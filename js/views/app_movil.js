@@ -25,29 +25,29 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0789';
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0789';
-import * as ORD from '../services_v245/despachoOrden.js?v=29.0789';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0789';
+import * as adminService from '../services_v245/adminService.js?v=29.0790';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0790';
+import * as ORD from '../services_v245/despachoOrden.js?v=29.0790';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0790';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0789';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0789';
-import * as metasService from '../services_v245/metasService.js?v=29.0789';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0790';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0790';
+import * as metasService from '../services_v245/metasService.js?v=29.0790';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0789';
+import * as temaService from '../services_v245/temaService.js?v=29.0790';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0789';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0789';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0790';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0790';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0789';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0790';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -209,12 +209,18 @@ const CSS = `
    que se hace en el dia -llega el archivo por WhatsApp y se carga-, y lo que se hace
    todos los dias tiene que estar a un toque.
 
-   EL SELECTOR ACEPTA CUALQUIER ARCHIVO (`accept="*/*"`) A PROPOSITO. Filtrar por .xlsx
-   parece mas prolijo y en Android es una trampa: cada explorador decide por su cuenta
-   que tipo tiene un archivo, y los que bajan de WhatsApp muchas veces vienen como
-   octet-stream. Con el filtro puesto, el archivo SIMPLEMENTE NO APARECE en la lista y
-   el usuario no tiene forma de saber por que. Es mejor dejarlo elegir lo que sea y
-   decirle "esto no parece un Excel" -que es lo que hace el lector- que esconderselo. */
+   EL SELECTOR ACEPTA CUALQUIER ARCHIVO A PROPOSITO. Filtrar por extension parece mas
+   prolijo y en Android es una trampa: cada explorador decide por su cuenta que tipo
+   tiene un archivo, y los que bajan de WhatsApp muchas veces vienen como octet-stream.
+   Con el filtro puesto, el archivo SIMPLEMENTE NO APARECE en la lista y el usuario no
+   tiene forma de saber por que. Es mejor dejarlo elegir lo que sea y decirle "esto no
+   parece un Excel" -que es lo que hace el lector- que esconderselo.
+
+   Y OJO CON ESCRIBIR EL VALOR DEL ACCEPT ACA ADENTRO: este comentario vive dentro del
+   BLOQUE DE CSS, y en CSS una barra con asterisco cierra el comentario donde aparezca.
+   Al escribirlo, el comentario se corto a la mitad, el resto quedo como CSS invalido y
+   la app se abrio en NEGRO. El chequeo de sintaxis no lo vio: como JavaScript, el
+   texto seguia siendo una plantilla valida. */
 #app-movil .dsp-cargar { display: flex; align-items: center; justify-content: center;
   min-width: 46px; background: var(--am-va-agua); border: 1px solid var(--am-va);
   border-radius: 10px; color: var(--am-va); font-size: 1.1rem; cursor: pointer; }
