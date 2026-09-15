@@ -25,8 +25,12 @@
  */
 
 import { nf, esc, cuadro, cuadroRutas, estilos, engancharBuscador }
-    from './pendiente.js?v=29.0795';
-import { icono } from '../services_v245/iconos.js?v=29.0795';
+    from './pendiente.js?v=29.0796';
+import { icono } from '../services_v245/iconos.js?v=29.0796';
+/* LOS MISMOS DOS CUADROS QUE PICKING > PEDIDOS WMS, no una copia. Daniel,
+   15-sep-2026: *"este mismo reporte que este en el modulo de correo de hoy"*.
+   Alla miran lo liberado de ayer hacia atras; aca, lo que comercial solto HOY. */
+import { cuadroLiberacion, cuadroLiberacionDetalle } from './pedidos_wms.js?v=29.0796';
 
 /* ── LA CABECERA ────────────────────────────────────────────────────────────── */
 
@@ -319,7 +323,19 @@ function cuerpo(d, fecha, dias) {
                               etiquetaPed: 'GUÍAS' }),
     ].join('');
 
-    return cab + tarjetas + `<div class="pend-grid">${cuadros}</div>` + estiloBloque();
+    /* AL FINAL DEL TODO, como en Pedidos WMS: es otra pregunta y no se mezcla con
+       los cortes de arriba. Si el correo de hoy todavia no llego, no se dibuja. */
+    const LH = d.liberacionHoy;
+    const liberado = LH
+        ? `<div class="pend-grid" style="margin-top:16px">
+             <div class="pend-dos">
+               ${cuadroLiberacion(LH, { universo: 'guías del correo de hoy' })}
+               ${cuadroLiberacionDetalle(LH, { pref: 'libhoy' })}
+             </div>
+           </div>`
+        : '';
+    return cab + tarjetas + `<div class="pend-grid">${cuadros}</div>`
+        + liberado + estiloBloque();
 }
 
 /** Lo único de estilo que no está en `estilos()`: el rótulo que parte los bloques. */
@@ -416,6 +432,15 @@ export function montarCorreoHoy(raiz, OPC) {
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'No liberados');
         XLSX.writeFile(wb, 'Pedidos WMS no liberados ' + (fecha || '') + '.xlsx');
+    });
+
+    if (d && d.liberacionHoy) engancharBuscador(raiz, 'libhoy', {
+        sacarFilas: () => (O.datos || {}).liberacionHoy?.detalle,
+        cabecera: ['Guia', 'Fecha orden WMS', 'Fecha correo', 'Dias',
+                   'Pendiente', 'Tienda'],
+        aFila: (f) => [f.guia, f.orden, f.correo, Number(f.dias) || 0,
+                       Number(f.und) || 0, f.tienda],
+        archivo: 'Pedido liberado hoy', unidad: 'guias', fecha: fecha,
     });
 
     engancharBuscador(raiz, 'tie', {

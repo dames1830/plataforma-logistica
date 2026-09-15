@@ -15,8 +15,8 @@
  * numero calculado en dos sitios se desincroniza, y ya paso en este proyecto.
  */
 
-import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0795';
-import { icono } from '../services_v245/iconos.js?v=29.0795';
+import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0796';
+import { icono } from '../services_v245/iconos.js?v=29.0796';
 
 /**
  * LO QUE EL WMS ABRE Y COMERCIAL NUNCA LIBERO.
@@ -163,14 +163,15 @@ function cuadroGender(n) {
  * liberada el dia que nacio no tiene demora que mirar, y las 1.094 sumaban 80 KB a
  * cada apertura. Los dos rotulos lo dicen, porque los cuadros tienen que cuadrar.
  */
-function cuadroLiberacion(L) {
+export function cuadroLiberacion(L, O) {
+    const o = O || {};
     const filas = (L && L.tramos) || [];
     if (!filas.length) return '';
     const p = L.peor;
     return `<div class="pend-panel">
         <h3>PEDIDO LIBERADO</h3>
         <div class="pend-cap">Cuánto tardó comercial en liberar lo que el WMS ya
-          tenía creado &middot; ${nf(L.pedidos)} pedidos del pendiente</div>
+          tenía creado &middot; ${nf(L.pedidos)} ${esc(o.universo || 'pedidos del pendiente')}</div>
         <table>
           <thead><tr>
             <th>DEMORA EN LIBERAR</th><th class="c">PEDIDOS</th>
@@ -204,7 +205,11 @@ function cuadroLiberacion(L) {
  * unidades pendientes y la tienda. Van en ese orden, con DIAS entre las fechas y
  * las unidades para no tener que restar a ojo.
  */
-function cuadroLiberacionDetalle(L) {
+export function cuadroLiberacionDetalle(L, O) {
+    const o = O || {};
+    /* El prefijo de los ids: las dos pantallas usan estos mismos cuadros y no se
+       montan juntas, pero un id repetido es de los errores que no avisan. */
+    const P = o.pref || 'lib';
     const filas = (L && L.detalle) || [];
     if (!filas.length) return '';
     return `<div class="pend-panel">
@@ -216,9 +221,9 @@ function cuadroLiberacionDetalle(L) {
               no salen</div>
           </div>
           <div class="pend-acc2">
-            <input type="search" id="lib_buscar" class="pend-buscar"
+            <input type="search" id="${P}_buscar" class="pend-buscar"
                    placeholder="Guía o tienda">
-            <button type="button" id="lib_xls" class="btn-icono btn-excel"
+            <button type="button" id="${P}_xls" class="btn-icono btn-excel"
                     title="Exportar a Excel" aria-label="Exportar a Excel">${icono('excel', 18)}</button>
           </div>
         </div>
@@ -228,7 +233,7 @@ function cuadroLiberacionDetalle(L) {
               <th>GUÍA</th><th class="n">FECHA ORDEN WMS</th><th class="n">FECHA CORREO</th>
               <th class="n">DÍAS</th><th class="n">PENDIENTE</th><th>TIENDA</th>
             </tr></thead>
-            <tbody id="lib_filas">
+            <tbody id="${P}_filas">
               ${filas.map(f => `<tr${Number(f.dias) > 7 ? ' class="pend-ojo"' : ''}
                 data-b="${esc((f.guia + ' ' + f.tienda).toLowerCase())}">
                 <td>${esc(f.guia)}</td>
@@ -240,7 +245,7 @@ function cuadroLiberacionDetalle(L) {
             </tbody>
           </table>
         </div>
-        <div class="pend-suave" id="lib_cuenta"></div>
+        <div class="pend-suave" id="${P}_cuenta"></div>
       </div>`;
 }
 
