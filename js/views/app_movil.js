@@ -25,29 +25,29 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0792';
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0792';
-import * as ORD from '../services_v245/despachoOrden.js?v=29.0792';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0792';
+import * as adminService from '../services_v245/adminService.js?v=29.0793';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0793';
+import * as ORD from '../services_v245/despachoOrden.js?v=29.0793';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0793';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0792';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0792';
-import * as metasService from '../services_v245/metasService.js?v=29.0792';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0793';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0793';
+import * as metasService from '../services_v245/metasService.js?v=29.0793';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0792';
+import * as temaService from '../services_v245/temaService.js?v=29.0793';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0792';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0792';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0793';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0793';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0792';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0793';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -255,6 +255,9 @@ const CSS = `
 #app-movil .dsp-adj.pide { border-color: var(--am-tarde); color: var(--am-tarde);
   background: var(--am-tarde-agua); }
 #app-movil .dsp-adj:active { transform: scale(.97); }
+/* SE TOCAN CON EL PULGAR, en la calle y a veces con guantes: altos y de ancho entero. */
+#app-movil .dsp-grande { width: 100%; min-height: 52px; font-size: .92rem; font-weight: 800;
+  margin-bottom: .5rem; display: flex; align-items: center; justify-content: center; gap: .5rem; }
 #app-movil .dsp-adj .ic { font-size: 1.25rem; }
 /* LOS DOS ICONOS DEL RECUADRO: ver y cambiar. Van grandes -36 px de lado- porque se
    tocan con el pulgar, en la calle, a veces con guantes. */
@@ -3052,6 +3055,8 @@ let desMarca = '';           /* '', 'atendidos', 'incidencias': la tarjeta tocad
 /* EL CARGADOR. null = cerrado. Si no, lo que se leyó del archivo, esperando el visto
    bueno: NADA se guarda hasta que se toca el botón. */
 let desOrden = null;
+/* Cual adjunto esta esperando que se elija cámara o galería. null = ninguno. */
+let desEligiendoFoto = null;
 let desAviso = '';
 let desReloj = null;
 
@@ -3280,6 +3285,26 @@ const desGuardarEscrito = () => {
     return desBorrador;
 };
 
+/* ══ ¿LA TOMAS O LA ELIGES? ═════════════════════════════════════════
+   Daniel: *"me tiene que mandar a la cámara, o al archivo; a las dos opciones"*.
+
+   Android DEBERIA ofrecer las dos solo, pero en su teléfono ofreció nada más la
+   galería: depende del explorador de archivos que traiga cada marca y no hay forma de
+   obligarlo desde la web. Así que se pregunta, con dos botones grandes que se tocan con
+   el pulgar. El liquidador casi siempre toma la foto en el momento; elegir de la
+   galería es para cuando ya la tenía tomada. */
+const hojaDeElegirFoto = () => {
+    if (!desEligiendoFoto) return '';
+    const rot = desEligiendoFoto === 'foto2' ? 'la foto 2' : 'la foto';
+    return `<div class="am-velo" data-velo-foto><div class="am-hoja">
+      <div class="am-hoja-cuerpo">
+        <p class="am-nota" style="text-align:center;margin:0 0 .7rem">${esc(rot)} del despacho</p>
+        <button type="button" class="am-btn dsp-grande" data-dfoto-camara>\ud83d\udcf7 Tomar la foto</button>
+        <button type="button" class="am-boton-suave dsp-grande" data-dfoto-galeria>\ud83d\uddbc\ufe0f Elegir una que ya tengo</button>
+        <button type="button" class="am-boton-suave" data-dfoto-cerrar>Cancelar</button>
+      </div></div></div>`;
+};
+
 /* ══ EL SELECTOR DE ARCHIVO VIVE FUERA DE LA PANTALLA ═════════════════════
    Daniel: *"le doy clic al Excel, me vuelve a la aplicación, pero nada, no carga nada"*.
 
@@ -3317,11 +3342,16 @@ const pedirElArchivo = () => {
    mientras la cámara está abierta la app está en segundo plano. Al volver con la foto
    tomada, el recuadro que abrió la cámara ya no existe y la foto se pierde sin decir
    nada. Uno por tipo —la foto pide la cámara y el PDF no—, colgados del <body>. */
-const pedirElAdjunto = (cual) => {
-    if (!entradasAdjunto[cual]) {
+const pedirElAdjunto = (cual, conCamara) => {
+    const llave = cual + (conCamara ? '-camara' : '');
+    if (!entradasAdjunto[llave]) {
         const e = document.createElement('input');
         e.type = 'file';
         e.accept = cual === 'pdf' ? 'application/pdf' : 'image/*';
+        /* `capture` manda DERECHO a la camara, sin pasar por el explorador. Sin el, se
+           abre la galeria. Son dos selectores distintos y no uno al que se le cambia el
+           atributo: cambiarselo a uno que ya existe no siempre lo toma. */
+        if (conCamara) e.setAttribute('capture', 'environment');
         e.style.display = 'none';
         document.body.appendChild(e);
         e.addEventListener('change', async () => {
@@ -3338,10 +3368,11 @@ const pedirElAdjunto = (cual) => {
             }
             pintar();
         });
-        entradasAdjunto[cual] = e;
+        entradasAdjunto[llave] = e;
     }
-    entradasAdjunto[cual].value = '';
-    entradasAdjunto[cual].click();
+    desEligiendoFoto = null;
+    entradasAdjunto[llave].value = '';
+    entradasAdjunto[llave].click();
 };
 
 /* Leer el archivo y mostrar lo que trae. No guarda nada. */
@@ -3795,6 +3826,19 @@ const pintar = () => {
 
        El cuerpo de la app ya guardaba su posición desde que pasar lista la perdía; la
        HOJA no, porque se rehace entera dentro del cuerpo. Se guarda igual. */
+    /* ══ LO ESCRITO SE GUARDA ANTES DE CUALQUIER REPINTADO ═════════════════════
+       Daniel, liquidando: *"pongo la fecha de entrega, la incidencia, la factura...
+       espero unos segundos y se borra todo lo que puse"*.
+
+       La app se repinta sola cada tanto —llegan datos, se refresca— y el repintado
+       rehace la ficha desde la fila guardada: lo tecleado, que solo vivia en las cajas
+       de texto de la pantalla, desaparecia. Se guardaba antes de repintar solo cuando
+       el repintado lo causaba un toque -elegir estado, elegir una foto-, y no cuando lo
+       causaba el reloj. Justo el caso de quien se toma su tiempo llenando la ficha.
+
+       Ahora se guarda ANTES DE CUALQUIER REPINTADO, venga de donde venga. */
+    if (desAbierto) desGuardarEscrito();
+
     const donde = (sel) => [...raiz.querySelectorAll(sel)].map((e) => e.scrollTop);
     /* Por indice y no por el primero que aparezca: puede haber dos hojas abiertas -la
        ficha y el cargador- y devolverle a una la posicion de la otra seria peor que no
@@ -3809,7 +3853,7 @@ const pintar = () => {
            scroll ni la encierra la rejilla de tres filas de la app. */
         : seccion === 'chat' ? (chatSala ? pantallaConversacion() : pantallaChat())
         : seccion === 'tareas' ? (pantallaTareas() + hojaDeTarea())
-        : seccion === 'despacho' ? (pantallaDespacho() + hojaDeDespacho() + hojaDeCarga())
+        : seccion === 'despacho' ? (pantallaDespacho() + hojaDeDespacho() + hojaDeCarga() + hojaDeElegirFoto())
         : seccion === 'robots' ? (pantallaRobots() + hojaDeRobot())
         : seccion === 'avisos' ? pantallaAvisos()
         : pantallaEnCamino(seccion);
@@ -4031,8 +4075,23 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         /* ── DESPACHO ── */
         /* ── EL CARGADOR ── */
         if (e.target.closest('[data-dcargar]')) { pedirElArchivo(); return; }
+        if (e.target.closest('[data-dfoto-camara]')) { pedirElAdjunto(desEligiendoFoto, true); return; }
+        if (e.target.closest('[data-dfoto-galeria]')) { pedirElAdjunto(desEligiendoFoto, false); return; }
+        if (e.target.closest('[data-dfoto-cerrar]')) { desEligiendoFoto = null; pintar(); return; }
+        /* Tocar afuera tambien la cierra: es lo que uno hace sin pensar. */
+        if (desEligiendoFoto && e.target.closest('[data-velo-foto]') && !e.target.closest('.am-hoja')) {
+            desEligiendoFoto = null; pintar(); return;
+        }
         const da = e.target.closest('[data-dadj]');
-        if (da) { pedirElAdjunto(da.getAttribute('data-dadj')); return; }
+        if (da) {
+            const cual = da.getAttribute('data-dadj');
+            /* El PDF no se toma con la camara: va derecho al explorador. */
+            if (cual === 'pdf') { pedirElAdjunto(cual, false); return; }
+            desGuardarEscrito();
+            desEligiendoFoto = cual;
+            pintar();
+            return;
+        }
         if (e.target.closest('[data-dcarga-cerrar]')) { desOrden = null; pintar(); return; }
         if (e.target.closest('[data-dcarga-guardar]')) { guardarLaOrden(); return; }
         if (e.target.closest('[data-dcarga-ver]')) {
