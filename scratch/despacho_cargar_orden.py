@@ -100,6 +100,10 @@ def leer_orden(ruta):
                             meta['paresPedido'] = ws.cell(row=rr, column=cc + 1).value
                         elif et == 'total monto':
                             meta['monto'] = ws.cell(row=rr, column=cc + 1).value
+                        elif et == 'bolsas pedido':
+                            meta['bolsas'] = ws.cell(row=rr, column=cc + 1).value
+                        elif et == 'estado':
+                            meta['estadoOD'] = limpio(ws.cell(row=rr, column=cc + 1).value)
                 filas = []
                 for rr in range(r + 1, ws.max_row + 1):
                     g = {}
@@ -171,24 +175,70 @@ def main():
               and abs(float(meta.get('monto') or 0) - venta) < 0.05)
     print('  %s' % ('CUADRA' if cuadra else 'NO CUADRA - revisar antes de cargar'))
 
+    # PEDIDO Y ENVIADO NO SON EL MISMO NUMERO, y esto no es un error del archivo.
+    # Daniel, 15-sep-2026: *"son 368 pedidos, pares enviados son 403"*. Los 35 de
+    # diferencia son premios que se agregan al despacho, y el archivo NO dice a que guia
+    # le toca cada uno: las 25 observaciones dicen "PREMIO SANDALIAS", "PREMIO 800.00",
+    # sin una sola cantidad. Asi que la cantidad por guia es LA PEDIDA, y el total
+    # enviado se guarda aparte, a nivel de la orden. Poner 368 como "lo que salio" seria
+    # decir un numero que el papel del chofer desmiente.
+    env = meta.get('paresEnviado')
+    if env not in (None, '') and str(env) != str(int(pares)):
+        meta['premios'] = float(env) - pares
+        print('  OJO: el archivo dice %s pares ENVIADOS y las guias suman %d PEDIDOS.'
+              % (env, pares))
+        print('       Los %.0f de diferencia son premios y el archivo no dice de que guia'
+              % meta['premios'])
+        print('       son. La cantidad por guia queda en la PEDIDA; el total enviado se')
+        print('       guarda con la orden para que ningun cuadro diga 368 como si fuera todo.')
+
     # Numeracion: se sigue el correlativo del AppSheet para no chocar si algun dia se
     # vuelve a importar de alla.
+    #
+    # CARGAR DOS VECES LA MISMA ORDEN NO PUEDE RENUMERAR NADA. El numero de la guia es
+    # lo que amarra la liquidacion -el estado, la factura y la foto viven aparte y
+    # apuntan a el-, asi que si al recargar la misma OD las guias cambiaran de numero,
+    # todo lo liquidado quedaria colgando de numeros que ya no existen. Por eso, cuando
+    # la orden es la misma que ya estaba, se reusan los numeros de la carga anterior.
+    anterior = {}
     try:
         base = pedir(AREA_BASE) or {}
-        vistos = [int(x['id']) for x in (base.get('filas') or []) if str(x.get('id', '')).isdigit()]
+        previas = base.get('filas') or []
+        vistos = [int(x['id']) for x in previas if str(x.get('id', '')).isdigit()]
         desde = (max(vistos) + 1) if vistos else 40001
-        print('\nEN BETA HABIA %d guias. Se van a BORRAR.' % len(base.get('filas') or []))
+        if base.get('od') and base.get('od') == meta.get('od'):
+            desde = min(vistos) if vistos else 40001
+            for x in previas:
+                anterior[(str(x.get('rot', '')), str(x.get('ped', '')))] = str(x.get('id'))
+            print('')
+            print('Es LA MISMA ORDEN %s que ya estaba: se reusan los numeros.' % base['od'])
+        else:
+            print('')
+            print('EN BETA HABIA %d guias. Se van a BORRAR.' % len(previas))
     except Exception as e:
         desde = 40001
-        print('\n(no se pudo leer lo que habia en beta: %s)' % e)
+        print('')
+        print('(no se pudo leer lo que habia en beta: %s)' % e)
 
-    for i, f in enumerate(filas):
-        f['id'] = str(desde + i)
+    usados = set(anterior.values())
+    libre = desde
+    for f in filas:
+        reusado = anterior.get((str(f.get('rot', '')), str(f.get('ped', ''))))
+        if reusado:
+            f['id'] = reusado
+        else:
+            while str(libre) in usados:
+                libre += 1
+            f['id'] = str(libre)
+            usados.add(str(libre))
+            libre += 1
         f['desp'] = fecha
         f['est'] = 'PENDIENTE'
         f['canal'] = 'catalogo'
         f['od'] = meta.get('od', '')
-    print('  numeros: del %s al %s' % (filas[0]['id'], filas[-1]['id']))
+    nums = sorted(int(f['id']) for f in filas)
+    print('  numeros: del %d al %d%s'
+          % (nums[0], nums[-1], ('  (%d reusados)' % len(anterior)) if anterior else ''))
 
     if not subir:
         print('\nPrueba en seco. Para hacerlo de verdad: --subir')
@@ -219,7 +269,7 @@ def main():
 
     # ── CARGAR ───────────────────────────────────────────────────────────────
     paquete = {'version': 2, 'origen': os.path.basename(ruta), 'od': meta.get('od', ''),
-               'importado': hoy, 'filas': filas}
+               'importado': hoy, 'orden': meta, 'filas': filas}
     guardar(AREA_BASE, paquete)
     print('\n   ok  %s con %d guias' % (AREA_BASE, len(filas)))
 
@@ -229,7 +279,7 @@ def main():
     print('   ok  %s%s' % (AREA_SEMANA, lunes))
 
     indice = {'version': 2, 'total': len(filas), 'desde': fecha, 'hasta': fecha,
-              'importado': hoy, 'origen': os.path.basename(ruta),
+              'importado': hoy, 'origen': os.path.basename(ruta), 'ordenes': [meta],
               'partido': datetime.datetime.now().strftime('%Y-%m-%d %H:%M'),
               'semanas': {lunes: {
                   'n': len(filas), 'sin': len(filas),
