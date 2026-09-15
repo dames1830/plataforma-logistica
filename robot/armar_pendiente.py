@@ -1594,6 +1594,32 @@ def main():
             return 2
         log('')
 
+    # Y CON --sin-bajar, LA FOTO TIENE QUE SER DE HOY IGUAL.
+    #
+    # `--sin-bajar` no pide nada al WMS: usa el archivo que ya esta en disco. Eso
+    # esta bien en el pase de la manana, donde la bajada acaba de dejarlo ahi
+    # arriba. Pero si esa bajada fallo -el WMS ocupado con otro robot, que es como
+    # sale con codigo 3-, el archivo en disco es el de AYER y el pendiente saldria
+    # de una foto vieja SELLADA CON LA HORA DE HOY. Una pantalla que se ve fresca y
+    # no lo esta es peor que una que se ve vieja: de ahi se deciden las paletas que
+    # se bajan.
+    #
+    # El camino normal ya tiene su guarda -la foto tiene que ser posterior al
+    # correo-; este atajo no la tenia. Con --probar no se comprueba nada, que para
+    # eso esta.
+    if sin_bajar and not probar and hoy == datetime.now().strftime('%Y-%m-%d'):
+        foto = hora_foto()
+        if not foto or datetime.fromtimestamp(foto).date() != datetime.now().date():
+            log('')
+            log('NO SE PUBLICA NADA. La foto del WMS que hay en disco es del %s y '
+                'hoy es %s: la bajada de esta misma corrida no dejo una nueva. '
+                'Queda publicado el pendiente del dia anterior, que al menos dice '
+                'de cuando es.' % (_reloj(foto), datetime.now().strftime('%d-%m')),
+                'ERROR')
+            return 2
+        log('Foto del WMS en disco: %s. No se baja de nuevo.' % _reloj(foto))
+        log('')
+
     (datos, guias, cabecera, IQ, por_guia, por_sku, sku_hoy, sku_antes,
      maestros) = armar(hoy)
     gen, rims, colec, rutas = maestros
