@@ -28,9 +28,59 @@
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 
-/* El oyente tiene que EXISTIR, pero no hace nada: sin `respondWith`, el navegador maneja
-   el pedido como siempre. Es la version mas segura posible de un service worker. */
-self.addEventListener('fetch', () => { /* se deja pasar */ });
+/* ═══════════════════════════════════════════════════════════════════════════════
+ *  COMPARTIR DESDE WHATSAPP
+ *  ─────────────────────────────────────────────────────────────────────────────
+ *  Daniel, 15-sep-2026: *"arma el compartir desde WhatsApp"*. Con el `share_target` del
+ *  manifest, Android pone la plataforma en la lista de Compartir, al lado de Drive y
+ *  OneDrive: se mantiene apretado el Excel en WhatsApp, Compartir, y listo.
+ *
+ *  POR QUE HACE FALTA EL AYUDANTE. Android manda el archivo con un POST, y esta web es
+ *  ESTATICA: no hay nadie del otro lado que reciba un POST. El unico que puede atenderlo
+ *  es este ayudante, que corre en el propio telefono. Lo que hace es: agarrar el archivo,
+ *  guardarlo un momento, y mandar el navegador a la pagina normal. La app lo recoge al
+ *  abrir y abre el cargador con el archivo puesto.
+ *
+ *  EL ORDEN IMPORTA. Primero se guarda el archivo y RECIEN DESPUES se redirige. Al reves
+ *  la pagina abriria antes de que el archivo este, y el usuario veria la app normal sin
+ *  entender por que no paso nada.
+ *
+ *  Y SIGUE SIN CONTESTAR NADA MAS. Este oyente responde UNICAMENTE al POST de Compartir;
+ *  todo lo demas se deja pasar tal cual, como hasta hoy. Un ayudante que empiece a
+ *  contestar pedidos normales serviria unos archivos viejos y otros nuevos, que es la
+ *  forma en que esta web se rompe sin dejar rastro. */
+const CAJON = 'compartido-v1';
+const LLAVE = './__compartido__';
+
+self.addEventListener('fetch', (evento) => {
+    const pedido = evento.request;
+    if (pedido.method !== 'POST') return;                 // todo lo demas: se deja pasar
+    const url = new URL(pedido.url);
+    if (!url.searchParams.has('compartido')) return;
+
+    evento.respondWith((async () => {
+        try {
+            const datos = await pedido.formData();
+            const archivo = datos.get('archivo');
+            if (archivo && archivo.size) {
+                const cajon = await caches.open(CAJON);
+                await cajon.put(LLAVE, new Response(archivo, {
+                    headers: {
+                        'Content-Type': archivo.type || 'application/octet-stream',
+                        /* El nombre viaja aparte porque una Response no lo guarda. Va
+                           codificado: los nombres traen espacios y acentos, y una
+                           cabecera no los admite crudos. */
+                        'X-Nombre': encodeURIComponent(archivo.name || 'compartido.xlsx')
+                    }
+                }));
+            }
+        } catch (e) {
+            /* Si algo sale mal igual se manda a la app: es preferible que se abra y no
+               encuentre nada -y se pueda cargar a mano- a que quede una pagina en blanco. */
+        }
+        return Response.redirect('./index.html?compartido=1', 303);
+    })());
+});
 
 /* ═══════════════════════════════════════════════════════════════════════════════════════
  *  LOS AVISOS

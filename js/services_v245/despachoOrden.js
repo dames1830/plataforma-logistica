@@ -46,7 +46,7 @@
  * lo liquidado colgando de números que ya no existen.
  */
 
-import * as DES from './despachoCatalogo.js?v=29.0790';
+import * as DES from './despachoCatalogo.js?v=29.0791';
 
 /* Los catorce títulos que manda comercial, y a qué campo va cada uno. Se reconocen por
    el título y no por la posición: es lo único que sobrevive a que alguien mueva una
@@ -109,6 +109,34 @@ const CABECERA = [
     [/^pares enviado$/, 'paresEnviado', 'num'],
     [/^bolsas pedido$/, 'bolsas', 'num']
 ];
+
+/* ══ EL ARCHIVO QUE LLEGO POR COMPARTIR ════════════════════════════════
+   Cuando se comparte el Excel desde WhatsApp, Android se lo manda al ayudante -el
+   service worker-, que lo deja guardado un momento y abre la app. Esto lo recoge.
+
+   SE BORRA APENAS SE LEE. Si quedara guardado, la proxima vez que alguien abriera la
+   app se le abriria solo el cargador con el archivo de la semana pasada, sin entender
+   por que. Un archivo compartido es de una sola vez. */
+const CAJON_COMPARTIDO = 'compartido-v1';
+const LLAVE_COMPARTIDO = './__compartido__';
+
+export const archivoCompartido = async () => {
+    try {
+        if (!self.caches) return null;
+        const cajon = await caches.open(CAJON_COMPARTIDO);
+        const r = await cajon.match(LLAVE_COMPARTIDO);
+        if (!r) return null;
+        await cajon.delete(LLAVE_COMPARTIDO);
+        const trozo = await r.blob();
+        if (!trozo || !trozo.size) return null;
+        let nombre = 'compartido.xlsx';
+        try { nombre = decodeURIComponent(r.headers.get('X-Nombre') || nombre); } catch (e) { /* se queda el de siempre */ }
+        return new File([trozo], nombre, { type: r.headers.get('Content-Type') || trozo.type });
+    } catch (e) {
+        console.warn('[despacho] no se pudo recoger el compartido:', e && e.message);
+        return null;
+    }
+};
 
 /**
  * Lee el archivo y devuelve lo que trae, SIN guardar nada.
