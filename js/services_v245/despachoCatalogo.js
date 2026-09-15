@@ -7,21 +7,45 @@
  * que se cambie en uno, la web y el celular dirían números distintos del mismo día. Y
  * cuando dos pantallas se contradicen, no se puede creer a ninguna.
  *
- * ── LAS TRES ÁREAS ────────────────────────────────────────────────────────────
+ * ── SE BAJA POR SEMANAS, NO TODO ──────────────────────────────────────────────
  *
- *   despacho_catalogo           la base importada del AppSheet. NO SE TOCA.
- *   despacho_catalogo_cambios   lo liquidado desde la plataforma, una entrada por id
- *   despacho_adj_<id>_<cual>    cada foto o PDF, en base64, en su propia área
+ *   Daniel, 15-sep-2026: *"no es necesario que tengas los 3.000 y tantos registros…
+ *   no es mejor tener un rango de fechas y que se actualice a la fecha actual, por
+ *   ejemplo hoy día lunes, o el lunes hasta el sábado"*.
+ *
+ * Tenía razón y el número lo confirma: el paquete entero pesa 1.144 KB y crece unos
+ * 450 KB por mes, así que en un año serían 5,4 MB bajados de nuevo cada vez que
+ * alguien abre la pantalla —en un celular, con datos móviles— para mirar el día de hoy.
+ *
+ * Ahora hay UN ÁREA POR SEMANA, que empieza el lunes, y cada una se basta a sí misma:
+ * trae su propio catálogo de agencias y destinos, así que se puede bajar una sin
+ * depender de ninguna otra. Se bajan solo las semanas que el rango pedido toca.
+ *
+ *   despacho_catalogo_indice          1,3 KB · qué semanas hay, cuántas guías y
+ *                                     cuántas quedan sin liquidar en cada una
+ *   despacho_catalogo_sem_2026-09-14  19 KB  · la semana del lunes 14 de setiembre
+ *   despacho_catalogo_cambios         lo liquidado desde la plataforma, una entrada por id
+ *   despacho_adj_<id>_<cual>          cada foto o PDF, en base64, en su propia área
+ *   despacho_catalogo                 el paquete entero de la importación. YA NO SE BAJA.
+ *                                     Queda como respaldo: si algo sale mal se vuelve a
+ *                                     partir desde ahí sin pedirle el Excel a nadie.
+ *
+ * Abrir la pantalla en el día de hoy pasó de bajar 1.144 KB a bajar 20 KB.
+ *
+ * El índice es también lo que evita pedir semanas que no existen: si un lunes no está
+ * en la lista, no se pregunta por él. Y la cuenta de "sin liquidar" por semana es lo
+ * que permite que la pestaña Por liquidar encuentre una guía vieja sin bajar el
+ * historial completo — solo baja las semanas que tienen alguna abierta.
  *
  * Que la base no se reescriba es lo que hace seguro seguir usando el AppSheet en
- * paralelo: si algo sale mal, se vuelve a importar y no se pierde una liquidación. Y
- * evita que dos personas liquidando a la vez se pisen, que es lo que pasaría mandando
- * el megabyte entero cada vez.
+ * paralelo, y evita que dos personas liquidando a la vez se pisen.
  */
 
 const API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-export const AREA = 'despacho_catalogo';
+export const AREA = 'despacho_catalogo';                 // el respaldo de la importación
+export const AREA_INDICE = 'despacho_catalogo_indice';
+export const AREA_SEMANA = (lunes) => 'despacho_catalogo_sem_' + lunes;
 export const AREA_CAMBIOS = 'despacho_catalogo_cambios';
 export const AREA_ADJ = (id, cual) => 'despacho_adj_' + String(id) + '_' + cual;
 
@@ -56,24 +80,60 @@ export const delCanal = (filas, canal) => !canal ? filas : filas.filter((f) => c
 
 export const sinLiquidar = (f) => SIN_CERRAR.indexOf(String(f.est || '').toUpperCase()) >= 0;
 
-/* ── LA FECHA, SIN toISOString ────────────────────────────────────────────────
-   Devuelve UTC y en Lima adelanta el día a las 19:00, justo cuando entra el turno
-   noche. Es la trampa número uno de este proyecto. */
-export const hoyTexto = () => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+/* ── LAS FECHAS, SIN toISOString ──────────────────────────────────────────────
+   toISOString devuelve UTC y en Lima adelanta el día a las 19:00, justo cuando entra el
+   turno noche. Es la trampa número uno de este proyecto, y acá haría que a las 19:01 de
+   un sábado la pantalla saltara a la semana siguiente y se viera vacía. */
+const dd = (n) => String(n).padStart(2, '0');
+const aTexto = (d) => `${d.getFullYear()}-${dd(d.getMonth() + 1)}-${dd(d.getDate())}`;
+const aFecha = (t) => {
+    const p = String(t || '').split('-').map(Number);
+    return new Date(p[0], (p[1] || 1) - 1, p[2] || 1);
+};
+export const esFecha = (t) => /^\d{4}-\d{2}-\d{2}$/.test(String(t || ''));
+export const hoyTexto = () => aTexto(new Date());
+export const sumarDias = (t, n) => { const d = aFecha(t); d.setDate(d.getDate() + n); return aTexto(d); };
+
+/** El lunes de la semana de esa fecha. Es la clave con la que se guarda cada semana. */
+export const lunesDe = (t) => {
+    const d = aFecha(t);
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));   // getDay: 0 = domingo
+    return aTexto(d);
 };
 
-const traerArea = async (area) => {
+/** Los lunes de todas las semanas que toca un rango, en orden. */
+export const semanasEntre = (desde, hasta) => {
+    if (!esFecha(desde) || !esFecha(hasta) || hasta < desde) return [];
+    const fin = lunesDe(hasta);
+    const lista = [];
+    let l = lunesDe(desde);
+    while (l <= fin && lista.length < 520) { lista.push(l); l = sumarDias(l, 7); }
+    return lista;
+};
+
+/**
+ * EL RANGO CON EL QUE ABRE LA PANTALLA: lunes a sábado de esta semana.
+ * De lunes a sábado y no los siete días porque el despacho no sale los domingos: un
+ * domingo en el filtro solo ensancha el rango sin agregar una sola guía.
+ */
+export const rangoDeLaSemana = (ref) => {
+    const l = lunesDe(ref || hoyTexto());
+    return { desde: l, hasta: sumarDias(l, 5) };
+};
+
+/* ── HABLAR CON EL SERVIDOR ───────────────────────────────────────────────────
+   Se distingue "no hay nada" de "no pude preguntar". Confundirlos es lo que hizo que
+   la pantalla del Maestro dijera "Nunca publicado" en un reinicio del servidor. */
+const pedirArea = async (area) => {
     try {
         const r = await fetch(`${API}/${area}?date=MASTER&z=${Date.now()}`);
-        if (!r.ok) return null;
+        if (r.status === 404) return { ok: true, datos: null };
+        if (!r.ok) return { ok: false, motivo: 'el servidor contestó ' + r.status };
         const j = await r.json();
         const d = (j && j.data !== undefined) ? j.data : j;
-        return (d && typeof d === 'object' && Object.keys(d).length) ? d : null;
+        return { ok: true, datos: (d && typeof d === 'object' && Object.keys(d).length) ? d : null };
     } catch (e) {
-        console.warn('[catalogo] no se pudo traer', area, e && e.message);
-        return null;
+        return { ok: false, motivo: (e && e.message) || 'no se pudo conectar' };
     }
 };
 
@@ -88,10 +148,9 @@ export const guardarArea = async (area, datos) => {
 };
 
 /* ── EL PAQUETE COMPACTO, REARMADO ────────────────────────────────────────────
-   Son 3.129 filas y el área se descarga entera, así que viene apretada: los campos
-   que se repiten -agencia, destino, asesor, estado, líder- van en un catálogo y cada
-   fila guarda el número. La ruta de la foto es un patrón y se guarda solo la parte
-   variable. Acá se deshace todo eso. */
+   Los campos que se repiten —agencia, destino, asesor, estado, líder— van en un
+   catálogo y cada fila guarda el número. La ruta de la foto es un patrón y se guarda
+   solo la parte variable. Acá se deshace todo eso. */
 const abrir = (p) => {
     if (!p || !Array.isArray(p.filas)) return [];
     const cat = p.cat || {};
@@ -110,28 +169,137 @@ const abrir = (p) => {
     });
 };
 
-let FILAS = null;
-let CAMBIOS = {};
-let seLeyoLaBase = false;
+/* ── LO QUE SE VA GUARDANDO EN MEMORIA ───────────────────────────────────────── */
+let INDICE = null;
+let CAMBIOS = { porId: {} };
+let cambiosLeidos = false;
+const SEMANAS = {};        // lunes -> filas, ya con lo liquidado superpuesto
+let ultimoFallo = '';
 
-/** Todos los despachos, con lo liquidado desde la plataforma ya superpuesto. */
-export const traerDespachos = async (recargar) => {
-    if (FILAS && !recargar) return FILAS;
-    const base = await traerArea(AREA);
-    seLeyoLaBase = !!base;
-    const filas = abrir(base);
-    CAMBIOS = (await traerArea(AREA_CAMBIOS)) || {};
-    const porId = CAMBIOS.porId || {};
+export const elIndice = () => INDICE;
+export const semanasEnMemoria = () => Object.keys(SEMANAS).sort();
+/** El motivo del último tropiezo, para poder decirlo en pantalla en vez de mentir. */
+export const ultimoProblema = () => ultimoFallo;
+
+const aplicarCambios = (filas) => {
+    const porId = (CAMBIOS && CAMBIOS.porId) || {};
     filas.forEach((f) => {
         const c = porId[String(f.id)];
         if (c) Object.keys(c).forEach((k) => { f[k] = c[k]; });
     });
-    FILAS = filas;
-    return FILAS;
+    return filas;
 };
 
-/** true si la base se pudo leer. Sirve para distinguir "no hay nada" de "no pude preguntar". */
-export const seLeyo = () => seLeyoLaBase;
+/** El mapa de semanas. Pesa poco más de un kilobyte y se baja siempre. */
+export const traerIndice = async (recargar) => {
+    if (INDICE && !recargar) return INDICE;
+    const r = await pedirArea(AREA_INDICE);
+    if (!r.ok) { ultimoFallo = r.motivo; return null; }
+    INDICE = r.datos || { semanas: {}, total: 0 };
+    return INDICE;
+};
+
+const traerCambios = async (recargar) => {
+    if (cambiosLeidos && !recargar) return CAMBIOS;
+    const r = await pedirArea(AREA_CAMBIOS);
+    if (!r.ok) { ultimoFallo = r.motivo; return CAMBIOS; }
+    CAMBIOS = r.datos || { porId: {} };
+    if (!CAMBIOS.porId) CAMBIOS.porId = {};
+    cambiosLeidos = true;
+    return CAMBIOS;
+};
+
+/** Una semana suelta. Devuelve [] si esa semana no tiene guías. */
+export const traerSemana = async (lunes, recargar) => {
+    if (SEMANAS[lunes] && !recargar) return SEMANAS[lunes];
+    await traerCambios();
+    const r = await pedirArea(AREA_SEMANA(lunes));
+    if (!r.ok) { ultimoFallo = r.motivo; return null; }
+    SEMANAS[lunes] = aplicarCambios(abrir(r.datos));
+    return SEMANAS[lunes];
+};
+
+/**
+ * LAS GUÍAS DE UN RANGO DE FECHAS. Es la puerta que usan las dos pantallas.
+ *
+ * Baja en paralelo solo las semanas que el rango toca Y que el índice dice que
+ * existen; las que ya estaban en memoria no se vuelven a pedir. Devuelve las filas
+ * recortadas al rango exacto —una semana trae de lunes a domingo y el rango puede
+ * empezar un miércoles—, ordenadas de la más nueva a la más vieja.
+ */
+export const traerRango = async (desde, hasta, recargar) => {
+    await traerIndice(recargar);
+    const hay = (INDICE && INDICE.semanas) || {};
+    const lunes = semanasEntre(desde, hasta).filter((l) => hay[l] !== undefined);
+    await Promise.all(lunes.map((l) => traerSemana(l, recargar)));
+    const filas = [];
+    lunes.forEach((l) => (SEMANAS[l] || []).forEach((f) => {
+        const d = String(f.desp || '');
+        if (d >= desde && d <= hasta) filas.push(f);
+    }));
+    filas.sort((a, b) => String(b.desp || '').localeCompare(String(a.desp || '')));
+    return filas;
+};
+
+/**
+ * LAS QUE SIGUEN ABIERTAS, estén en la semana que estén.
+ *
+ * Sin el índice esto obligaría a bajar el historial completo para encontrar una guía
+ * de hace un mes que quedó sin liquidar. Con él se bajan solo las semanas que tienen
+ * alguna abierta, que en la práctica son una o dos.
+ */
+export const traerPendientes = async (recargar) => {
+    await traerIndice(recargar);
+    const hay = (INDICE && INDICE.semanas) || {};
+    const conAbiertas = Object.keys(hay).filter((l) => (hay[l].sin || 0) > 0);
+    await Promise.all(conAbiertas.map((l) => traerSemana(l, recargar)));
+    const filas = [];
+    /* Se barren TODAS las semanas que haya en memoria, no solo las que el índice
+       marca: si alguien acaba de abrir una guía que estaba cerrada, el índice todavía
+       no lo sabe y la pantalla igual tiene que mostrarla. */
+    Object.keys(SEMANAS).forEach((l) => (SEMANAS[l] || []).forEach((f) => {
+        if (sinLiquidar(f)) filas.push(f);
+    }));
+    filas.sort((a, b) => String(b.desp || '').localeCompare(String(a.desp || '')));
+    return filas;
+};
+
+/** El historial entero. Solo cuando alguien lo pide a propósito: son más de 1 MB. */
+export const traerTodo = async (recargar) => {
+    const i = await traerIndice(recargar);
+    const l = Object.keys((i && i.semanas) || {}).sort();
+    if (!l.length) return [];
+    return traerRango(l[0], sumarDias(l[l.length - 1], 6), recargar);
+};
+
+/**
+ * Cuántas guías de ese rango hay YA EN MEMORIA, o null si falta bajar alguna semana.
+ *
+ * Es para los rótulos de las pestañas. Devolver 0 cuando en realidad no se sabe sería
+ * peor que no decir nada: un cero se lee como "ese día no se despachó".
+ */
+export const contarRango = (desde, hasta) => {
+    const hay = (INDICE && INDICE.semanas) || {};
+    const lunes = semanasEntre(desde, hasta).filter((l) => hay[l] !== undefined);
+    if (lunes.some((l) => !SEMANAS[l])) return null;
+    let n = 0;
+    lunes.forEach((l) => SEMANAS[l].forEach((f) => {
+        const d = String(f.desp || '');
+        if (d >= desde && d <= hasta) n++;
+    }));
+    return n;
+};
+
+/** Cuántos kilobytes costaría un rango que todavía no se bajó. Para poder avisarlo. */
+export const pesoDelRango = (desde, hasta) => {
+    const hay = (INDICE && INDICE.semanas) || {};
+    return semanasEntre(desde, hasta)
+        .filter((l) => hay[l] && !SEMANAS[l])
+        .reduce((t, l) => t + (hay[l].kb || 0), 0);
+};
+
+/** true si el índice se pudo leer. Distingue "no hay nada" de "no pude preguntar". */
+export const seLeyo = () => !!INDICE;
 
 /* ── LAS FOTOS SE ACHICAN MENOS QUE EN EL CHAT ────────────────────────────────
    El chat usa 1600 px y calidad 0,72, que para una conversación sobra. Acá no:
@@ -188,8 +356,22 @@ const adjuntosVistos = {};
 /** Trae un adjunto guardado en la plataforma. `null` si no está o no se pudo. */
 export const traerAdjunto = async (id, cual) => {
     const clave = id + '_' + cual;
-    if (!adjuntosVistos[clave]) adjuntosVistos[clave] = await traerArea(AREA_ADJ(id, cual));
+    if (!adjuntosVistos[clave]) {
+        const r = await pedirArea(AREA_ADJ(id, cual));
+        if (!r.ok) { ultimoFallo = r.motivo; return null; }
+        adjuntosVistos[clave] = r.datos;
+    }
     return adjuntosVistos[clave];
+};
+
+/** La fila con ese id, mire la pantalla la semana que mire. */
+export const filaDe = (id) => {
+    const claves = Object.keys(SEMANAS);
+    for (let i = 0; i < claves.length; i++) {
+        const f = SEMANAS[claves[i]].find((x) => String(x.id) === String(id));
+        if (f) return f;
+    }
+    return null;
 };
 
 /**
@@ -200,7 +382,7 @@ export const traerAdjunto = async (id, cual) => {
  * devolvió prepararAdjunto(). Devuelve el cambio final, ya aplicado a la fila.
  */
 export const liquidar = async (id, cambio, adjuntos, avisar) => {
-    const f = (FILAS || []).find((x) => String(x.id) === String(id));
+    const f = filaDe(id);
     if (!f) throw new Error('no se encontró el despacho ' + id);
 
     const listo = Object.assign({}, cambio);
@@ -218,12 +400,40 @@ export const liquidar = async (id, cambio, adjuntos, avisar) => {
     }
 
     listo.liquidadoEl = hoyTexto();
+    await traerCambios();
     const porId = Object.assign({}, (CAMBIOS && CAMBIOS.porId) || {});
     porId[String(id)] = Object.assign({}, porId[String(id)] || {}, listo);
     await guardarArea(AREA_CAMBIOS, { porId });
     CAMBIOS = { porId };
+    cambiosLeidos = true;
     Object.keys(listo).forEach((k) => { f[k] = listo[k]; });
+
+    await recontarLaSemana(f);
     return listo;
+};
+
+/**
+ * El índice dice cuántas guías quedan abiertas en cada semana, y de ese número depende
+ * que la pestaña Por liquidar las encuentre sin bajar el historial entero. Al cerrar
+ * una hay que actualizarlo, o una guía vieja quedaría escondida para siempre.
+ *
+ * Se recuenta mirando la semana completa que está en memoria —no restando uno—: si la
+ * cuenta se llevara a mano y se perdiera un guardado, el número iría quedando cada vez
+ * más lejos de la verdad sin que nadie se entere. Y si el índice no se puede guardar,
+ * la liquidación NO se deshace: ya está guardada, que es lo que importa.
+ */
+const recontarLaSemana = async (fila) => {
+    try {
+        const l = lunesDe(String(fila.desp || hoyTexto()));
+        const filas = SEMANAS[l];
+        if (!filas || !INDICE || !INDICE.semanas || !INDICE.semanas[l]) return;
+        const sin = filas.filter(sinLiquidar).length;
+        if (INDICE.semanas[l].sin === sin) return;
+        INDICE.semanas[l].sin = sin;
+        await guardarArea(AREA_INDICE, INDICE);
+    } catch (e) {
+        console.warn('[despacho] no se pudo actualizar el índice:', e && e.message);
+    }
 };
 
 /** La regla de la foto, en un solo sitio: sin foto no se puede dar por atendido. */

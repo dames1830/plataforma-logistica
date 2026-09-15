@@ -33,171 +33,105 @@
  * 102 reales, y de 753 destinos, 580.
  */
 
-import { traerAreaPublicada } from '../services_v245/csvHub_v6.js?v=29.0775';
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0775';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0776';
 
-const AREA = 'despacho_catalogo';
+/* ── DE DÓNDE SALEN LOS DATOS ─────────────────────────────────────────────────
+   De `despachoCatalogo.js`, que los baja POR SEMANAS. Acá había una copia de todo
+   -las áreas, el achicado de fotos, el rearmado del paquete, la fecha de hoy- escrita
+   antes de que existiera la pantalla del celular. Se fue: dos copias de la misma regla
+   es el camino más corto a que la web y el celular digan números distintos del mismo
+   día, y cuando dos pantallas se contradicen no se puede creer a ninguna.
 
-/* ── DONDE SE GUARDA LO QUE SE LIQUIDA DESDE ACA ──────────────────────────────
-   NO se reescribe `despacho_catalogo`. Son 3.129 filas y un megabyte: mandarlo
-   entero cada vez que alguien liquida uno es lento y, el dia que dos personas
-   liquiden a la vez, el segundo pisa al primero.
+   Lo que sí es de acá son los colores: el celular tiene su propia paleta. */
+const { AREA_ADJ, guardarArea, achicarFoto, aBase64, TOPE_MB, hoyTexto } = DES;
 
-   En vez de eso, los cambios van a un area aparte, chica, con UNA entrada por id.
-   Al leer se superponen a la base. La base importada queda intacta, que ademas es
-   lo que hace seguro seguir con el AppSheet en paralelo: si algo sale mal, se
-   vuelve a importar y no se perdio nada. */
-const AREA_CAMBIOS = 'despacho_catalogo_cambios';
-
-/* Los adjuntos van uno por area -`despacho_adj_<id>`- con el archivo en base64.
-   Es el mismo camino que usa el chat, y por el mismo motivo: `/api/archivos` esta
-   hecho para el robot y BORRA el anterior del mismo tipo, que aca seria perder la
-   foto de una liquidacion al subir la de la siguiente. */
-const AREA_ADJ = (id, cual) => 'despacho_adj_' + String(id) + '_' + cual;
-
-const API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
-
-const guardarArea = async (area, datos) => {
-    const r = await fetch(API + '/' + area + '?date=MASTER', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(datos)
-    });
-    if (!r.ok) throw new Error('el servidor contestó ' + r.status);
-    return true;
-};
-
-/* LAS FOTOS SE ACHICAN EN EL NAVEGADOR, pero MENOS QUE EN EL CHAT.
-   El chat usa 1600 px y JPEG 0,72, que para una conversacion sobra. Aca no:
-
-     Daniel, 15-sep-2026: *"las fotos que no bajen mucho la calidad, no se va a
-     apreciar, y eso lo tiene que ver el area comercial tambien para que ellos lo
-     metan a contabilidad y finanzas"*.
-
-   Lo que se fotografia es la FACTURA junto con la guia de la agencia. Si el numero
-   de factura o el monto no se leen, la foto no sirve para lo unico que tiene que
-   servir. Por eso 2200 px y calidad 0,88: una foto de celular de 4 MB queda en unos
-   700 KB -el triple que en el chat- y los numeros se leen. */
-const LADO_MAXIMO = 2200;
-const CALIDAD = 0.88;
-const TOPE_MB = 6;
-
-const achicarFoto = (archivo) => new Promise((listo) => {
-    const mime = String(archivo.type || '');
-    if (mime.indexOf('image/') !== 0 || mime.indexOf('gif') >= 0) { listo(archivo); return; }
-    const url = URL.createObjectURL(archivo);
-    const img = new Image();
-    img.onload = () => {
-        const e = Math.min(1, LADO_MAXIMO / Math.max(img.width, img.height));
-        if (e >= 1 && archivo.size < 900 * 1024) { URL.revokeObjectURL(url); listo(archivo); return; }
-        const c = document.createElement('canvas');
-        c.width = Math.round(img.width * e); c.height = Math.round(img.height * e);
-        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-        c.toBlob((b) => { URL.revokeObjectURL(url); listo(b || archivo); }, 'image/jpeg', CALIDAD);
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); listo(archivo); };
-    img.src = url;
-});
-
-const aBase64 = (blob) => new Promise((listo, falla) => {
-    const l = new FileReader();
-    l.onload = () => listo(String(l.result));
-    l.onerror = () => falla(new Error('no se pudo leer el archivo'));
-    l.readAsDataURL(blob);
-});
-
-/* Los estados que usa el AppSheet. Los dos primeros son los únicos que aparecen en las
-   3.129 filas de hoy; PENDIENTE y REPROGRAMAR existen en el formulario pero no quedan
-   registrados, porque hoy se carga y se liquida casi seguido. */
+/* Los estados que usa el AppSheet, con los colores de la web. Los dos primeros son los
+   únicos que aparecen en las 3.129 filas de hoy; PENDIENTE y REPROGRAMAR existen en el
+   formulario pero no quedan registrados, porque hoy se carga y se liquida casi seguido. */
 const ESTADOS = {
     'ATENDIDO':    { et: 'Atendido',    color: 'var(--success)', fondo: 'rgba(var(--success-rgb), 0.12)' },
     'NO ATENDIDO': { et: 'No atendido', color: 'var(--danger)',  fondo: 'rgba(var(--danger-rgb), 0.12)' },
     'PENDIENTE':   { et: 'Pendiente',   color: 'var(--warning)', fondo: 'rgba(var(--warning-rgb), 0.12)' },
     'REPROGRAMAR': { et: 'Reprogramar', color: 'var(--warning)', fondo: 'rgba(var(--warning-rgb), 0.12)' }
 };
-/* LA REGLA DE QUÉ CUENTA COMO "SIN LIQUIDAR" VIVE EN UN SOLO SITIO.
-   Acá había una copia. Si la regla estuviera en dos lados, el día que se cambie en uno
-   la web y el celular dirían números distintos del mismo día, y cuando dos pantallas se
-   contradicen no se puede creer a ninguna. Los colores sí son de acá: el celular tiene
-   su propia paleta. */
-const PENDIENTES = null;   // se usa DES.sinLiquidar
 
 const esc = (s) => String(s === undefined || s === null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const num = (n) => (n === null || n === undefined || n === '') ? '' : Number(n).toLocaleString('es-PE');
-const soles = (n) => (n === null || n === undefined || n === '') ? '—'
+const soles = (n) => (n === null || n === undefined || n === '') ? '\u2014'
     : 'S/ ' + Number(n).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-/* ── LA FECHA, SIN toISOString ────────────────────────────────────────────────
-   Devuelve UTC y en Lima adelanta el día a las 19:00, justo cuando entra el turno
-   noche. Es la trampa número uno de este proyecto. */
-const hoyTexto = () => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
-const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const DIAS = ['domingo', 'lunes', 'martes', 'mi\u00e9rcoles', 'jueves', 'viernes', 's\u00e1bado'];
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'set', 'oct', 'nov', 'dic'];
 const fechaBonita = (f) => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(f || ''))) return f || '—';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(f || ''))) return f || '\u2014';
     const [a, m, d] = f.split('-').map(Number);
     const x = new Date(a, m - 1, d);
     return `${DIAS[x.getDay()]} ${d} de ${MESES[m - 1]}`;
 };
-const fechaCorta = (f) => /^\d{4}-\d{2}-\d{2}$/.test(String(f || '')) ? f.slice(8, 10) + '/' + f.slice(5, 7) : (f || '—');
+const fechaCorta = (f) => /^\d{4}-\d{2}-\d{2}$/.test(String(f || '')) ? f.slice(8, 10) + '/' + f.slice(5, 7) : (f || '\u2014');
 
-/* ── EL PAQUETE COMPACTO, REARMADO ───────────────────────────────────────────── */
-let PAQUETE = null;
-let FILAS = [];
-let CAMBIOS = {};
 let borrador = null;
 let guardando = false;
 
-const abrir = (p) => {
-    if (!p || !Array.isArray(p.filas)) return [];
-    const cat = p.cat || {};
-    const patron = p.fotoPatron || 'STATUS_Images/{id}.FOTO.{foto}';
-    return p.filas.map((f) => {
-        const g = {};
-        Object.keys(f).forEach((k) => {
-            g[k] = (cat[k] && typeof f[k] === 'number') ? (cat[k][f[k]] || '') : f[k];
-        });
-        if (f.foto !== undefined && f.fotoX === undefined) {
-            g.foto = patron.replace('{id}', f.id).replace('{foto}', f.foto);
-        } else if (f.fotoX !== undefined) {
-            g.foto = f.fotoX;
-        }
-        return g;
-    });
-};
-
 /* ── EL ESTADO DE LA PANTALLA ────────────────────────────────────────────────── */
 let pestana = 'hoy';
-let filtro = { canal: 'catalogo', agencia: '', asesor: '', estado: '', texto: '', desde: '', hasta: '' };
+/* EL RANGO ARRANCA EN LA SEMANA EN CURSO, lunes a sábado, y no en el historial entero.
+   Daniel, 15-sep-2026: *"no es necesario que tengas los 3.000 y tantos registros… no
+   es mejor tener un rango de fechas y que se actualice a la fecha actual"*. El paquete
+   completo son 1.144 KB y crece ~450 KB por mes; una semana son 20. */
+const sem0 = DES.rangoDeLaSemana();
+let filtro = { canal: 'catalogo', agencia: '', asesor: '', estado: '', texto: '',
+               desde: sem0.desde, hasta: sem0.hasta };
 let abierta = null;          /* el id de la fila abierta en la ficha */
 let raiz = null;
+let FILAS = [];              /* SOLO lo que la pestaña de turno necesita */
+let cargando = false;
+let diaMostrado = '';        /* qué día está mostrando la pestaña Hoy */
 
 const pendiente = (f) => DES.sinLiquidar(f);
 
 const delDia = (f, dia) => String(f.desp || '') === dia;
 
-const visibles = () => {
-    const dia = hoyTexto();
-    let L = FILAS;
-    if (pestana === 'hoy') {
-        L = L.filter((f) => delDia(f, dia));
-        /* SI HOY NO HAY NADA, SE MUESTRA EL ÚLTIMO DÍA CON DESPACHOS.
-           Los datos importados llegan hasta el 14-sep: una pantalla en blanco haría
-           pensar que está rota cuando lo que pasa es que aún no cargaron el día. */
-        if (!L.length && FILAS.length) {
-            const ultimo = FILAS.reduce((a, f) => (f.desp > a ? f.desp : a), '');
-            L = FILAS.filter((f) => delDia(f, ultimo));
+/* ── QUÉ SE BAJA EN CADA PESTAÑA ──────────────────────────────────────────────
+   Hoy         la semana en curso, y se muestra el día de hoy
+   Por liquidar solo las semanas que el índice marca con guías abiertas
+   Rango       las semanas que toca el rango elegido */
+const cargar = async (recargar) => {
+    cargando = true;
+    try {
+        if (pestana === 'liquidar') {
+            FILAS = await DES.traerPendientes(recargar);
+            diaMostrado = '';
+        } else if (pestana === 'hoy') {
+            const r = DES.rangoDeLaSemana();
+            FILAS = await DES.traerRango(r.desde, r.hasta, recargar);
+            diaMostrado = hoyTexto();
+            /* SI HOY NO HAY NADA, SE MUESTRA EL ÚLTIMO DÍA CON DESPACHOS. Una pantalla
+               en blanco haría pensar que está rota cuando lo que pasa es que todavía no
+               cargaron el día. El último día lo dice el índice, sin bajar nada. */
+            if (!FILAS.some((f) => delDia(f, diaMostrado))) {
+                const i = DES.elIndice();
+                const ult = (i && i.hasta) || '';
+                if (ult && ult < diaMostrado) {
+                    const r2 = DES.rangoDeLaSemana(ult);
+                    FILAS = await DES.traerRango(r2.desde, r2.hasta, recargar);
+                    diaMostrado = ult;
+                }
+            }
+        } else {
+            FILAS = await DES.traerRango(filtro.desde, filtro.hasta, recargar);
+            diaMostrado = '';
         }
-    } else if (pestana === 'liquidar') {
-        L = L.filter(pendiente);
-    } else {
-        if (filtro.desde) L = L.filter((f) => String(f.desp || '') >= filtro.desde);
-        if (filtro.hasta) L = L.filter((f) => String(f.desp || '') <= filtro.hasta);
+    } finally {
+        cargando = false;
     }
+};
+
+const visibles = () => {
+    let L = FILAS;
+    if (pestana === 'hoy') L = L.filter((f) => delDia(f, diaMostrado));
+    else if (pestana === 'liquidar') L = L.filter(pendiente);
     if (filtro.agencia) L = L.filter((f) => f.age === filtro.agencia);
     if (filtro.asesor) L = L.filter((f) => f.ase === filtro.asesor);
     if (filtro.estado) L = L.filter((f) => String(f.est || '').toUpperCase() === filtro.estado);
@@ -234,20 +168,42 @@ const opciones = (campo, puesto) => {
 
 const barra = () => {
     const L = visibles();
+    /* LAS CUENTAS SALEN DEL ÍNDICE, que pesa 1,3 KB. Antes salían de tener las 3.129
+       filas en memoria, que es justamente lo que ya no se baja. */
+    const i = DES.elIndice() || { semanas: {} };
+    const abiertas = Object.keys(i.semanas || {}).reduce((t, k) => t + (i.semanas[k].sin || 0), 0);
+    /* UN CERO NO ES LO MISMO QUE NO SABERLO: si la semana todavía no se bajó, la
+       pestaña dice lo que costaría bajarla, nunca un cero que se leería como
+       "ese día no se despachó nada". */
+    const cuenta = (desde, hasta) => {
+        const n = DES.contarRango(desde, hasta);
+        if (n !== null) return num(n);
+        const kb = DES.pesoDelRango(desde, hasta);
+        return kb ? '+' + kb + ' KB' : '—';
+    };
+    const hoy = hoyTexto();
     const pes = [
-        ['hoy', 'Hoy', FILAS.filter((f) => delDia(f, hoyTexto())).length],
-        ['liquidar', 'Por liquidar', FILAS.filter(pendiente).length],
-        ['historial', 'Historial', FILAS.length]
+        ['hoy', pestana === 'hoy' && diaMostrado && diaMostrado !== hoy
+                ? fechaBonita(diaMostrado) : 'Hoy',
+         pestana === 'hoy' ? num(L.length) : cuenta(hoy, hoy)],
+        ['liquidar', 'Por liquidar', num(abiertas)],
+        ['rango', 'Rango', pestana === 'rango' ? num(FILAS.length) : cuenta(filtro.desde, filtro.hasta)]
     ];
     return `
-    <div style="display:flex; gap:.4rem; border-bottom:1px solid var(--border); margin-bottom:1rem; flex-wrap:wrap;">
+    <div style="display:flex; gap:.4rem; border-bottom:1px solid var(--border); margin-bottom:1rem;
+                flex-wrap:wrap; align-items:center;">
       ${pes.map(([id, et, n]) => `
         <button type="button" data-pes="${id}" style="background:none; border:0; cursor:pointer;
             padding:.55rem .9rem; font-size:var(--t-sm); font-weight:800; font-family:inherit;
             color:${pestana === id ? 'var(--primary-2)' : 'var(--text-muted)'};
             border-bottom:2px solid ${pestana === id ? 'var(--primary-2)' : 'transparent'};">
-          ${esc(et)} <span style="font-family:var(--font-num); font-weight:400; opacity:.75;">${num(n)}</span>
+          ${esc(et)} <span style="font-family:var(--font-num); font-weight:400; opacity:.75;">${esc(n)}</span>
         </button>`).join('')}
+      ${cargando ? `<span style="margin-left:auto; padding:.55rem .3rem; font-size:var(--t-xs);
+          color:var(--text-muted); display:flex; align-items:center; gap:.4rem;">
+          <span style="width:12px; height:12px; border:2px solid rgba(var(--primary2-rgb), 0.2);
+            border-left-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;
+            display:inline-block;"></span>trayendo…</span>` : ''}
     </div>
 
     <div style="display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; margin-bottom:1rem;">
@@ -266,18 +222,42 @@ const barra = () => {
         <option value="">Todos los estados</option>
         ${Object.keys(ESTADOS).map((k) => `<option value="${k}" ${filtro.estado === k ? 'selected' : ''}>${esc(ESTADOS[k].et)}</option>`).join('')}
       </select>
-      ${pestana === 'historial' ? `
+      ${pestana === 'rango' ? `
       <input id="dc_d1" type="date" value="${esc(filtro.desde)}" title="Desde"
         style="background:var(--input-bg); border:1px solid var(--border); border-radius:9px; padding:.45rem .5rem;
                color:var(--text-main); font-size:var(--t-sm); color-scheme:var(--scheme);">
       <input id="dc_d2" type="date" value="${esc(filtro.hasta)}" title="Hasta"
         style="background:var(--input-bg); border:1px solid var(--border); border-radius:9px; padding:.45rem .5rem;
-               color:var(--text-main); font-size:var(--t-sm); color-scheme:var(--scheme);">` : ''}
+               color:var(--text-main); font-size:var(--t-sm); color-scheme:var(--scheme);">
+      ${atajos()}` : ''}
       <button type="button" id="dc_excel" style="background:var(--panel); border:1px solid var(--border);
         border-radius:9px; padding:.5rem .8rem; color:var(--text-soft); font-size:var(--t-sm);
         font-weight:700; cursor:pointer; font-family:inherit;">Excel (${num(L.length)})</button>
     </div>`;
 };
+
+/* ── LOS ATAJOS DE FECHA ──────────────────────────────────────────────────────
+   Nadie quiere teclear dos fechas para ver la semana pasada. Y cada uno dice al lado
+   cuánto falta bajar: la semana en curso ya está en memoria y no cuesta nada; el mes
+   entero son cuatro semanas más. Que se vea ANTES de tocar, no después de esperar. */
+const RANGOS = [
+    ['Esta semana', () => DES.rangoDeLaSemana()],
+    ['La pasada', () => DES.rangoDeLaSemana(DES.sumarDias(hoyTexto(), -7))],
+    ['Últimos 15 días', () => ({ desde: DES.sumarDias(hoyTexto(), -14), hasta: hoyTexto() })],
+    ['Este mes', () => ({ desde: hoyTexto().slice(0, 8) + '01', hasta: hoyTexto() })]
+];
+
+const atajos = () => RANGOS.map(([et, dame], k) => {
+    const r = dame();
+    const puesto = r.desde === filtro.desde && r.hasta === filtro.hasta;
+    const kb = DES.pesoDelRango(r.desde, r.hasta);
+    return `<button type="button" data-rango="${k}" title="${esc(fechaBonita(r.desde))} a ${esc(fechaBonita(r.hasta))}"
+        style="background:${puesto ? 'rgba(var(--primary2-rgb), 0.14)' : 'var(--panel)'};
+        border:1px solid ${puesto ? 'var(--primary-2)' : 'var(--border)'}; border-radius:9px;
+        padding:.5rem .7rem; color:${puesto ? 'var(--primary-2)' : 'var(--text-soft)'};
+        font-size:var(--t-sm); font-weight:700; cursor:pointer; font-family:inherit;">${esc(et)}${kb
+        ? ` <span style="font-weight:400; opacity:.7;">+${kb} KB</span>` : ''}</button>`;
+}).join('');
 
 const resumen = (L) => {
     const at = L.filter((f) => String(f.est).toUpperCase() === 'ATENDIDO').length;
@@ -298,8 +278,15 @@ const resumen = (L) => {
 
 const tabla = (L) => {
     if (!L.length) {
+        /* "No hay con estos filtros" cuando no hay ningun filtro puesto hace pensar
+           que algo quedo mal marcado. Se dice lo que realmente pasa en cada caso. */
+        const puestos = filtro.texto || filtro.agencia || filtro.asesor || filtro.estado;
+        const que = puestos ? 'No hay despachos con estos filtros.'
+                  : pestana === 'liquidar' ? 'No queda ninguna guía por liquidar.'
+                  : pestana === 'rango' ? 'No hubo despachos entre esas dos fechas.'
+                  : 'Todavía no se cargó ninguna guía de este día.';
         return `<div style="padding:3rem 1rem; text-align:center; color:var(--text-muted); font-size:var(--t-sm);">
-            No hay despachos con estos filtros.</div>`;
+            ${esc(que)}</div>`;
     }
     /* Tope de dibujado: 3.129 filas de golpe cuelgan la pantalla un segundo largo y
        nadie mira más de doscientas. El Excel sí se las lleva todas. */
@@ -357,7 +344,7 @@ const campoTexto = (id, rotulo, valor, tipo) => `
 
 const ficha = () => {
     if (!abierta) return '';
-    const f = FILAS.find((x) => String(x.id) === String(abierta));
+    const f = DES.filaDe(abierta) || FILAS.find((x) => String(x.id) === String(abierta));
     if (!f) return '';
     const b = borrador || {};
     const val = (k) => (b[k] !== undefined ? b[k] : (f[k] !== undefined ? f[k] : ''));
@@ -501,14 +488,8 @@ const bajarExcel = (L) => {
    Los que vienen del AppSheet siguen en el Drive y acá solo se ve su nombre: la
    plataforma no tiene acceso a esa carpeta. Se dice tal cual, sin prometer una foto
    que no se puede mostrar. */
-const adjuntosVistos = {};
-
 const verAdjunto = async (id, cual) => {
-    const clave = id + '_' + cual;
-    if (!adjuntosVistos[clave]) {
-        adjuntosVistos[clave] = await traerAreaPublicada(AREA_ADJ(id, cual));
-    }
-    const a = adjuntosVistos[clave];
+    const a = await DES.traerAdjunto(id, cual);
     if (!a || !a.dato) { aviso('No se pudo traer el archivo.', true); return; }
 
     const capa = document.createElement('div');
@@ -547,7 +528,7 @@ const verAdjunto = async (id, cual) => {
      2. Los cambios del formulario, al área de cambios.
      3. Recién ahí se toca lo que está en pantalla.
 
-   NO SE REESCRIBE LA BASE. Ver AREA_CAMBIOS arriba. */
+   NO SE REESCRIBE LA BASE: los cambios van a un área aparte. Lo hace el servicio. */
 const aviso = (texto, malo) => {
     const d = raiz && raiz.querySelector('#dc_msg');
     if (!d) return;
@@ -559,7 +540,7 @@ const aviso = (texto, malo) => {
 
 const liquidar = async () => {
     if (guardando || !abierta) return;
-    const f = FILAS.find((x) => String(x.id) === String(abierta));
+    const f = DES.filaDe(abierta);
     if (!f) return;
     const b = borrador || {};
 
@@ -580,9 +561,10 @@ const liquidar = async () => {
 
     /* LA FOTO ES OBLIGATORIA PARA DAR POR ATENDIDO. Es la regla del AppSheet de hoy
        -el campo lleva asterisco- y es lo que hace que la liquidación valga: sin foto
-       no hay con qué demostrar la entrega. */
-    const tieneFoto = b._foto || f.foto;
-    if (String(cambio.est).toUpperCase() === 'ATENDIDO' && !tieneFoto) {
+       no hay con qué demostrar la entrega. La regla vive en el servicio, y la miran
+       igual la web y el celular. */
+    const adj = { foto: b._foto, foto2: b._foto2, pdf: b._pdf };
+    if (DES.faltaLaFoto(f, adj, cambio.est)) {
         aviso('Para marcar ATENDIDO hace falta la foto. Es la prueba de la entrega.', true);
         return;
     }
@@ -590,29 +572,12 @@ const liquidar = async () => {
     guardando = true;
     pintar();
     try {
-        for (const cual of ['foto', 'foto2', 'pdf']) {
-            const dato = b['_' + cual];
-            if (!dato) continue;
-            aviso('Subiendo ' + cual + '…');
-            await guardarArea(AREA_ADJ(f.id, cual), {
-                id: String(f.id), cual: cual, tipo: dato.tipo,
-                nombre: dato.nombre, dato: dato.dato,
-                cuando: hoyTexto()
-            });
-            cambio[cual] = 'plataforma';      // marca de que vive acá, no en el Drive
-            /* SE OLVIDA LA COPIA GUARDADA. El visor se queda con el archivo en memoria
-               para no volver a pedirlo, y sin esto, después de subir una foto nueva
-               seguía mostrando la anterior. Lo cazó la prueba de subir dos seguidas. */
-            delete adjuntosVistos[f.id + '_' + cual];
-        }
-
-        cambio.liquidadoEl = hoyTexto();
-        const porId = Object.assign({}, (CAMBIOS && CAMBIOS.porId) || {});
-        porId[String(f.id)] = Object.assign({}, porId[String(f.id)] || {}, cambio);
-        await guardarArea(AREA_CAMBIOS, { porId: porId });
-        CAMBIOS = { porId: porId };
-
-        Object.keys(cambio).forEach((k) => { f[k] = cambio[k]; });
+        /* TODO EL GUARDADO ES DEL SERVICIO. Acá había una segunda copia, y desde que
+           los datos se bajan por semanas ya no daba igual: además de subir la foto y
+           los campos, hay que recontar cuántas guías quedan abiertas en esa semana,
+           que es de donde saca la pestaña Por liquidar las viejas sin bajar todo el
+           historial. Una copia que no recontara dejaría guías escondidas. */
+        await DES.liquidar(f.id, cambio, adj, aviso);
         borrador = null;
         guardando = false;
         abierta = null;
@@ -630,7 +595,7 @@ const pintar = () => {
     const L = visibles();
     const dia = hoyTexto();
     const hayHoy = FILAS.some((f) => delDia(f, dia));
-    const ultimo = FILAS.reduce((a, f) => (f.desp > a ? f.desp : a), '');
+    const ultimo = diaMostrado || FILAS.reduce((a, f) => (f.desp > a ? f.desp : a), '');
 
     raiz.innerHTML = `
     <div style="padding:1.1rem 1.2rem;">
@@ -642,7 +607,8 @@ const pintar = () => {
             ? (hayHoy ? `Despachos de ${esc(fechaBonita(dia))}`
                       : `Todavía no hay despachos de hoy · se muestra el último día: ${esc(fechaBonita(ultimo))}`)
             : pestana === 'liquidar' ? 'Lo que falta cerrar'
-            : `${num(FILAS.length)} despachos importados del AppSheet`}
+            : `Del ${esc(fechaBonita(filtro.desde))} al ${esc(fechaBonita(filtro.hasta))}${
+                FILAS.length ? ` · ${num(FILAS.length)} despachos` : ''}`}
         </p>
       </div>
       ${barra()}
@@ -652,8 +618,14 @@ const pintar = () => {
     ${ficha()}`;
 
     /* Los toques */
-    raiz.querySelectorAll('[data-pes]').forEach((b) => b.addEventListener('click', () => {
+    raiz.querySelectorAll('[data-pes]').forEach((b) => b.addEventListener('click', async () => {
         pestana = b.getAttribute('data-pes'); abierta = null; pintar();
+        await cargar(); pintar();
+    }));
+    raiz.querySelectorAll('[data-rango]').forEach((b) => b.addEventListener('click', async () => {
+        const r = RANGOS[Number(b.getAttribute('data-rango'))][1]();
+        filtro.desde = r.desde; filtro.hasta = r.hasta; abierta = null; pintar();
+        await cargar(); pintar();
     }));
     raiz.querySelectorAll('[data-fila]').forEach((tr) => tr.addEventListener('click', () => {
         abierta = tr.getAttribute('data-fila'); pintar();
@@ -725,7 +697,16 @@ const pintar = () => {
         if (s) s.addEventListener('change', () => { filtro[campo] = s.value; pintar(); });
     };
     liga('#dc_age', 'agencia'); liga('#dc_ase', 'asesor'); liga('#dc_est', 'estado');
-    liga('#dc_d1', 'desde'); liga('#dc_d2', 'hasta');
+    /* Las fechas no son un filtro más: cambiarlas manda a buscar semanas al servidor. */
+    const fecha = (id, campo) => {
+        const e = raiz.querySelector(id);
+        if (e) e.addEventListener('change', async () => {
+            filtro[campo] = e.value;
+            if (filtro.hasta < filtro.desde) filtro[campo === 'desde' ? 'hasta' : 'desde'] = e.value;
+            pintar(); await cargar(); pintar();
+        });
+    };
+    fecha('#dc_d1', 'desde'); fecha('#dc_d2', 'hasta');
     const ex = raiz.querySelector('#dc_excel');
     if (ex) ex.addEventListener('click', () => bajarExcel(visibles()));
 };
@@ -737,32 +718,32 @@ export const renderDespachoCatalogo = async (container) => {
       <div style="display:flex; align-items:center; gap:12px; padding:3rem; color:var(--text-muted);">
         <div style="width:22px; height:22px; border:3px solid rgba(var(--primary2-rgb), 0.15);
              border-left-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div>
-        <span style="font-size:var(--t-md);">Trayendo los despachos de catálogo…</span>
+        <span style="font-size:var(--t-md);">Trayendo los despachos de la semana…</span>
       </div>`;
 
-    if (!PAQUETE) {
-        PAQUETE = await traerAreaPublicada(AREA);
-        FILAS = abrir(PAQUETE);
-        /* LO LIQUIDADO DESDE LA PLATAFORMA SE SUPERPONE A LA BASE. La base es lo que
-           se importo del AppSheet; esto es lo que se hizo despues, y manda. */
-        CAMBIOS = (await traerAreaPublicada(AREA_CAMBIOS)) || {};
-        const porId = CAMBIOS.porId || {};
-        FILAS.forEach((f) => {
-            const c = porId[String(f.id)];
-            if (c) Object.keys(c).forEach((k) => { f[k] = c[k]; });
-        });
-    }
+    const i = await DES.traerIndice();
+    await cargar();
 
-    if (!FILAS.length) {
+    if (!i) {
         /* NO SE PUDO PREGUNTAR NO ES QUE NO HAYA NADA. Se dice cuál de las dos. */
         container.innerHTML = `
           <div style="padding:3rem 1.2rem; text-align:center;">
             <p style="margin:0 0 .4rem; font-size:var(--t-lg); font-weight:800; color:var(--text-strong);">
-              Todavía no hay despachos de catálogo</p>
+              No se pudo leer el despacho de catálogo</p>
             <p style="margin:0; font-size:var(--t-sm); color:var(--text-muted); line-height:1.6;">
-              ${PAQUETE ? 'El área existe pero llegó vacía.'
-                        : 'No se pudo leer el área <b>despacho_catalogo</b>. Esto no quiere decir que no haya datos: puede ser que el servidor esté reiniciando. Vuelve a entrar en un minuto.'}
-            </p>
+              Esto <b>no</b> quiere decir que no haya datos: no se pudo preguntar.
+              ${esc(DES.ultimoProblema() || '')}<br>Puede que el servidor esté reiniciando;
+              vuelve a entrar en un minuto.</p>
+          </div>`;
+        return;
+    }
+    if (!i.total) {
+        container.innerHTML = `
+          <div style="padding:3rem 1.2rem; text-align:center;">
+            <p style="margin:0 0 .4rem; font-size:var(--t-lg); font-weight:800; color:var(--text-strong);">
+              Todavía no hay despachos de catálogo</p>
+            <p style="margin:0; font-size:var(--t-sm); color:var(--text-muted);">
+              El área existe pero llegó vacía.</p>
           </div>`;
         return;
     }

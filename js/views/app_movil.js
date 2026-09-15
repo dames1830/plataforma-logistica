@@ -25,28 +25,28 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0775';
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0775';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0775';
+import * as adminService from '../services_v245/adminService.js?v=29.0776';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0776';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0776';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0775';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0775';
-import * as metasService from '../services_v245/metasService.js?v=29.0775';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0776';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0776';
+import * as metasService from '../services_v245/metasService.js?v=29.0776';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0775';
+import * as temaService from '../services_v245/temaService.js?v=29.0776';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0775';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0775';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0776';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0776';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0775';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0776';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -185,6 +185,21 @@ const CSS = `
 #app-movil .dsp-sub.on { background: var(--am-va-agua); color: var(--am-va); }
 #app-movil .dsp-sub span { display: block; font-family: var(--am-num); font-size: .68rem;
   font-weight: 400; opacity: .8; }
+#app-movil .dsp-rango { background: var(--am-carta); border: 1px solid var(--am-linea);
+  border-radius: 11px; padding: .5rem; display: flex; flex-direction: column; gap: .45rem; }
+#app-movil .dsp-chips { display: flex; gap: .3rem; flex-wrap: wrap; }
+#app-movil .dsp-chip { flex: 1 1 calc(50% - .3rem); background: var(--am-papel);
+  border: 1px solid var(--am-linea); border-radius: 8px; padding: .4rem .3rem; color: var(--am-suave);
+  font-size: .74rem; font-weight: 700; font-family: var(--am-ui); cursor: pointer; }
+#app-movil .dsp-chip.on { background: var(--am-va-agua); border-color: var(--am-va); color: var(--am-va); }
+#app-movil .dsp-chip small { display: block; font-weight: 400; opacity: .75; font-size: .62rem;
+  font-family: var(--am-num); }
+#app-movil .dsp-fechas { display: flex; gap: .4rem; }
+#app-movil .dsp-fechas label { flex: 1; display: block; }
+#app-movil .dsp-fechas span { display: block; font-size: .66rem; color: var(--am-tenue); margin-bottom: 2px; }
+#app-movil .dsp-fechas input { width: 100%; background: var(--am-papel); border: 1px solid var(--am-linea);
+  border-radius: 8px; padding: .4rem .5rem; color: var(--am-tinta); font-size: .78rem;
+  font-family: var(--am-ui); }
 #app-movil .dsp-buscar { width: 100%; background: var(--am-carta); border: 1px solid var(--am-linea);
   border-radius: 10px; padding: .55rem .7rem; color: var(--am-tinta); font-size: .85rem;
   font-family: var(--am-ui); }
@@ -575,9 +590,12 @@ const CSS = `
 /* EL ALMANAQUE QUE ABRE EL TELEFONO ES DEL SISTEMA, no nuestro, y se pinta segun
    'color-scheme'. Sin esto, en los dos temas oscuros el iconito sale negro sobre negro y
    parece que no hubiera calendario. Se le dice a cada tema de que color es. */
-#app-movil .am-fecha input { color-scheme: dark; }
+#app-movil .am-fecha input,
+#app-movil .dsp-fechas input { color-scheme: dark; }
 html[data-tema="pbi"] #app-movil .am-fecha input,
-html[data-tema="pbi-classic"] #app-movil .am-fecha input { color-scheme: light; }
+html[data-tema="pbi-classic"] #app-movil .am-fecha input,
+html[data-tema="pbi"] #app-movil .dsp-fechas input,
+html[data-tema="pbi-classic"] #app-movil .dsp-fechas input { color-scheme: light; }
 #app-movil .am-fecha input::-webkit-calendar-picker-indicator { cursor: pointer; }
 
 #app-movil .am-encabezado { display: grid; grid-template-columns: minmax(0, 1fr) 88px 68px;
@@ -2972,11 +2990,20 @@ const hojaDeRobot = () => {
    dirían números distintos del mismo día.
 
    TRES SUB-PESTAÑAS, que son los tres momentos del circuito: HOY lo que se despacha,
-   POR LIQUIDAR lo que falta cerrar, HISTORIAL todo. El canal va de filtro y no de
-   pestaña, para que sumar Retail sea una casilla y no otra pantalla. */
+   POR LIQUIDAR lo que falta cerrar, RANGO un tramo de fechas que se elige. El canal va
+   de filtro y no de pestaña, para que sumar Retail sea una casilla y no otra pantalla.
+
+   NO SE BAJA EL HISTORIAL. Daniel, 15-sep-2026: *"no es necesario que tengas los 3.000
+   y tantos registros… no es mejor tener un rango de fechas y que se actualice a la
+   fecha actual, por ejemplo hoy día lunes, o el lunes hasta el sábado"*. Tenía razón:
+   el paquete entero son 1.144 KB y crece ~450 KB por mes; la semana en curso son 20 KB.
+   Esto es un celular, con datos móviles, y el que liquida en la calle abre la pantalla
+   veinte veces al día. El reparto por semanas vive en `despachoCatalogo.js`. */
 let desDatos = null;         /* null = todavía no se pidió */
 let desCargando = false;
 let desSub = 'hoy';
+let desRango = null;         /* se fija en la primera carga: la semana en curso */
+let desDiaMostrado = '';
 let desAbierto = null;
 let desBorrador = null;
 let desGuardando = false;
@@ -2985,33 +3012,59 @@ let desBusca = '';
 let desAviso = '';
 let desReloj = null;
 
+const desHoy = () => DES.hoyTexto();
+
+/* LOS ATAJOS DE FECHA. En un teléfono nadie teclea dos fechas para ver la semana
+   pasada. Cada uno dice al lado cuánto falta bajar —la semana en curso ya está y no
+   cuesta nada— para que se sepa ANTES de tocar, no después de esperar. */
+const DES_RANGOS = [
+    ['Esta semana', () => DES.rangoDeLaSemana()],
+    ['La pasada', () => DES.rangoDeLaSemana(DES.sumarDias(DES.hoyTexto(), -7))],
+    ['15 días', () => ({ desde: DES.sumarDias(DES.hoyTexto(), -14), hasta: DES.hoyTexto() })],
+    ['Este mes', () => ({ desde: DES.hoyTexto().slice(0, 8) + '01', hasta: DES.hoyTexto() })]
+];
+
+/* QUÉ SE BAJA EN CADA SUB-PESTAÑA:
+     Hoy          la semana en curso, y se muestra el día de hoy
+     Por liquidar solo las semanas que el índice marca con guías abiertas
+     Rango        las semanas que toca el rango elegido */
 const mirarDespachos = async (recargar) => {
     desCargando = true;
     try {
-        desDatos = await DES.traerDespachos(recargar);
+        if (!desRango) desRango = DES.rangoDeLaSemana();
+        if (desSub === 'liquidar') {
+            desDatos = await DES.traerPendientes(recargar);
+            desDiaMostrado = '';
+        } else if (desSub === 'hoy') {
+            const r = DES.rangoDeLaSemana();
+            desDatos = await DES.traerRango(r.desde, r.hasta, recargar);
+            desDiaMostrado = desHoy();
+            /* SI HOY NO HAY NADA, SE MUESTRA EL ÚLTIMO DÍA CON DESPACHOS. Una pantalla
+               en blanco haría pensar que está rota cuando lo que pasa es que todavía no
+               cargaron el día. Cuál es el último día lo dice el índice, sin bajar nada. */
+            if (!desDatos.some((f) => f.desp === desDiaMostrado)) {
+                const i = DES.elIndice();
+                const ult = (i && i.hasta) || '';
+                if (ult && ult < desDiaMostrado) {
+                    const r2 = DES.rangoDeLaSemana(ult);
+                    desDatos = await DES.traerRango(r2.desde, r2.hasta, recargar);
+                    desDiaMostrado = ult;
+                }
+            }
+        } else {
+            desDatos = await DES.traerRango(desRango.desde, desRango.hasta, recargar);
+            desDiaMostrado = '';
+        }
     } catch (e) {
-        desDatos = [];
+        desDatos = desDatos || [];
     }
     desCargando = false;
 };
 
-const desHoy = () => DES.hoyTexto();
-const desUltimoDia = () => (desDatos || []).reduce((a, f) => (f.desp > a ? f.desp : a), '');
-
 const desDeLaPestana = () => {
     let L = desDatos || [];
-    if (desSub === 'hoy') {
-        const hoy = desHoy();
-        let D = L.filter((f) => f.desp === hoy);
-        /* SI HOY NO HAY NADA, SE MUESTRA EL ÚLTIMO DÍA CON DESPACHOS. Una pantalla en
-           blanco haría pensar que está rota cuando lo que pasa es que aún no cargaron. */
-        if (!D.length && L.length) D = L.filter((f) => f.desp === desUltimoDia());
-        L = D;
-    } else if (desSub === 'liquidar') {
-        L = L.filter(DES.sinLiquidar);
-    } else {
-        L = L.slice().sort((a, b) => String(b.desp || '').localeCompare(String(a.desp || '')));
-    }
+    if (desSub === 'hoy') L = L.filter((f) => f.desp === desDiaMostrado);
+    else if (desSub === 'liquidar') L = L.filter(DES.sinLiquidar);
     if (desBusca) {
         const t = desBusca.toLowerCase();
         L = L.filter((f) => [f.rot, f.prom, f.ped, f.dest, f.age, f.fact]
@@ -3032,6 +3085,41 @@ const desAgua = (est) => {
 };
 const desEtiqueta = (est) => (DES.ESTADOS[String(est || '').toUpperCase()] || {}).et || (est || 'Sin estado');
 
+const DES_DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+const DES_MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'set', 'oct', 'nov', 'dic'];
+const desDiaEnLetras = (f) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(f || ''))) return f || '';
+    const [a, m, d] = f.split('-').map(Number);
+    return DES_DIAS[new Date(a, m - 1, d).getDay()] + ' ' + d + ' ' + DES_MESES[m - 1];
+};
+
+/* Los cuatro atajos arriba y las dos fechas abajo. Los atajos cubren el 95% de los
+   casos; las fechas están para el 5% restante y para que nadie quede encerrado. */
+const desCuenta = (desde, hasta) => {
+    const n = DES.contarRango(desde, hasta);
+    if (n !== null) return n;
+    const kb = DES.pesoDelRango(desde, hasta);
+    return kb ? '+' + kb + ' KB' : '—';
+};
+
+const desSelectorDeFechas = () => {
+    const r = desRango || DES.rangoDeLaSemana();
+    const chips = DES_RANGOS.map(([et, dame], k) => {
+        const x = dame();
+        const puesto = x.desde === r.desde && x.hasta === r.hasta;
+        const kb = DES.pesoDelRango(x.desde, x.hasta);
+        return `<button type="button" class="dsp-chip ${puesto ? 'on' : ''}" data-drango="${k}">${esc(et)}${kb
+            ? `<small>+${kb} KB</small>` : ''}</button>`;
+    }).join('');
+    return `<div class="dsp-rango">
+        <div class="dsp-chips">${chips}</div>
+        <div class="dsp-fechas">
+          <label><span>Desde</span><input id="des_d1" type="date" value="${esc(r.desde)}"></label>
+          <label><span>Hasta</span><input id="des_d2" type="date" value="${esc(r.hasta)}"></label>
+        </div>
+      </div>`;
+};
+
 const pantallaDespacho = () => {
     if (desDatos === null) {
         if (!desCargando) mirarDespachos().then(pintar);
@@ -3045,9 +3133,11 @@ const pantallaDespacho = () => {
     }
 
     const L = desDeLaPestana();
-    const hoy = desHoy();
-    const nHoy = desDatos.filter((f) => f.desp === hoy).length;
-    const nLiq = desDatos.filter(DES.sinLiquidar).length;
+    /* LA CUENTA DE ABIERTAS SALE DEL ÍNDICE, que pesa 1,3 KB. Antes salía de tener las
+       3.129 filas en memoria, que es justo lo que ya no se baja. */
+    const idx = DES.elIndice() || { semanas: {} };
+    const nLiq = Object.keys(idx.semanas || {}).reduce((t, k) => t + (idx.semanas[k].sin || 0), 0);
+    const rr = desRango || DES.rangoDeLaSemana();
     const sub = (id, rot, n) => `<div class="dsp-sub ${desSub === id ? 'on' : ''}" data-dsub="${id}">
         ${esc(rot)}<span>${esc(String(n))}</span></div>`;
 
@@ -3070,7 +3160,12 @@ const pantallaDespacho = () => {
         </div>`).join('');
 
     return `
-      <div class="dsp-subs">${sub('hoy', 'Hoy', nHoy)}${sub('liquidar', 'Por liquidar', nLiq)}${sub('historial', 'Historial', desDatos.length)}</div>
+      <div class="dsp-subs">${sub('hoy', desSub === 'hoy' && desDiaMostrado && desDiaMostrado !== desHoy()
+            ? desDiaEnLetras(desDiaMostrado) : 'Hoy', desSub === 'hoy' ? L.length : desCuenta(desHoy(), desHoy()))}${
+        sub('liquidar', 'Por liquidar', nLiq)}${
+        sub('rango', 'Rango', desSub === 'rango' ? desDatos.length : desCuenta(rr.desde, rr.hasta))}</div>
+      ${desSub === 'rango' ? desSelectorDeFechas() : ''}
+      ${desCargando ? '<p class="am-nota">Trayendo…</p>' : ''}
       <input id="des_busca" class="dsp-buscar" type="search" placeholder="Buscar rótulo, pedido, factura, destino…"
              value="${esc(desBusca)}">
       <div class="am-tres">
@@ -3079,14 +3174,18 @@ const pantallaDespacho = () => {
         <div class="am-tarjeta"><b class="am-gordo" style="color:${conInc ? 'var(--am-tarde)' : 'var(--am-tinta)'}">${conInc}</b><span class="am-pie">incidencias</span></div>
       </div>
       ${gasto ? `<p class="am-nota">Gasto de lo que se ve: S/ ${gasto.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>` : ''}
-      ${L.length ? `<div class="am-pila">${filas}</div>` : '<p class="am-vacio">Nada con ese filtro.</p>'}
+      ${L.length ? `<div class="am-pila">${filas}</div>` : `<p class="am-vacio">${
+          desBusca ? 'Nada que coincida con lo que buscas.'
+        : desSub === 'liquidar' ? 'No queda ninguna guía por liquidar.'
+        : desSub === 'rango' ? 'No hubo despachos entre esas dos fechas.'
+        : 'Todavía no se cargó ninguna guía de este día.'}</p>`}
       ${L.length > 120 ? `<p class="am-nota">Se muestran los primeros 120 de ${L.length}. Afina la búsqueda.</p>` : ''}`;
 };
 
 /* ── LA FICHA, QUE ES DONDE SE LIQUIDA ─────────────────────────────────────────────── */
 const hojaDeDespacho = () => {
     if (!desAbierto) return '';
-    const f = (desDatos || []).find((x) => String(x.id) === String(desAbierto));
+    const f = DES.filaDe(desAbierto) || (desDatos || []).find((x) => String(x.id) === String(desAbierto));
     if (!f) return '';
     const b = desBorrador || {};
     const val = (k) => (b[k] !== undefined ? b[k] : (f[k] !== undefined ? f[k] : ''));
@@ -3263,11 +3362,20 @@ const CABECERAS = {
     /* EL DIA ELEGIDO, no el de hoy. Si la cabecera dijera hoy mientras se edita otro dia,
        se estaria marcando sobre el equivocado sin que nada lo avise. */
     lista: () => ({ sub: `Turno noche · ${diaDeLaListaEnLetras()}`, ttl: 'Pasar lista' }),
+    /* EL SUBTÍTULO DICE LO QUE SE ESTÁ VIENDO, no el total del historial. Decía
+       "3.129 despachos" cuando en pantalla había 45: el número más grande era el
+       menos cierto. */
     despacho: () => {
-        const L = desDatos || [];
-        const liq = L.filter(DES.sinLiquidar).length;
+        const L = desDeLaPestana();
+        const i = DES.elIndice() || { semanas: {} };
+        const abiertas = Object.keys(i.semanas || {}).reduce((t, k) => t + (i.semanas[k].sin || 0), 0);
+        const r = desRango || DES.rangoDeLaSemana();
+        const que = desSub === 'liquidar' ? `${L.length} sin liquidar`
+                  : desSub === 'rango' ? `${L.length} del ${desDiaEnLetras(r.desde)} al ${desDiaEnLetras(r.hasta)}`
+                  : `${L.length} · ${desDiaEnLetras(desDiaMostrado || desHoy())}`;
         return { sub: desDatos === null ? 'Consultando…'
-                    : (liq ? `${liq} por liquidar` : `${L.length} despachos`), ttl: 'Despacho' };
+                    : (abiertas && desSub !== 'liquidar' ? `${que} · ${abiertas} por liquidar` : que),
+                 ttl: 'Despacho' };
     },
     avisos: () => ({ sub: avisosEstado === 'prendidos' ? 'Activados en este teléfono' : 'Apagados', ttl: 'Avisos' }),
     robots: () => {
@@ -3447,6 +3555,20 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         pintar();
     });
 
+    /* Las fechas no son un filtro más: cambiarlas manda a buscar semanas al servidor. */
+    raiz.addEventListener('change', (e) => {
+        const d1 = e.target.closest('#des_d1');
+        const d2 = e.target.closest('#des_d2');
+        if (!d1 && !d2) return;
+        const r = Object.assign({}, desRango || DES.rangoDeLaSemana());
+        if (d1) r.desde = d1.value;
+        if (d2) r.hasta = d2.value;
+        if (!r.desde || !r.hasta) return;
+        if (r.hasta < r.desde) { if (d1) r.hasta = r.desde; else r.desde = r.hasta; }
+        desRango = r; desAbierto = null; desCargando = true; pintar();
+        mirarDespachos().then(pintar);
+    });
+
     raiz.addEventListener('input', (e) => {
         if (!e.target.closest('#des_busca')) return;
         clearTimeout(desReloj);
@@ -3494,7 +3616,18 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         if (e.target.closest('[data-foto]')) { mandarFoto(); return; }
         /* ── DESPACHO ── */
         const ds = e.target.closest('[data-dsub]');
-        if (ds) { desSub = ds.getAttribute('data-dsub'); desAbierto = null; pintar(); return; }
+        if (ds) {
+            desSub = ds.getAttribute('data-dsub'); desAbierto = null; desCargando = true; pintar();
+            mirarDespachos().then(pintar);
+            return;
+        }
+        const dr = e.target.closest('[data-drango]');
+        if (dr) {
+            desRango = DES_RANGOS[Number(dr.getAttribute('data-drango'))][1]();
+            desAbierto = null; desCargando = true; pintar();
+            mirarDespachos().then(pintar);
+            return;
+        }
         const dd = e.target.closest('[data-desp]');
         if (dd) { desAbierto = dd.getAttribute('data-desp'); desBorrador = null;
                   desAdjuntos = {}; desAviso = ''; pintar(); return; }
