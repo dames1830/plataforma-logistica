@@ -15,8 +15,8 @@
  * numero calculado en dos sitios se desincroniza, y ya paso en este proyecto.
  */
 
-import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0782';
-import { icono } from '../services_v245/iconos.js?v=29.0782';
+import { nf, esc, estilos, engancharBuscador } from './pendiente.js?v=29.0783';
+import { icono } from '../services_v245/iconos.js?v=29.0783';
 
 /**
  * LO QUE EL WMS ABRE Y COMERCIAL NUNCA LIBERO.

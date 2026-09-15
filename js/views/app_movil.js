@@ -25,28 +25,28 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0782';
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0782';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0782';
+import * as adminService from '../services_v245/adminService.js?v=29.0783';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0783';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0783';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0782';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0782';
-import * as metasService from '../services_v245/metasService.js?v=29.0782';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0783';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0783';
+import * as metasService from '../services_v245/metasService.js?v=29.0783';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0782';
+import * as temaService from '../services_v245/temaService.js?v=29.0783';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0782';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0782';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0783';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0783';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0782';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0783';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
