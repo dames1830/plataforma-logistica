@@ -25,28 +25,28 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0777';
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0777';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0777';
+import * as adminService from '../services_v245/adminService.js?v=29.0778';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0778';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0778';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0777';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0777';
-import * as metasService from '../services_v245/metasService.js?v=29.0777';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0778';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0778';
+import * as metasService from '../services_v245/metasService.js?v=29.0778';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0777';
+import * as temaService from '../services_v245/temaService.js?v=29.0778';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0777';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0777';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0778';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0778';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0777';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0778';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -3139,9 +3139,17 @@ const pantallaDespacho = () => {
     const hayAlgo = (DES.elIndice() || {}).total;
     if (!desDatos.length && !hayAlgo) {
         /* NO SE PUDO PREGUNTAR NO ES QUE NO HAYA NADA. Se dice cuál de las dos es. */
+        /* Y LLEVA SUS PROPIOS BOTONES. Daniel, 15-sep-2026: *"¿cómo salgo de esto? no me
+           da opciones"*. La salida estaba -la barra de abajo-, pero en una ventana
+           angosta se confunde con el borde. Un cartel que ocupa la pantalla entera
+           tiene que traer su salida puesta, no confiar en que se vea la de al lado. */
         return `<div class="am-aviso">${DES.seLeyo()
             ? '<b>Todavía no hay despachos de catálogo.</b> El área existe pero llegó vacía.'
-            : '<b>No se pudo leer los despachos.</b> Esto no quiere decir que no haya: puede ser que el servidor esté reiniciando. Vuelve a entrar en un minuto.'}</div>`;
+            : '<b>No se pudo leer los despachos.</b> Esto no quiere decir que no haya: puede ser que el servidor esté reiniciando, que tarda como un minuto en volver.'}</div>
+          <div class="dsp-ver" style="justify-content:center; margin-top:.9rem;">
+            <button type="button" data-drecargar>Volver a preguntar</button>
+            <button type="button" data-dsalir>Ir a Inicio</button>
+          </div>`;
     }
 
     const L = desDeLaPestana();
@@ -3615,6 +3623,20 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
                    segundo despues se pone roja. Lo cazo la prueba de la pantalla. */
                 metasService.cargarReglas().then(pintar).catch(() => {});
             }
+            /* DESPACHO EMPIEZA SIEMPRE EN HOY, Y VUELVE A PREGUNTAR.
+               Daniel, 15-sep-2026: *"me voy a otro modulo y regreso y sigo en el mismo
+               sitio"*. Se habia quedado en Por liquidar sin nada pendiente, y volver a
+               entrar lo devolvia al mismo vacio: la pantalla se acordaba de un callejon.
+
+               Un modulo de configuracion hace bien en recordar donde estabas. Este no:
+               es el trabajo del dia, se entra a ver que hay que cerrar HOY, y mientras
+               uno estaba en otra pantalla puede haber liquidado otro desde su telefono.
+               Acordarse de la sub-pestana solo sirve para heredar un callejon. */
+            if (seccion === 'despacho') {
+                desSub = 'hoy'; desAbierto = null; desBorrador = null; desAdjuntos = {};
+                desBusca = ''; desAviso = ''; desRango = null;
+                desDatos = null; desCargando = false;
+            }
             if (seccion === 'chat') { chatSala = null; prepararChat(); }
             if (seccion === 'avisos') mirarAvisos().then(pintar);
             pintar();
@@ -3632,6 +3654,12 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
             desSub = ds.getAttribute('data-dsub'); desAbierto = null; desCargando = true; pintar();
             mirarDespachos().then(pintar);
             return;
+        }
+        if (e.target.closest('[data-drecargar]')) {
+            desDatos = null; desCargando = false; pintar(); return;
+        }
+        if (e.target.closest('[data-dsalir]')) {
+            seccion = 'inicio'; menu = null; pintar(); return;
         }
         const dr = e.target.closest('[data-drango]');
         if (dr) {
