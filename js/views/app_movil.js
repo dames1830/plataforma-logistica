@@ -25,29 +25,29 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0788';
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0788';
-import * as ORD from '../services_v245/despachoOrden.js?v=29.0788';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0788';
+import * as adminService from '../services_v245/adminService.js?v=29.0789';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0789';
+import * as ORD from '../services_v245/despachoOrden.js?v=29.0789';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0789';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0788';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0788';
-import * as metasService from '../services_v245/metasService.js?v=29.0788';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0789';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0789';
+import * as metasService from '../services_v245/metasService.js?v=29.0789';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0788';
+import * as temaService from '../services_v245/temaService.js?v=29.0789';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0788';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0788';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0789';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0789';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0788';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0789';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -207,7 +207,14 @@ const CSS = `
 #app-movil .dsp-barra .dsp-buscar { flex: 1; }
 /* EL BOTON DE CARGAR VA AL LADO DEL BUSCADOR y no escondido en el menu: es lo primero
    que se hace en el dia -llega el archivo por WhatsApp y se carga-, y lo que se hace
-   todos los dias tiene que estar a un toque. */
+   todos los dias tiene que estar a un toque.
+
+   EL SELECTOR ACEPTA CUALQUIER ARCHIVO (`accept="*/*"`) A PROPOSITO. Filtrar por .xlsx
+   parece mas prolijo y en Android es una trampa: cada explorador decide por su cuenta
+   que tipo tiene un archivo, y los que bajan de WhatsApp muchas veces vienen como
+   octet-stream. Con el filtro puesto, el archivo SIMPLEMENTE NO APARECE en la lista y
+   el usuario no tiene forma de saber por que. Es mejor dejarlo elegir lo que sea y
+   decirle "esto no parece un Excel" -que es lo que hace el lector- que esconderselo. */
 #app-movil .dsp-cargar { display: flex; align-items: center; justify-content: center;
   min-width: 46px; background: var(--am-va-agua); border: 1px solid var(--am-va);
   border-radius: 10px; color: var(--am-va); font-size: 1.1rem; cursor: pointer; }
@@ -3168,7 +3175,7 @@ const pantallaDespacho = () => {
             : '<b>No se pudo leer los despachos.</b> Esto no quiere decir que no haya: puede ser que el servidor esté reiniciando, que tarda como un minuto en volver.'}</div>
           <div class="dsp-ver" style="justify-content:center; margin-top:.9rem;">
             <label class="dsp-otra">\ud83d\udcc4 Cargar la orden<input type="file" data-dcargar
-              accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              accept="*/*"
               style="display:none"></label>
             <button type="button" data-drecargar>Volver a preguntar</button>
             <button type="button" data-dsalir>Ir a Inicio</button>
@@ -3236,7 +3243,7 @@ const pantallaDespacho = () => {
                value="${esc(desBusca)}">
         <label class="dsp-cargar" title="Cargar la orden de comercial">\ud83d\udcc4
           <input type="file" data-dcargar
-            accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            accept="*/*"
             style="display:none"></label>
       </div>
       <div class="am-tres">
@@ -3298,7 +3305,7 @@ const hojaDeCarga = () => {
             esté a medio bajar.</p>
             <div class="dsp-ver" style="margin-top:.8rem">
               <label class="dsp-otra">Elegir otro<input type="file" data-dcargar
-                accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                accept="*/*"
                 style="display:none"></label>
               <button type="button" data-dcarga-cerrar>Cerrar</button>
             </div>
