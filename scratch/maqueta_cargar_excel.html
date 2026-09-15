@@ -1,0 +1,165 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Maqueta - Cargar el Excel desde el celular</title>
+<style>
+:root{--papel:#0f172a;--carta:#1e293b;--linea:rgba(255,255,255,.10);--tinta:#fff;
+--suave:#e2e8f0;--tenue:#94a3b8;--va:#818cf8;--agua:rgba(129,140,248,.16);
+--ok:#34d399;--ok-agua:rgba(52,211,153,.14);--warn:#fbbf24;--ui:'Segoe UI',system-ui,sans-serif;}
+*{box-sizing:border-box}
+body{margin:0;background:#070b16;color:var(--tinta);font-family:var(--ui);padding:28px 16px 60px}
+h1{font-size:1.3rem;margin:0 0 4px;letter-spacing:-.01em}
+.sub{color:var(--tenue);font-size:.86rem;margin:0 0 26px;line-height:1.55;max-width:760px}
+.tira{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start;justify-content:center}
+.tel{width:330px;background:var(--papel);border:1px solid var(--linea);border-radius:22px;
+ overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.cab{background:var(--carta);padding:14px 16px 12px;border-bottom:1px solid var(--linea)}
+.cab .eyebrow{font-family:ui-monospace,monospace;font-size:.62rem;letter-spacing:.09em;
+ color:var(--tenue);text-transform:uppercase}
+.cab h2{margin:2px 0 0;font-size:1.05rem;font-weight:800}
+.cuerpo{padding:13px}
+.paso{font-family:ui-monospace,monospace;font-size:.6rem;letter-spacing:.1em;color:var(--va);
+ text-transform:uppercase;margin:0 0 9px;font-weight:700}
+.tarj{background:var(--carta);border:1px solid var(--linea);border-radius:12px;padding:12px;margin-bottom:10px}
+.tarj h3{margin:0 0 6px;font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--tenue);font-weight:800}
+.chat{background:#0b1b16;border:1px solid rgba(52,211,153,.25);border-radius:12px;padding:11px;margin-bottom:10px}
+.doc{display:flex;gap:9px;align-items:center;background:#122b23;border-radius:9px;padding:9px}
+.doc .ic{font-size:1.3rem}
+.doc b{display:block;font-size:.78rem}
+.doc small{color:var(--tenue);font-size:.66rem}
+.paso2{display:flex;gap:7px;align-items:center;margin-top:9px;font-size:.74rem;color:var(--suave)}
+.paso2 .n{width:17px;height:17px;border-radius:50%;background:var(--agua);color:var(--va);
+ font-size:.6rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tres{display:flex;gap:7px;margin-bottom:10px}
+.mini{flex:1;background:var(--carta);border:1px solid var(--linea);border-radius:11px;padding:9px 8px;text-align:left}
+.mini b{display:block;font-family:ui-monospace,monospace;font-size:1.35rem;line-height:1.05;font-weight:800}
+.mini span{display:block;font-size:.6rem;color:var(--tenue);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.fecha{display:flex;align-items:center;gap:7px;background:var(--carta);border:1px solid var(--linea);
+ border-radius:11px;padding:9px 11px;margin-bottom:10px}
+.fecha .rot{font-size:.62rem;font-weight:800;letter-spacing:.05em;color:var(--tenue)}
+.fecha .v{font-size:.8rem;font-weight:700}
+.fila{display:flex;gap:9px;background:var(--carta);border:1px solid var(--linea);border-radius:11px;
+ padding:9px;margin-bottom:6px;align-items:flex-start}
+.fila.opaca{opacity:.5}
+.cinta{width:3px;border-radius:2px;background:var(--va);align-self:stretch;flex-shrink:0}
+.cinta.gris{background:var(--tenue)}
+.fila .c{min-width:0;flex:1}
+.fila .t{margin:0;font-size:.76rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fila .s{margin:1px 0 0;font-size:.68rem;color:var(--tenue)}
+.pill{font-size:.54rem;font-weight:800;letter-spacing:.05em;padding:2px 5px;border-radius:4px;
+ white-space:nowrap;flex-shrink:0;align-self:center}
+.nueva{background:var(--agua);color:var(--va)}
+.repe{background:rgba(148,163,184,.16);color:var(--tenue)}
+.btn{display:block;width:100%;background:var(--va);color:#0b1020;border:0;border-radius:11px;
+ padding:12px;font-size:.86rem;font-weight:800;font-family:inherit;cursor:pointer;margin-top:4px}
+.btn.gris{background:var(--carta);color:var(--suave);border:1px solid var(--linea)}
+.nota{font-size:.66rem;color:var(--tenue);line-height:1.55;margin:9px 0 0}
+.ok{text-align:center;padding:26px 14px}
+.ok .tick{width:56px;height:56px;border-radius:50%;background:var(--ok-agua);color:var(--ok);
+ display:flex;align-items:center;justify-content:center;font-size:1.7rem;margin:0 auto 14px}
+.ok h3{margin:0 0 6px;font-size:1rem}
+.ok p{margin:0;color:var(--tenue);font-size:.78rem;line-height:1.6}
+.reglas{max-width:760px;margin:34px auto 0;background:#0d1426;border:1px solid var(--linea);
+ border-radius:14px;padding:18px 20px}
+.reglas h3{margin:0 0 10px;font-size:.78rem;letter-spacing:.07em;text-transform:uppercase;color:var(--tenue)}
+.reglas li{font-size:.83rem;line-height:1.65;margin-bottom:7px;color:var(--suave)}
+.reglas b{color:var(--tinta)}
+.pie{max-width:760px;margin:16px auto 0;color:var(--tenue);font-size:.74rem;text-align:center}
+@media(max-width:760px){.tel{width:100%;max-width:360px}}
+</style></head><body>
+<h1>Cargar el Excel de comercial desde el celular</h1>
+<p class="sub">El archivo llega por WhatsApp. Estas son las tres pantallas. Los nombres, agencias
+y destinos de la lista son <b>reales</b>, sacados del Excel que me pasaste.</p>
+
+<div class="tira">
+
+  <div class="tel">
+    <div class="cab"><div class="eyebrow">1 &middot; c&oacute;mo entra</div><h2>Desde WhatsApp</h2></div>
+    <div class="cuerpo">
+      <div class="chat">
+        <div class="doc"><span class="ic">&#128202;</span>
+          <div><b>BBDD Catalogo.xlsx</b><small>Comercial &middot; 312 KB &middot; hoy 08:14</small></div></div>
+        <div class="paso2"><span class="n">1</span> Mantener apretado el archivo</div>
+        <div class="paso2"><span class="n">2</span> <b style="font-weight:700">Compartir</b></div>
+        <div class="paso2"><span class="n">3</span> Elegir <b style="font-weight:700">Log&iacute;stica Deam1830</b></div>
+      </div>
+      <div class="tarj">
+        <h3>Si el tel&eacute;fono es iPhone</h3>
+        <div class="paso2"><span class="n">1</span> Compartir &rarr; <b style="font-weight:700">Guardar en Archivos</b></div>
+        <div class="paso2"><span class="n">2</span> En la app: Despacho &rarr; <b style="font-weight:700">Cargar Excel</b></div>
+        <div class="paso2"><span class="n">3</span> Buscarlo en Archivos</div>
+        <p class="nota">Apple no deja que una app web aparezca en Compartir. Un toque m&aacute;s,
+        la misma pantalla.</p>
+      </div>
+      <button class="btn gris">&#128194;&nbsp; Cargar Excel</button>
+      <p class="nota">Este bot&oacute;n tambi&eacute;n est&aacute; siempre en la pantalla de Despacho,
+      para el que ya tiene el archivo en el tel&eacute;fono.</p>
+    </div>
+  </div>
+
+  <div class="tel">
+    <div class="cab"><div class="eyebrow">2 &middot; antes de guardar nada</div><h2>Esto encontr&eacute;</h2></div>
+    <div class="cuerpo">
+      <div class="tarj" style="padding:10px 12px">
+        <div class="doc" style="background:none;padding:0"><span class="ic">&#128202;</span>
+          <div><b>BBDD Catalogo.xlsx</b><small>hoja <b>Status</b> &middot; 312 filas le&iacute;das</small></div></div>
+      </div>
+      <div class="tres">
+        <div class="mini"><b style="color:var(--va)">296</b><span>nuevas</span></div>
+        <div class="mini"><b style="color:var(--tenue)">12</b><span>ya estaban</span></div>
+        <div class="mini"><b style="color:var(--warn)">4</b><span>vac&iacute;as</span></div>
+      </div>
+      <div class="fecha"><span>&#128197;</span><span class="rot">FECHA DE DESPACHO</span>
+        <span class="v" style="margin-left:auto">15/09/2026</span></div>
+      <div class="paso">las primeras, para mirar</div>
+      <div class="fila"><span class="cinta"></span><div class="c"><p class="t">Sheyla Marcelo Palpan DNI:71842669 CELULAR</p><p class="s">SHALOM &rarr; CERRO DE PASCO</p><p class="s">ANTONELLA &middot; 4 pares &middot; S/ 292.45</p></div><span class="pill nueva">NUEVA</span></div><div class="fila"><span class="cinta"></span><div class="c"><p class="t">Jhelsy Gisela Carhuapoma Garcia DNI:730634</p><p class="s">SHALOM &rarr; JR AGUILAR</p><p class="s">ANTONELLA &middot; 4 pares &middot; S/ 238.86</p></div><span class="pill nueva">NUEVA</span></div><div class="fila"><span class="cinta"></span><div class="c"><p class="t">Katherine Fabiola Magallanes Magallanes DN</p><p class="s">SHALOM &rarr; Prolong Luis Massaro</p><p class="s">ANTONELLA &middot; 2 pares &middot; S/ 93.42</p></div><span class="pill nueva">NUEVA</span></div><div class="fila"><span class="cinta"></span><div class="c"><p class="t">Nohemi Milagros Guerrero Caro DNI:70137145</p><p class="s">Shalom &rarr; Huaraz</p><p class="s">ANTONELLA &middot; 3 pares &middot; S/ 235.42</p></div><span class="pill nueva">NUEVA</span></div><div class="fila"><span class="cinta"></span><div class="c"><p class="t">Pamela Roxana Garro Mallqui DNI:76596583 C</p><p class="s">Shalom &rarr; Huaraz</p><p class="s">ANTONELLA &middot; 5 pares &middot; S/ 370.3</p></div><span class="pill nueva">NUEVA</span></div><div class="fila"><span class="cinta"></span><div class="c"><p class="t">Cecilia Del Carmen Ruíz Diaz DNI:17446594 </p><p class="s">SHALOM &rarr; Ferreñafe</p><p class="s">ANTONELLA &middot; 3 pares &middot; S/ 285.39</p></div><span class="pill nueva">NUEVA</span></div>
+      <div class="fila opaca"><span class="cinta gris"></span><div class="c"><p class="t">Macahuachi Lancha Josue DNI:10757915753 CE</p><p class="s">TARAPOTO COURRIER &rarr; NAUTA</p><p class="s">ya estaba cargada el 12/09</p></div><span class="pill repe">YA ESTABA</span></div>
+      <button class="btn">Cargar las 296</button>
+      <button class="btn gris" style="margin-top:7px">Cancelar</button>
+      <p class="nota">Nada se guarda hasta tocar el bot&oacute;n. Si algo no cuadra, se cancela y no
+      qued&oacute; ni media fila escrita.</p>
+    </div>
+  </div>
+
+  <div class="tel">
+    <div class="cab"><div class="eyebrow">3 &middot; listo</div><h2>296 cargadas</h2></div>
+    <div class="cuerpo">
+      <div class="ok">
+        <div class="tick">&#10003;</div>
+        <h3>Quedaron en PENDIENTE</h3>
+        <p>Ya aparecen en <b>Por liquidar</b>, ac&aacute; y en la web,<br>listas para que el
+        liquidador las cierre.</p>
+      </div>
+      <div class="tarj">
+        <h3>Lo que hizo</h3>
+        <p class="nota" style="margin:0">
+        &bull; Les puso n&uacute;mero: <b>33300 al 33595</b><br>
+        &bull; Fecha de despacho: <b>15/09/2026</b><br>
+        &bull; Estado: <b>PENDIENTE</b><br>
+        &bull; Canal: <b>Cat&aacute;logo</b><br>
+        &bull; No toc&oacute; ninguna de las 3.129 que ya estaban</p>
+      </div>
+      <button class="btn gris">Ver las 296 en Por liquidar</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="reglas">
+  <h3>Las reglas que sigue, y por qu&eacute;</h3>
+  <ul>
+    <li><b>Solo lee la hoja Status.</b> El archivo trae once hojas &mdash;Productos, Stock,
+    Kardex, RQs&hellip;&mdash; y ninguna otra tiene que ver con el despacho.</li>
+    <li><b>De comercial toma las columnas E a la R</b>, que es lo que ellos llenan. El
+    n&uacute;mero, la fecha de despacho y el estado los pone la plataforma, igual que hoy los
+    ponen ustedes a mano.</li>
+    <li><b>Las filas vac&iacute;as se ignoran.</b> El Excel que me pasaste tiene 3.129 gu&iacute;as
+    reales y <b>388 filas vac&iacute;as</b> al final. Sin esta regla, cargar&iacute;a 388 gu&iacute;as
+    fantasma.</li>
+    <li><b>Lo que ya estaba no se vuelve a cargar ni se pisa.</b> Se reconoce por pedido y
+    r&oacute;tulo. Si alguien manda el mismo archivo dos veces, la segunda no hace nada.</li>
+    <li><b>Nada se escribe hasta que se toca el bot&oacute;n.</b> Primero se mira, despu&eacute;s
+    se guarda.</li>
+  </ul>
+</div>
+<p class="pie">Maqueta. Todav&iacute;a no est&aacute; hecho: es para que digas qu&eacute; cambiar antes de que lo escriba.</p>
+</body></html>
