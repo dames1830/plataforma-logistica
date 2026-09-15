@@ -1267,9 +1267,11 @@ def armar_liberacion(hoy, guias):
     if not filas:
         return None
 
-    TRAMOS = [(0, 0, 'el mismo dia'), (1, 3, '1 a 3 dias'), (4, 7, '4 a 7 dias'),
-              (8, 15, '8 a 15 dias'), (16, 30, '16 a 30 dias'),
-              (31, 99999, 'mas de 30 dias')]
+    # CON TILDES: estas etiquetas no son nombres internos, se leen en la pantalla
+    # tal cual. Viajan en el JSON, no por el log de la consola.
+    TRAMOS = [(0, 0, 'el mismo día'), (1, 3, '1 a 3 días'),
+              (4, 7, '4 a 7 días'), (8, 15, '8 a 15 días'),
+              (16, 30, '16 a 30 días'), (31, 99999, 'más de 30 días')]
     cuenta = collections.OrderedDict((t[2], [0, 0]) for t in TRAMOS)
     for x in filas:
         for a, b, k in TRAMOS:
