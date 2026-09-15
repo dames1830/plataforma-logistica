@@ -324,6 +324,40 @@ export const abiertasDelCanal = (canal) => {
    una invitación a volver a pintarla. El `kb` de cada semana sigue en el índice, que es
    donde sirve, para saber cómo está repartido el peso sin abrir el navegador. */
 
+/* ── GUARDAR UNA SEMANA ENTERA ───────────────────────────────────────
+   La usa el cargador de órdenes al meter las guías de un despacho nuevo. Vuelve a
+   apretar el paquete —agencias, destinos y asesores a catálogo— porque una semana de
+   64 guías sin apretar pesa el triple, y esto se baja en un teléfono. */
+const apretar = (filas) => {
+    const cat = {};
+    ['ase', 'lider', 'age', 'dest', 'est', 'flete', 'obs'].forEach((campo) => {
+        const vistos = [];
+        filas.forEach((f) => {
+            const v = f[campo];
+            if (typeof v === 'string' && v && vistos.indexOf(v) < 0) vistos.push(v);
+        });
+        if (vistos.length > 1) cat[campo] = vistos;
+    });
+    const apretadas = filas.map((f) => {
+        const g = {};
+        Object.keys(f).forEach((k) => {
+            g[k] = (cat[k] && typeof f[k] === 'string') ? cat[k].indexOf(f[k]) : f[k];
+        });
+        return g;
+    });
+    return { cat, apretadas };
+};
+
+/** Guarda las filas de esa semana y deja la copia en memoria al día. */
+export const guardarSemana = async (lunes, filas) => {
+    const { cat, apretadas } = apretar(filas);
+    await guardarArea(AREA_SEMANA(lunes), {
+        version: 2, lunes, cat, filas: apretadas, guardado: hoyTexto()
+    });
+    SEMANAS[lunes] = filas;
+    return filas.length;
+};
+
 /** true si el índice se pudo leer. Distingue "no hay nada" de "no pude preguntar". */
 export const seLeyo = () => !!INDICE;
 

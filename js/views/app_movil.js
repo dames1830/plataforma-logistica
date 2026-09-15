@@ -25,28 +25,29 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0780';
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0780';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0780';
+import * as adminService from '../services_v245/adminService.js?v=29.0788';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0788';
+import * as ORD from '../services_v245/despachoOrden.js?v=29.0788';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0788';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0780';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0780';
-import * as metasService from '../services_v245/metasService.js?v=29.0780';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0788';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0788';
+import * as metasService from '../services_v245/metasService.js?v=29.0788';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0780';
+import * as temaService from '../services_v245/temaService.js?v=29.0788';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0780';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0780';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0788';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0788';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0780';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0788';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -185,17 +186,36 @@ const CSS = `
 #app-movil .dsp-sub.on { background: var(--am-va-agua); color: var(--am-va); }
 #app-movil .dsp-sub span { display: block; font-family: var(--am-num); font-size: .68rem;
   font-weight: 400; opacity: .8; }
+/* SI PARECE UN BOTON, TIENE QUE SERLO. Las tres tarjetas del resumen filtran la
+   lista al tocarlas; sin esta marca visual seguirian pareciendo un cartel. */
+#app-movil .dsp-toca { cursor: pointer; border: 1px solid transparent; transition: border-color .12s; }
+#app-movil .dsp-toca:active { transform: scale(.97); }
+#app-movil .dsp-toca.on { border-color: var(--am-va); background: var(--am-va-agua); }
+#app-movil .dsp-quitar { cursor: pointer; color: var(--am-va); }
 #app-movil .dsp-rango { background: var(--am-carta); border: 1px solid var(--am-linea);
-  border-radius: 11px; padding: .5rem; display: flex; flex-direction: column; gap: .45rem; }
-#app-movil .dsp-fechas { display: flex; gap: .4rem; }
-#app-movil .dsp-fechas label { flex: 1; display: block; }
-#app-movil .dsp-fechas span { display: block; font-size: .66rem; color: var(--am-tenue); margin-bottom: 2px; }
-#app-movil .dsp-fechas input { width: 100%; background: var(--am-papel); border: 1px solid var(--am-linea);
-  border-radius: 8px; padding: .4rem .5rem; color: var(--am-tinta); font-size: .78rem;
-  font-family: var(--am-ui); }
+  border-radius: 11px; padding: .45rem .6rem; display: flex; align-items: center; gap: .35rem; }
+#app-movil .dsp-cal { font-size: .9rem; opacity: .8; flex-shrink: 0; }
+#app-movil .dsp-rot { font-size: .64rem; font-weight: 800; letter-spacing: .04em;
+  color: var(--am-tenue); white-space: nowrap; flex-shrink: 0; }
+#app-movil .dsp-rango input { flex: 1; min-width: 0; background: transparent; border: 0;
+  padding: 0; color: var(--am-tinta); font-size: .76rem; font-weight: 700;
+  font-family: var(--am-ui); outline: none; }
 #app-movil .dsp-buscar { width: 100%; background: var(--am-carta); border: 1px solid var(--am-linea);
   border-radius: 10px; padding: .55rem .7rem; color: var(--am-tinta); font-size: .85rem;
   font-family: var(--am-ui); }
+#app-movil .dsp-barra { display: flex; gap: .4rem; align-items: stretch; }
+#app-movil .dsp-barra .dsp-buscar { flex: 1; }
+/* EL BOTON DE CARGAR VA AL LADO DEL BUSCADOR y no escondido en el menu: es lo primero
+   que se hace en el dia -llega el archivo por WhatsApp y se carga-, y lo que se hace
+   todos los dias tiene que estar a un toque. */
+#app-movil .dsp-cargar { display: flex; align-items: center; justify-content: center;
+  min-width: 46px; background: var(--am-va-agua); border: 1px solid var(--am-va);
+  border-radius: 10px; color: var(--am-va); font-size: 1.1rem; cursor: pointer; }
+#app-movil .dsp-cargar:active { transform: scale(.95); }
+#app-movil .dsp-otra { display: flex; align-items: center; justify-content: center;
+  background: var(--am-papel); border: 1px solid var(--am-linea); border-radius: 8px;
+  padding: .32rem .7rem; color: var(--am-suave); font-size: .72rem; font-weight: 700;
+  font-family: var(--am-ui); cursor: pointer; }
 #app-movil .dsp-pastilla { font-size: .6rem; font-weight: 800; letter-spacing: .04em;
   text-transform: uppercase; padding: .14rem .38rem; border-radius: 3px; white-space: nowrap; }
 #app-movil .dsp-dato { display: flex; justify-content: space-between; gap: .7rem; padding: .13rem 0;
@@ -221,6 +241,15 @@ const CSS = `
 #app-movil .dsp-adj.pide { border-color: var(--am-tarde); color: var(--am-tarde);
   background: var(--am-tarde-agua); }
 #app-movil .dsp-adj .ic { font-size: 1.25rem; }
+/* LOS DOS ICONOS DEL RECUADRO: ver y cambiar. Van grandes -36 px de lado- porque se
+   tocan con el pulgar, en la calle, a veces con guantes. */
+#app-movil .dsp-acc { display: flex; gap: .3rem; margin-top: .3rem; }
+#app-movil .dsp-acc > button, #app-movil .dsp-acc > label,
+#app-movil .dsp-acc .dsp-uno { display: flex; align-items: center; justify-content: center;
+  min-width: 36px; min-height: 30px; border-radius: 8px; cursor: pointer; font-size: 1rem;
+  border: 1px solid var(--am-linea); background: var(--am-carta); color: inherit;
+  font-family: var(--am-ui); padding: 0; }
+#app-movil .dsp-acc > button:active, #app-movil .dsp-acc > label:active { transform: scale(.94); }
 #app-movil .dsp-adj small { opacity: .8; font-size: .62rem; }
 #app-movil .dsp-ver { display: flex; gap: .4rem; margin-top: .5rem; flex-wrap: wrap; }
 #app-movil .dsp-ver button { background: var(--am-papel); border: 1px solid var(--am-linea);
@@ -584,11 +613,11 @@ const CSS = `
    'color-scheme'. Sin esto, en los dos temas oscuros el iconito sale negro sobre negro y
    parece que no hubiera calendario. Se le dice a cada tema de que color es. */
 #app-movil .am-fecha input,
-#app-movil .dsp-fechas input { color-scheme: dark; }
+#app-movil .dsp-rango input { color-scheme: dark; }
 html[data-tema="pbi"] #app-movil .am-fecha input,
 html[data-tema="pbi-classic"] #app-movil .am-fecha input,
-html[data-tema="pbi"] #app-movil .dsp-fechas input,
-html[data-tema="pbi-classic"] #app-movil .dsp-fechas input { color-scheme: light; }
+html[data-tema="pbi"] #app-movil .dsp-rango input,
+html[data-tema="pbi-classic"] #app-movil .dsp-rango input { color-scheme: light; }
 #app-movil .am-fecha input::-webkit-calendar-picker-indicator { cursor: pointer; }
 
 #app-movil .am-encabezado { display: grid; grid-template-columns: minmax(0, 1fr) 88px 68px;
@@ -3004,6 +3033,10 @@ let desBorrador = null;
 let desGuardando = false;
 let desAdjuntos = {};
 let desBusca = '';
+let desMarca = '';           /* '', 'atendidos', 'incidencias': la tarjeta tocada */
+/* EL CARGADOR. null = cerrado. Si no, lo que se leyó del archivo, esperando el visto
+   bueno: NADA se guarda hasta que se toca el botón. */
+let desOrden = null;
 let desAviso = '';
 let desReloj = null;
 
@@ -3088,13 +3121,19 @@ const desCuenta = (desde, hasta) => {
     return n === null ? '·' : n;
 };
 
+/* EN UNA SOLA FILA, COMO EN EL RESTO DE LA PLATAFORMA. Daniel: *"la fecha la puedes
+   poner en una fila"*, señalando el Tracking, que usa `selectorRango` de
+   `reportesComunes`. Ese componente está escrito con las variables de la web
+   -`--text-strong`, `--border`- y acá el tema es otro, así que se copia la FORMA
+   -calendario, "Desde", fecha, "hasta", fecha, todo en una línea que se lee como una
+   frase- con los colores del celular. Antes eran dos cajones apilados con su rótulo
+   arriba: tres renglones para decir dos fechas, en la pantalla donde menos sobran. */
 const desSelectorDeFechas = () => {
     const r = desRango || DES.rangoDeLaSemana();
     return `<div class="dsp-rango">
-        <div class="dsp-fechas">
-          <label><span>Desde</span><input id="des_d1" type="date" value="${esc(r.desde)}"></label>
-          <label><span>Hasta</span><input id="des_d2" type="date" value="${esc(r.hasta)}"></label>
-        </div>
+        <span class="dsp-cal">📅</span>
+        <span class="dsp-rot">Desde</span><input id="des_d1" type="date" value="${esc(r.desde)}">
+        <span class="dsp-rot">hasta</span><input id="des_d2" type="date" value="${esc(r.hasta)}">
       </div>`;
 };
 
@@ -3118,11 +3157,19 @@ const pantallaDespacho = () => {
         /* Y LLEVA SUS PROPIOS BOTONES. Daniel, 15-sep-2026: *"¿cómo salgo de esto? no me
            da opciones"*. La salida estaba -la barra de abajo-, pero en una ventana
            angosta se confunde con el borde. Un cartel que ocupa la pantalla entera
-           tiene que traer su salida puesta, no confiar en que se vea la de al lado. */
+           tiene que traer su salida puesta, no confiar en que se vea la de al lado.
+
+       Y LLEVA TAMBIEN EL BOTON DE CARGAR. El cargador vive al lado del buscador, y
+       con el area vacia el buscador no se dibuja: sin este boton, el primer dia -o
+       cualquier dia que el area amanezca vacia- no habria forma de meter la primera
+       orden desde el telefono. Lo cazo probar la carga desde cero. */
         return `<div class="am-aviso">${DES.seLeyo()
             ? '<b>Todavía no hay despachos de catálogo.</b> El área existe pero llegó vacía.'
             : '<b>No se pudo leer los despachos.</b> Esto no quiere decir que no haya: puede ser que el servidor esté reiniciando, que tarda como un minuto en volver.'}</div>
           <div class="dsp-ver" style="justify-content:center; margin-top:.9rem;">
+            <label class="dsp-otra">\ud83d\udcc4 Cargar la orden<input type="file" data-dcargar
+              accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              style="display:none"></label>
             <button type="button" data-drecargar>Volver a preguntar</button>
             <button type="button" data-dsalir>Ir a Inicio</button>
           </div>`;
@@ -3137,11 +3184,31 @@ const pantallaDespacho = () => {
     const sub = (id, rot, n) => `<div class="dsp-sub ${desSub === id ? 'on' : ''}" data-dsub="${id}">
         ${esc(rot)}<span>${esc(String(n))}</span></div>`;
 
-    const atendidos = L.filter((f) => String(f.est).toUpperCase() === 'ATENDIDO').length;
-    const conInc = L.filter((f) => f.inc).length;
-    const gasto = L.reduce((a, f) => a + (Number(f.gasto) || 0), 0);
+    /* ══ LAS TRES TARJETAS FILTRAN ═════════════════════════════════════
+       Daniel, 15-sep-2026: *"veo los botones de 45 despachos, 45 atendidos, una
+       incidencia, y no puedo entrar. Quiero entrar a la incidencia y no me da la
+       opción. Debería tocar y debería filtrarme nada más la incidencia"*.
 
-    const filas = L.slice(0, 120).map((f) => `
+       Tenía razón y el error es viejo: un número grande en una tarjeta PARECE un
+       botón. Si parece un botón, tiene que serlo —o no parecerlo—, y con dos
+       incidencias entre cuarenta y cinco guías, encontrarlas a mano es absurdo.
+
+       LOS NÚMEROS DE LAS TARJETAS NO CAMBIAN AL FILTRAR. Siguen siendo los del día,
+       que es lo que hace que se pueda volver: si al tocar "incidencias" las tres
+       tarjetas pasaran a 2, 0, 2, nadie sabría dónde estaba parado. Lo que se recorta
+       es la lista de abajo, y la tarjeta tocada queda encendida. */
+    const esAtendido = (x) => String(x.est).toUpperCase() === 'ATENDIDO';
+    const atendidos = L.filter(esAtendido).length;
+    const conInc = L.filter((x) => x.inc).length;
+    const gasto = L.reduce((a, f) => a + (Number(f.gasto) || 0), 0);
+    const M = desMarca === 'atendidos' ? L.filter(esAtendido)
+            : desMarca === 'incidencias' ? L.filter((x) => x.inc)
+            : L;
+    const tarjeta = (id, n, rot, color) => `<div class="am-tarjeta dsp-toca ${desMarca === id ? 'on' : ''}"
+        data-dmarca="${id}"><b class="am-gordo"${color ? ` style="color:${color}"` : ''}>${n}</b>
+        <span class="am-pie">${esc(rot)}</span></div>`;
+
+    const filas = M.slice(0, 120).map((f) => `
         <div class="am-fila" data-desp="${esc(f.id)}">
           <span class="cinta" style="background:${desTono(f.est)}"></span>
           <div style="min-width:0;flex:1">
@@ -3164,20 +3231,29 @@ const pantallaDespacho = () => {
         sub('rango', 'Historial', desSub === 'rango' ? desDatos.length : desCuenta(rr.desde, rr.hasta))}</div>
       ${desSub === 'rango' ? desSelectorDeFechas() : ''}
       ${desCargando ? '<p class="am-nota">Trayendo…</p>' : ''}
-      <input id="des_busca" class="dsp-buscar" type="search" placeholder="Buscar rótulo, pedido, factura, destino…"
-             value="${esc(desBusca)}">
-      <div class="am-tres">
-        <div class="am-tarjeta"><b class="am-gordo">${L.length}</b><span class="am-pie">despachos</span></div>
-        <div class="am-tarjeta"><b class="am-gordo" style="color:var(--am-va)">${atendidos}</b><span class="am-pie">atendidos</span></div>
-        <div class="am-tarjeta"><b class="am-gordo" style="color:${conInc ? 'var(--am-tarde)' : 'var(--am-tinta)'}">${conInc}</b><span class="am-pie">incidencias</span></div>
+      <div class="dsp-barra">
+        <input id="des_busca" class="dsp-buscar" type="search" placeholder="Buscar rótulo, pedido, factura, destino…"
+               value="${esc(desBusca)}">
+        <label class="dsp-cargar" title="Cargar la orden de comercial">\ud83d\udcc4
+          <input type="file" data-dcargar
+            accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            style="display:none"></label>
       </div>
+      <div class="am-tres">
+        ${tarjeta('', L.length, 'despachos')}
+        ${tarjeta('atendidos', atendidos, 'atendidos', 'var(--am-va)')}
+        ${tarjeta('incidencias', conInc, 'incidencias', conInc ? 'var(--am-tarde)' : 'var(--am-tinta)')}
+      </div>
+      ${desMarca ? `<p class="am-nota dsp-quitar" data-dmarca="">Viendo solo ${
+          esc(desMarca)} (${M.length} de ${L.length}) · <b>tocar para ver todo</b></p>` : ''}
       ${gasto ? `<p class="am-nota">Gasto de lo que se ve: S/ ${gasto.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>` : ''}
-      ${L.length ? `<div class="am-pila">${filas}</div>` : `<p class="am-vacio">${
-          desBusca ? 'Nada que coincida con lo que buscas.'
+      ${M.length ? `<div class="am-pila">${filas}</div>` : `<p class="am-vacio">${
+          desMarca ? 'No hay ninguna con ' + esc(desMarca) + ' en lo que se está viendo.'
+        : desBusca ? 'Nada que coincida con lo que buscas.'
         : desSub === 'liquidar' ? 'No queda ninguna guía por liquidar.'
         : desSub === 'rango' ? 'No hubo despachos entre esas dos fechas.'
         : 'Todavía no se cargó ninguna guía de este día.'}</p>`}
-      ${L.length > 120 ? `<p class="am-nota">Se muestran los primeros 120 de ${L.length}. Afina la búsqueda.</p>` : ''}`;
+      ${M.length > 120 ? `<p class="am-nota">Se muestran los primeros 120 de ${M.length}. Afina la búsqueda.</p>` : ''}`;
 };
 
 /* LO YA ESCRITO SE GUARDA ANTES DE REPINTAR. Tocar un estado, un canal o elegir una
@@ -3191,6 +3267,127 @@ const desGuardarEscrito = () => {
         if (el) desBorrador[k] = el.value;
     });
     return desBorrador;
+};
+
+/* ══ CARGAR LA ORDEN DE DESPACHO ══════════════════════════════════════
+   Daniel, 15-sep-2026: *"el excel llega por WhatsApp... lo ideal sería cargarlo por
+   celular del WhatsApp al celular de frente"*.
+
+   Dos pantallas y un botón. Se elige el archivo, se MUESTRA lo que se leyó —con el
+   cuadre contra los totales del propio archivo— y recién ahí se guarda. Nada se
+   escribe antes: si algo no cuadra se cancela y no quedó ni media fila.
+
+   La lectura no está acá sino en `despachoOrden.js`, para que la web pueda usar
+   exactamente la misma y no haya dos formas de leer el mismo Excel. */
+const hojaDeCarga = () => {
+    if (!desOrden) return '';
+    const c = desOrden;
+    const dato = (r, v) => `<div class="dsp-dato"><span>${esc(r)}</span><b>${esc(
+        v === '' || v === null || v === undefined ? '\u2014' : v)}</b></div>`;
+    if (c.estado === 'leyendo') {
+        return `<div class="am-velo" data-velo><div class="am-hoja"><div class="am-hoja-cuerpo">
+            <p class="am-vacio">Leyendo el archivo…</p></div></div></div>`;
+    }
+    if (c.estado === 'malo') {
+        return `<div class="am-velo" data-velo><div class="am-hoja">
+          <div class="am-hoja-cab"><p class="am-hoja-ttl">No se pudo leer</p></div>
+          <div class="am-hoja-cuerpo">
+            <div class="am-aviso"><b>${esc(c.motivo || 'El archivo no se pudo abrir.')}</b></div>
+            <p class="am-nota">Tiene que ser el Excel de la orden de despacho, el que manda
+            comercial. Si lo bajaste de WhatsApp, prueba abrirlo primero para ver que no
+            esté a medio bajar.</p>
+            <div class="dsp-ver" style="margin-top:.8rem">
+              <label class="dsp-otra">Elegir otro<input type="file" data-dcargar
+                accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                style="display:none"></label>
+              <button type="button" data-dcarga-cerrar>Cerrar</button>
+            </div>
+          </div></div></div>`;
+    }
+    if (c.estado === 'listo') {
+        return `<div class="am-velo" data-velo><div class="am-hoja">
+          <div class="am-hoja-cab" style="background:var(--am-va-agua)">
+            <p class="am-hoja-ttl" style="color:var(--am-va)">Cargadas</p>
+            <p class="am-hoja-sub">${c.guardadas} guías del ${esc(desDiaEnLetras(c.fecha))}</p>
+          </div>
+          <div class="am-hoja-cuerpo">
+            <div class="am-bloque"><h4>Lo que hizo</h4>
+              ${dato('Orden', c.orden.od || '\u2014')}
+              ${dato('Fecha de despacho', desDiaEnLetras(c.fecha))}
+              ${dato('Guías', c.guardadas)}
+              ${c.reusadas ? dato('De esas, ya estaban', c.reusadas) : ''}
+              ${(c.guardadas - c.reusadas) > 0 && c.reusadas
+                 ? dato('Nuevas', c.guardadas - c.reusadas) : ''}
+              ${dato('Estado', 'PENDIENTE')}
+            </div>
+            <button type="button" class="am-btn" data-dcarga-ver style="width:100%">
+              Ver las ${c.guardadas} en Por liquidar</button>
+          </div></div></div>`;
+    }
+
+    /* El caso normal: se leyó bien y se muestra ANTES de guardar. */
+    const q = c.cuadre || {};
+    const muestra = c.filas.slice(0, 5).map((f) => `
+        <div class="am-fila"><span class="cinta" style="background:var(--am-curso)"></span>
+          <div style="min-width:0;flex:1">
+            <p class="am-fila-tit">${esc(f.rot || f.prom || '\u2014')}</p>
+            <p class="am-fila-sub">${esc(f.age || '')} \u2192 ${esc(f.dest || '')}</p>
+            <p class="am-fila-sub">${esc(f.ase || '')}${f.cant ? ' \u00b7 ' + f.cant + ' pares' : ''}</p>
+          </div></div>`).join('');
+
+    return `<div class="am-velo" data-velo><div class="am-hoja">
+      <div class="am-hoja-cab">
+        <p class="am-hoja-ttl">${esc(c.orden.od || 'Orden de despacho')}</p>
+        <p class="am-hoja-sub">${esc(c.orden.archivo || '')}${c.orden.creada
+            ? ' \u00b7 creada el ' + esc(c.orden.creada) : ''}</p>
+      </div>
+      <div class="am-hoja-cuerpo">
+        <div class="am-tres">
+          <div class="am-tarjeta"><b class="am-gordo">${c.filas.length}</b><span class="am-pie">guías</span></div>
+          <div class="am-tarjeta"><b class="am-gordo">${Math.round(q.pares || 0)}</b><span class="am-pie">pares</span></div>
+          <div class="am-tarjeta"><b class="am-gordo">${c.agencias}</b><span class="am-pie">agencias</span></div>
+        </div>
+
+        ${q.ok
+          ? `<div class="am-aviso" style="background:var(--am-va-agua);border-color:var(--am-va)">
+              <b>Cuadra con el resumen del archivo.</b> ${Math.round(q.pares)} pares y
+              S/ ${(q.venta || 0).toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})},
+              igual que lo que dice arriba en el propio Excel.</div>`
+          : `<div class="am-aviso"><b>No cuadra con el resumen del archivo.</b>
+              Leí ${Math.round(q.pares)} pares y el archivo dice ${q.dicePares}.
+              Mejor no cargarlo hasta saber por qué.</div>`}
+
+        ${q.premios ? `<p class="am-nota">El archivo dice <b>${q.dicePares + q.premios} enviados</b>
+          y las guías suman <b>${q.dicePares} pedidos</b>. Los ${q.premios} de diferencia son
+          premios, y el archivo no dice de qué guía son: la cantidad de cada guía queda en
+          la pedida.</p>` : ''}
+
+        ${c.repetida ? `<div class="am-aviso"><b>Esta orden ya está cargada</b>${
+          c.repetida.cargada ? ' desde el ' + esc(c.repetida.cargada) : ''}${
+          c.repetida.guias ? ', con ' + c.repetida.guias + ' guías' : ''}. Si la vuelves a
+          cargar se actualizan, no se duplican, y lo que ya se liquidó no se toca.</div>` : ''}
+
+        <div class="am-bloque"><h4>Fecha de despacho</h4>
+          <div class="dsp-rango">
+            <span class="dsp-cal">\ud83d\udcc5</span>
+            <span class="dsp-rot">Sale el</span>
+            <input id="des_cfecha" type="date" value="${esc(c.fecha)}">
+          </div>
+          <p class="am-nota">Es el día que sale el camión, no el que comercial armó la
+          orden${c.orden.creada ? ' (' + esc(c.orden.creada) + ')' : ''}.</p></div>
+
+        <div class="am-bloque"><h4>Las primeras, para mirar</h4>
+          <div class="am-pila">${muestra}</div>
+          ${c.filas.length > 5 ? `<p class="am-nota">y ${c.filas.length - 5} más.</p>` : ''}</div>
+
+        ${c.aviso ? `<div class="am-aviso">${esc(c.aviso)}</div>` : ''}
+        <button type="button" class="am-btn" data-dcarga-guardar style="width:100%"
+          ${c.guardando ? 'disabled' : ''}>${c.guardando ? 'Guardando…'
+            : 'Cargar las ' + c.filas.length + ' guías'}</button>
+        <button type="button" class="am-boton-suave" data-dcarga-cerrar
+          style="width:100%;margin-top:.5rem">Cancelar</button>
+        <p class="am-nota">Nada se guarda hasta tocar el botón.</p>
+      </div></div></div>`;
 };
 
 /* ── LA FICHA, QUE ES DONDE SE LIQUIDA ─────────────────────────────────────────────── */
@@ -3219,17 +3416,47 @@ const hojaDeDespacho = () => {
     const bEstado = (k) => `<button type="button" class="dsp-eb ${est === k ? 'on' : ''}" data-dest="${k}"
         style="${est === k ? 'background:' + desAgua(k) + ';color:' + desTono(k) + ';border-color:' + desTono(k) : ''}">
         ${esc(DES.ESTADOS[k].et)}</button>`;
+    /* ══ EL RECUADRO DEL ADJUNTO ═══════════════════════════════════════
+       Daniel, 15-sep-2026: *"dice 'ya tiene', pero le doy clic para ver la foto y me
+       manda a adjuntar. Debería apretar donde dice 'ya tiene' y aparecerme dos
+       opciones: ver la foto, y abajo la opción de escoger otra —de repente el
+       liquidador se equivocó de foto—, pero con un ícono, no con palabras"*.
+
+       Tenía dos errores encima:
+         1. El recuadro era un <label> con el <input type=file> adentro, así que tocarlo
+            SIEMPRE abría el selector de archivos, tuviera foto o no.
+         2. El botón de ver estaba abajo, en otra fila, con la palabra "Ver foto". El
+            ojo tiene que estar donde está la foto.
+
+       Ahora: sin nada, el recuadro entero abre la cámara. Con algo, dos íconos:
+       👁 ver · 🔄 cambiar.
+
+       EL OJO SOLO SALE SI DE VERDAD SE PUEDE ABRIR. Las fotos que vienen del AppSheet
+       siguen en su Drive y la plataforma no tiene acceso: ahí el recuadro dice "en el
+       Drive" y no hay ojo. Un ojo que no abre nada es una mentira. */
     const adj = (cual, rot, pide) => {
-        const puesto = desAdjuntos[cual];
-        const hay = puesto || (f[cual] === 'plataforma') || (cual === 'foto' && f.foto);
-        return `<label class="dsp-adj ${hay ? 'hay' : (pide ? 'pide' : '')}">
-            <span class="ic">${cual === 'pdf' ? '📄' : '📷'}</span>
+        const puesto = desAdjuntos[cual];                       // recién elegido, sin guardar
+        const aca = puesto || f[cual] === 'plataforma';         // se puede abrir desde acá
+        const enDrive = !aca && cual === 'foto' && f.foto;      // existe, pero no la tenemos
+        const hay = aca || enDrive;
+        const botones = aca ? `<span class="dsp-acc">
+              <button type="button" data-dver="${cual}" title="Ver">👁️</button>
+              <label title="Cambiar">🔄<input type="file" data-dadj="${cual}"
+                accept="${cual === 'pdf' ? 'application/pdf' : 'image/*'}" style="display:none"></label>
+            </span>` : '';
+        const cuerpo = `<span class="ic">${cual === 'pdf' ? '📄' : '📷'}</span>
             <span>${esc(rot)}${pide ? ' *' : ''}</span>
-            <small>${puesto ? 'listo' : (hay ? 'ya tiene' : 'tocar')}</small>
-            <input type="file" data-dadj="${cual}" accept="${cual === 'pdf' ? 'application/pdf' : 'image/*'}" style="display:none">
-        </label>`;
+            <small>${puesto ? 'listo' : enDrive ? 'en el Drive' : hay ? 'ya tiene' : 'tocar'}</small>`;
+        /* Con algo adentro es un <div> y no un <label>: si siguiera siendo label,
+           tocar en cualquier hueco volvería a abrir el selector de archivos. */
+        return hay
+            ? `<div class="dsp-adj hay">${cuerpo}${botones}${enDrive
+                ? `<label class="dsp-acc"><span class="dsp-uno">🔄</span><input type="file" data-dadj="${cual}"
+                   accept="image/*" style="display:none"></label>` : ''}</div>`
+            : `<label class="dsp-adj ${pide ? 'pide' : ''}">${cuerpo}
+                <input type="file" data-dadj="${cual}" accept="${cual === 'pdf' ? 'application/pdf' : 'image/*'}" style="display:none">
+              </label>`;
     };
-    const verBotones = ['foto', 'foto2', 'pdf'].filter((k) => f[k] === 'plataforma');
 
     return `
     <div class="am-velo" data-velo>
@@ -3259,10 +3486,9 @@ const hojaDeDespacho = () => {
 
           <div class="am-bloque"><h4>La prueba</h4>
             <div class="dsp-adjs">${adj('foto', 'Foto', true)}${adj('foto2', 'Foto 2')}${adj('pdf', 'PDF')}</div>
-            ${verBotones.length ? `<div class="dsp-ver">${verBotones.map((k) =>
-                `<button type="button" data-dver="${k}">Ver ${k}</button>`).join('')}</div>` : ''}
             ${(f.foto && f.foto !== 'plataforma') ? `<p class="am-nota" style="margin-top:.4rem">
-               La foto de este despacho sigue en el Drive del AppSheet. Desde acá no se puede abrir.</p>` : ''}</div>
+               La foto vieja sigue en el Drive del AppSheet y desde acá no se puede abrir.
+               Toca 🔄 para tomar una nueva y que quede en la plataforma.</p>` : ''}</div>
 
           <div class="am-bloque"><h4>Lo que llena el liquidador</h4>
             ${campo('des_fact', 'Factura', val('fact'))}
@@ -3287,7 +3513,10 @@ const hojaDeDespacho = () => {
 
 /* Ver una foto o el PDF a pantalla completa. */
 const verAdjuntoMovil = async (id, cual) => {
-    const a = await DES.traerAdjunto(id, cual);
+    /* PRIMERO LA QUE ACABA DE ELEGIR, si todavía no la guardó. Es justo cuando más
+       falta hace mirarla: recién tomada, para ver si el número de la factura se lee
+       antes de subirla. Pedirle al servidor una que aún no está ahí traería la anterior. */
+    const a = desAdjuntos[cual] || await DES.traerAdjunto(id, cual);
     if (!a || !a.dato) { desAviso = 'No se pudo traer el archivo.'; pintar(); return; }
     const capa = document.createElement('div');
     capa.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9600;display:flex;' +
@@ -3304,6 +3533,28 @@ const verAdjuntoMovil = async (id, cual) => {
     capa.appendChild(cerrar);
     capa.addEventListener('click', (e) => { if (e.target === capa) capa.remove(); });
     document.body.appendChild(capa);
+};
+
+/* GUARDAR LA ORDEN. Recien aca se escribe algo. Si falla, la hoja se queda abierta con
+   lo leido y el motivo: perder los datos del archivo obligaria a ir a buscarlo otra vez
+   al WhatsApp, y eso en la calle es media hora. */
+const guardarLaOrden = async () => {
+    const c = desOrden;
+    if (!c || c.guardando || !c.filas) return;
+    if (!DES.esFecha(c.fecha)) { c.aviso = 'Falta la fecha de despacho.'; pintar(); return; }
+    c.guardando = true; c.aviso = ''; pintar();
+    try {
+        const r = await ORD.guardarOrden(c.orden, c.filas, c.fecha, (t) => { c.aviso = t; pintar(); });
+        desOrden = { estado: 'listo', orden: c.orden, fecha: c.fecha,
+                     guardadas: r.guardadas, reusadas: r.reusadas };
+        desDatos = null;                     // que se vuelva a traer con lo nuevo adentro
+        pintar();
+    } catch (e) {
+        c.guardando = false;
+        c.aviso = 'No se pudo guardar: ' + ((e && e.message) || 'sin detalle')
+                + '. Nada se perdio, vuelve a intentarlo.';
+        pintar();
+    }
 };
 
 const guardarDespacho = async () => {
@@ -3448,7 +3699,7 @@ const pintar = () => {
            scroll ni la encierra la rejilla de tres filas de la app. */
         : seccion === 'chat' ? (chatSala ? pantallaConversacion() : pantallaChat())
         : seccion === 'tareas' ? (pantallaTareas() + hojaDeTarea())
-        : seccion === 'despacho' ? (pantallaDespacho() + hojaDeDespacho())
+        : seccion === 'despacho' ? (pantallaDespacho() + hojaDeDespacho() + hojaDeCarga())
         : seccion === 'robots' ? (pantallaRobots() + hojaDeRobot())
         : seccion === 'avisos' ? pantallaAvisos()
         : pantallaEnCamino(seccion);
@@ -3569,7 +3820,30 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
     /* El archivo elegido: se achica, se pasa a base64 y se queda en memoria hasta que
        se toque Guardar. Así, si alguien cierra sin guardar, no queda una foto suelta
        en el servidor. */
+    /* El Excel de la orden. Se lee y se MUESTRA; no se guarda nada todavia. */
     raiz.addEventListener('change', async (e) => {
+        const cg = e.target.closest('[data-dcargar]');
+        if (cg) {
+            const arch = cg.files && cg.files[0];
+            cg.value = '';                       // para poder elegir el mismo otra vez
+            if (!arch) return;
+            desOrden = { estado: 'leyendo' }; pintar();
+            try {
+                const r = await ORD.leerArchivo(arch);
+                if (!r.ok) { desOrden = { estado: 'malo', motivo: r.motivo }; pintar(); return; }
+                const idx = await DES.traerIndice(true);
+                desOrden = {
+                    estado: 'mirando', orden: r.orden, filas: r.filas, cuadre: r.cuadre,
+                    fecha: DES.hoyTexto(),
+                    agencias: new Set(r.filas.map((f) => String(f.age || '').toUpperCase())).size,
+                    repetida: ORD.yaCargada(idx, r.orden.od)
+                };
+            } catch (err) {
+                desOrden = { estado: 'malo', motivo: (err && err.message) || 'no se pudo leer' };
+            }
+            pintar();
+            return;
+        }
         const inp = e.target.closest('[data-dadj]');
         if (!inp) return;
         const cual = inp.getAttribute('data-dadj');
@@ -3588,6 +3862,8 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
 
     /* Las fechas no son un filtro más: cambiarlas manda a buscar semanas al servidor. */
     raiz.addEventListener('change', (e) => {
+        const cf = e.target.closest('#des_cfecha');
+        if (cf && desOrden) { desOrden.fecha = cf.value; pintar(); return; }
         const d1 = e.target.closest('#des_d1');
         const d2 = e.target.closest('#des_d2');
         if (!d1 && !d2) return;
@@ -3645,7 +3921,7 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
                Acordarse de la sub-pestana solo sirve para heredar un callejon. */
             if (seccion === 'despacho') {
                 desSub = 'hoy'; desAbierto = null; desBorrador = null; desAdjuntos = {};
-                desBusca = ''; desAviso = ''; desRango = null;
+                desBusca = ''; desAviso = ''; desRango = null; desMarca = '';
                 desDatos = null; desCargando = false;
             }
             if (seccion === 'chat') { chatSala = null; prepararChat(); }
@@ -3660,9 +3936,24 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         if (e.target.closest('[data-guardar]')) { guardarLista(true); return; }
         if (e.target.closest('[data-foto]')) { mandarFoto(); return; }
         /* ── DESPACHO ── */
+        /* ── EL CARGADOR ── */
+        if (e.target.closest('[data-dcarga-cerrar]')) { desOrden = null; pintar(); return; }
+        if (e.target.closest('[data-dcarga-guardar]')) { guardarLaOrden(); return; }
+        if (e.target.closest('[data-dcarga-ver]')) {
+            desOrden = null; desSub = 'liquidar'; desMarca = ''; desCargando = true; pintar();
+            mirarDespachos(true).then(pintar);
+            return;
+        }
+        const dm = e.target.closest('[data-dmarca]');
+        if (dm) {
+            const q = dm.getAttribute('data-dmarca');
+            desMarca = (q === desMarca) ? '' : q;   // volver a tocarla la apaga
+            pintar(); return;
+        }
         const ds = e.target.closest('[data-dsub]');
         if (ds) {
-            desSub = ds.getAttribute('data-dsub'); desAbierto = null; desCargando = true; pintar();
+            desSub = ds.getAttribute('data-dsub'); desAbierto = null; desMarca = '';
+            desCargando = true; pintar();
             mirarDespachos().then(pintar);
             return;
         }
