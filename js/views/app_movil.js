@@ -25,28 +25,28 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0776';
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0776';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0776';
+import * as adminService from '../services_v245/adminService.js?v=29.0777';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0777';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0777';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0776';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0776';
-import * as metasService from '../services_v245/metasService.js?v=29.0776';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0777';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0777';
+import * as metasService from '../services_v245/metasService.js?v=29.0777';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0776';
+import * as temaService from '../services_v245/temaService.js?v=29.0777';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0776';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0776';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0777';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0777';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0776';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0777';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -2990,7 +2990,9 @@ const hojaDeRobot = () => {
    dirían números distintos del mismo día.
 
    TRES SUB-PESTAÑAS, que son los tres momentos del circuito: HOY lo que se despacha,
-   POR LIQUIDAR lo que falta cerrar, RANGO un tramo de fechas que se elige. El canal va
+   POR LIQUIDAR lo que falta cerrar, HISTORIAL un tramo de fechas que se elige. Se
+   llama Historial y no Rango porque es como lo nombra Daniel; por dentro la clave
+   sigue siendo 'rango', que es lo que hace. El canal va
    de filtro y no de pestaña, para que sumar Retail sea una casilla y no otra pantalla.
 
    NO SE BAJA EL HISTORIAL. Daniel, 15-sep-2026: *"no es necesario que tengas los 3.000
@@ -3125,7 +3127,17 @@ const pantallaDespacho = () => {
         if (!desCargando) mirarDespachos().then(pintar);
         return `<p class="am-vacio">Trayendo los despachos de catálogo…</p>`;
     }
-    if (!desDatos.length) {
+    /* ESTE CARTEL TAPA LA PANTALLA ENTERA, ASI QUE SOLO SALE CUANDO DE VERDAD NO HAY
+       NADA QUE MIRAR: ni una guía en ninguna semana, o no se pudo ni preguntar.
+
+       Antes salía cada vez que la pestaña de turno venía vacía, y desde que los datos
+       se bajan por semanas eso pasa todos los días: entrar a "Por liquidar" sin nada
+       pendiente borraba las tres sub-pestañas y dejaba a Daniel encerrado, sin forma de
+       volver a Hoy. Una pantalla sin salida es un error aunque el texto sea cierto: si
+       hay algo en alguna semana, las sub-pestañas se pintan igual y el vacío se dice
+       abajo, en la lista, donde no estorba. */
+    const hayAlgo = (DES.elIndice() || {}).total;
+    if (!desDatos.length && !hayAlgo) {
         /* NO SE PUDO PREGUNTAR NO ES QUE NO HAYA NADA. Se dice cuál de las dos es. */
         return `<div class="am-aviso">${DES.seLeyo()
             ? '<b>Todavía no hay despachos de catálogo.</b> El área existe pero llegó vacía.'
@@ -3163,7 +3175,7 @@ const pantallaDespacho = () => {
       <div class="dsp-subs">${sub('hoy', desSub === 'hoy' && desDiaMostrado && desDiaMostrado !== desHoy()
             ? desDiaEnLetras(desDiaMostrado) : 'Hoy', desSub === 'hoy' ? L.length : desCuenta(desHoy(), desHoy()))}${
         sub('liquidar', 'Por liquidar', nLiq)}${
-        sub('rango', 'Rango', desSub === 'rango' ? desDatos.length : desCuenta(rr.desde, rr.hasta))}</div>
+        sub('rango', 'Historial', desSub === 'rango' ? desDatos.length : desCuenta(rr.desde, rr.hasta))}</div>
       ${desSub === 'rango' ? desSelectorDeFechas() : ''}
       ${desCargando ? '<p class="am-nota">Trayendo…</p>' : ''}
       <input id="des_busca" class="dsp-buscar" type="search" placeholder="Buscar rótulo, pedido, factura, destino…"

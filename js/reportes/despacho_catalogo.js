@@ -33,7 +33,7 @@
  * 102 reales, y de 753 destinos, 580.
  */
 
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0776';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0777';
 
 /* ── DE DÓNDE SALEN LOS DATOS ─────────────────────────────────────────────────
    De `despachoCatalogo.js`, que los baja POR SEMANAS. Acá había una copia de todo
@@ -96,7 +96,7 @@ const delDia = (f, dia) => String(f.desp || '') === dia;
 /* ── QUÉ SE BAJA EN CADA PESTAÑA ──────────────────────────────────────────────
    Hoy         la semana en curso, y se muestra el día de hoy
    Por liquidar solo las semanas que el índice marca con guías abiertas
-   Rango       las semanas que toca el rango elegido */
+   Historial   las semanas que toca el rango elegido */
 const cargar = async (recargar) => {
     cargando = true;
     try {
@@ -187,7 +187,7 @@ const barra = () => {
                 ? fechaBonita(diaMostrado) : 'Hoy',
          pestana === 'hoy' ? num(L.length) : cuenta(hoy, hoy)],
         ['liquidar', 'Por liquidar', num(abiertas)],
-        ['rango', 'Rango', pestana === 'rango' ? num(FILAS.length) : cuenta(filtro.desde, filtro.hasta)]
+        ['rango', 'Historial', pestana === 'rango' ? num(FILAS.length) : cuenta(filtro.desde, filtro.hasta)]
     ];
     return `
     <div style="display:flex; gap:.4rem; border-bottom:1px solid var(--border); margin-bottom:1rem;
