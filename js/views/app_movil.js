@@ -25,27 +25,28 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0772';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0772';
+import * as adminService from '../services_v245/adminService.js?v=29.0780';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0780';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0780';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0772';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0772';
-import * as metasService from '../services_v245/metasService.js?v=29.0772';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0780';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0780';
+import * as metasService from '../services_v245/metasService.js?v=29.0780';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0772';
+import * as temaService from '../services_v245/temaService.js?v=29.0780';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0772';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0772';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0780';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0780';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0772';
+         traerAdjunto, pesoLegible } from '../chat.js?v=29.0780';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -174,6 +175,57 @@ const CSS = `
 #app-movil .am-boton-suave { background: var(--am-carta); color: var(--am-suave);
   border: 1px solid var(--am-linea); border-radius: 10px; padding: .7rem; font-family: var(--am-ui);
   font-size: .85rem; font-weight: 700; cursor: pointer; }
+/* ── DESPACHO ────────────────────────────────────────────────────────────────────────
+   Se apoya en lo que ya hay -.am-fila, .am-tarjeta, .am-hoja, .am-bloque- y solo agrega
+   lo propio: las sub-pestañas, el buscador y los recuadros de los adjuntos. */
+#app-movil .dsp-subs { display: flex; gap: .3rem; background: var(--am-carta);
+  border: 1px solid var(--am-linea); border-radius: 11px; padding: .3rem; }
+#app-movil .dsp-sub { flex: 1; text-align: center; font-size: .76rem; font-weight: 700;
+  color: var(--am-tenue); padding: .35rem .2rem; border-radius: 8px; cursor: pointer; }
+#app-movil .dsp-sub.on { background: var(--am-va-agua); color: var(--am-va); }
+#app-movil .dsp-sub span { display: block; font-family: var(--am-num); font-size: .68rem;
+  font-weight: 400; opacity: .8; }
+#app-movil .dsp-rango { background: var(--am-carta); border: 1px solid var(--am-linea);
+  border-radius: 11px; padding: .5rem; display: flex; flex-direction: column; gap: .45rem; }
+#app-movil .dsp-fechas { display: flex; gap: .4rem; }
+#app-movil .dsp-fechas label { flex: 1; display: block; }
+#app-movil .dsp-fechas span { display: block; font-size: .66rem; color: var(--am-tenue); margin-bottom: 2px; }
+#app-movil .dsp-fechas input { width: 100%; background: var(--am-papel); border: 1px solid var(--am-linea);
+  border-radius: 8px; padding: .4rem .5rem; color: var(--am-tinta); font-size: .78rem;
+  font-family: var(--am-ui); }
+#app-movil .dsp-buscar { width: 100%; background: var(--am-carta); border: 1px solid var(--am-linea);
+  border-radius: 10px; padding: .55rem .7rem; color: var(--am-tinta); font-size: .85rem;
+  font-family: var(--am-ui); }
+#app-movil .dsp-pastilla { font-size: .6rem; font-weight: 800; letter-spacing: .04em;
+  text-transform: uppercase; padding: .14rem .38rem; border-radius: 3px; white-space: nowrap; }
+#app-movil .dsp-dato { display: flex; justify-content: space-between; gap: .7rem; padding: .13rem 0;
+  font-size: .8rem; }
+#app-movil .dsp-dato span { color: var(--am-tenue); flex-shrink: 0; }
+#app-movil .dsp-dato b { color: var(--am-tinta); font-weight: 700; text-align: right; min-width: 0; }
+#app-movil .dsp-campo { display: block; margin-bottom: .45rem; }
+#app-movil .dsp-campo > span { display: block; font-size: .7rem; color: var(--am-tenue); margin-bottom: 2px; }
+#app-movil .dsp-campo input, #app-movil .dsp-campo select { width: 100%; background: var(--am-papel);
+  border: 1px solid var(--am-linea); border-radius: 8px; padding: .5rem .6rem; color: var(--am-tinta);
+  font-size: .85rem; font-family: var(--am-ui); }
+#app-movil .dsp-ests { display: grid; grid-template-columns: 1fr 1fr; gap: .35rem; margin-bottom: .55rem; }
+#app-movil .dsp-eb { border: 1px solid var(--am-linea); border-radius: 9px; padding: .5rem .3rem;
+  background: var(--am-papel); color: var(--am-tenue); font-size: .78rem; font-weight: 700;
+  font-family: var(--am-ui); cursor: pointer; }
+#app-movil .dsp-adjs { display: flex; gap: .45rem; }
+#app-movil .dsp-adj { flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 2px; aspect-ratio: 3/4; border-radius: 10px; cursor: pointer;
+  text-align: center; padding: .35rem; border: 1px dashed var(--am-linea); background: var(--am-papel);
+  font-size: .68rem; color: var(--am-tenue); }
+#app-movil .dsp-adj.hay { border-style: solid; border-color: var(--am-va); background: var(--am-va-agua);
+  color: var(--am-va); }
+#app-movil .dsp-adj.pide { border-color: var(--am-tarde); color: var(--am-tarde);
+  background: var(--am-tarde-agua); }
+#app-movil .dsp-adj .ic { font-size: 1.25rem; }
+#app-movil .dsp-adj small { opacity: .8; font-size: .62rem; }
+#app-movil .dsp-ver { display: flex; gap: .4rem; margin-top: .5rem; flex-wrap: wrap; }
+#app-movil .dsp-ver button { background: var(--am-papel); border: 1px solid var(--am-linea);
+  border-radius: 8px; padding: .32rem .7rem; color: var(--am-suave); font-size: .72rem;
+  font-weight: 700; font-family: var(--am-ui); cursor: pointer; }
 #app-movil .am-vacio { text-align: center; color: var(--am-tenue); font-size: .85rem; padding: 1.4rem 0.5rem; }
 #app-movil .am-pronto { background: var(--am-carta); border: 1px dashed #C2CFCC; border-radius: 12px;
   padding: 1.6rem 1.1rem; text-align: center; display: flex; flex-direction: column; gap: .5rem; }
@@ -531,9 +583,12 @@ const CSS = `
 /* EL ALMANAQUE QUE ABRE EL TELEFONO ES DEL SISTEMA, no nuestro, y se pinta segun
    'color-scheme'. Sin esto, en los dos temas oscuros el iconito sale negro sobre negro y
    parece que no hubiera calendario. Se le dice a cada tema de que color es. */
-#app-movil .am-fecha input { color-scheme: dark; }
+#app-movil .am-fecha input,
+#app-movil .dsp-fechas input { color-scheme: dark; }
 html[data-tema="pbi"] #app-movil .am-fecha input,
-html[data-tema="pbi-classic"] #app-movil .am-fecha input { color-scheme: light; }
+html[data-tema="pbi-classic"] #app-movil .am-fecha input,
+html[data-tema="pbi"] #app-movil .dsp-fechas input,
+html[data-tema="pbi-classic"] #app-movil .dsp-fechas input { color-scheme: light; }
 #app-movil .am-fecha input::-webkit-calendar-picker-indicator { cursor: pointer; }
 
 #app-movil .am-encabezado { display: grid; grid-template-columns: minmax(0, 1fr) 88px 68px;
@@ -682,6 +737,7 @@ const ICONOS = {
     reportes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V9"/><path d="M9.3 20V4.5"/><path d="M14.7 20v-7.5"/><path d="M20 20V7"/></svg>',
     tareas: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2.5"/><path d="M8.4 12.2l2.4 2.4 4.8-5"/></svg>',
     lista: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.6 20c0-3.2 2.4-5.2 5.4-5.2s5.4 2 5.4 5.2"/><path d="M17 11.5l1.7 1.7 3.1-3.3"/></svg>',
+    despacho: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5h11v9H3z"/><path d="M14 10.5h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.8"/><circle cx="17.5" cy="18" r="1.8"/></svg>',
     robots: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="12" rx="2.5"/><path d="M12 8V4.6"/><circle cx="12" cy="3.4" r="1.2"/><path d="M9 13.2h.01M15 13.2h.01"/><path d="M9.6 17h4.8"/></svg>',
     avisos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8.8a6 6 0 1 0-12 0c0 5.4-2 7-2 7h16s-2-1.6-2-7"/><path d="M13.7 20a2 2 0 0 1-3.4 0"/></svg>'
 };
@@ -706,7 +762,12 @@ const SECCIONES = [
     /* ABAJO, SOLO LOS MODULOS. Avisos y Temas se fueron al menu de arriba, y Reportes
        desaparecio: Daniel, 12-sep, *"ya estaria de mas el modulo de reportes"* — cada
        pantalla comparte lo suyo, asi que no hacia falta un sitio aparte para los cuadros. */
-    { id: 'lista', rotulo: 'Asistencia', icono: 'lista' }
+    { id: 'lista', rotulo: 'Asistencia', icono: 'lista' },
+    /* DESPACHO. Daniel, 15-sep-2026: *"me vas a traer una pestaña en el celular que diga
+       despacho, pero dentro de esa pestaña van a haber varias sub-pestañas"*. Va ABAJO y
+       no en el menú porque es trabajo del día -el liquidador de transporte entra a cerrar
+       guías-, no configuración. Son cinco, que es el tope que se puso la app. */
+    { id: 'despacho', rotulo: 'Despacho', icono: 'despacho' }
 ];
 
 /* Lo que todavia no tiene pantalla. Se dice lo que va a haber, con nombre y todo: una
@@ -2915,6 +2976,371 @@ const hojaDeRobot = () => {
     </div>`;
 };
 
+/* ── DESPACHO DE CATÁLOGO ────────────────────────────────────────────────────────────────
+   Lo mismo que la pantalla de la web, en el celular. Los datos y las reglas salen del
+   MISMO sitio -services_v245/despachoCatalogo.js-: si la regla de qué cuenta como "por
+   liquidar" viviera en dos lados, el día que se cambie en uno, la web y el celular
+   dirían números distintos del mismo día.
+
+   TRES SUB-PESTAÑAS, que son los tres momentos del circuito: HOY lo que se despacha,
+   POR LIQUIDAR lo que falta cerrar, HISTORIAL un tramo de fechas que se elige. Se
+   llama Historial y no Rango porque es como lo nombra Daniel; por dentro la clave
+   sigue siendo 'rango', que es lo que hace. El canal va
+   de filtro y no de pestaña, para que sumar Retail sea una casilla y no otra pantalla.
+
+   NO SE BAJA EL HISTORIAL. Daniel, 15-sep-2026: *"no es necesario que tengas los 3.000
+   y tantos registros… no es mejor tener un rango de fechas y que se actualice a la
+   fecha actual, por ejemplo hoy día lunes, o el lunes hasta el sábado"*. Tenía razón:
+   el paquete entero son 1.144 KB y crece ~450 KB por mes; la semana en curso son 20 KB.
+   Esto es un celular, con datos móviles, y el que liquida en la calle abre la pantalla
+   veinte veces al día. El reparto por semanas vive en `despachoCatalogo.js`. */
+let desDatos = null;         /* null = todavía no se pidió */
+let desCargando = false;
+let desSub = 'hoy';
+let desRango = null;         /* se fija en la primera carga: la semana en curso */
+let desDiaMostrado = '';
+let desAbierto = null;
+let desBorrador = null;
+let desGuardando = false;
+let desAdjuntos = {};
+let desBusca = '';
+let desAviso = '';
+let desReloj = null;
+
+const desHoy = () => DES.hoyTexto();
+
+/* QUÉ SE BAJA EN CADA SUB-PESTAÑA:
+     Hoy          la semana en curso, y se muestra el día de hoy
+     Por liquidar solo las semanas que el índice marca con guías abiertas
+     Rango        las semanas que toca el rango elegido */
+const mirarDespachos = async (recargar) => {
+    desCargando = true;
+    try {
+        if (!desRango) desRango = DES.rangoDeLaSemana();
+        if (desSub === 'liquidar') {
+            desDatos = await DES.traerPendientes(recargar);
+            desDiaMostrado = '';
+        } else if (desSub === 'hoy') {
+            const r = DES.rangoDeLaSemana();
+            desDatos = await DES.traerRango(r.desde, r.hasta, recargar);
+            desDiaMostrado = desHoy();
+            /* SI HOY NO HAY NADA, SE MUESTRA EL ÚLTIMO DÍA CON DESPACHOS. Una pantalla
+               en blanco haría pensar que está rota cuando lo que pasa es que todavía no
+               cargaron el día. Cuál es el último día lo dice el índice, sin bajar nada. */
+            if (!desDatos.some((f) => f.desp === desDiaMostrado)) {
+                const i = DES.elIndice();
+                const ult = (i && i.hasta) || '';
+                if (ult && ult < desDiaMostrado) {
+                    const r2 = DES.rangoDeLaSemana(ult);
+                    desDatos = await DES.traerRango(r2.desde, r2.hasta, recargar);
+                    desDiaMostrado = ult;
+                }
+            }
+        } else {
+            desDatos = await DES.traerRango(desRango.desde, desRango.hasta, recargar);
+            desDiaMostrado = '';
+        }
+    } catch (e) {
+        desDatos = desDatos || [];
+    }
+    desCargando = false;
+};
+
+const desDeLaPestana = () => {
+    let L = desDatos || [];
+    if (desSub === 'hoy') L = L.filter((f) => f.desp === desDiaMostrado);
+    else if (desSub === 'liquidar') L = L.filter(DES.sinLiquidar);
+    if (desBusca) {
+        const t = desBusca.toLowerCase();
+        L = L.filter((f) => [f.rot, f.prom, f.ped, f.dest, f.age, f.fact]
+            .some((x) => String(x || '').toLowerCase().indexOf(t) >= 0));
+    }
+    return L;
+};
+
+const desTono = (est) => {
+    const e = (DES.ESTADOS[String(est || '').toUpperCase()] || {}).tono;
+    return e === 'bien' ? 'var(--am-va)' : e === 'mal' ? 'var(--am-tarde)'
+         : e === 'curso' ? 'var(--am-curso)' : 'var(--am-quieto)';
+};
+const desAgua = (est) => {
+    const e = (DES.ESTADOS[String(est || '').toUpperCase()] || {}).tono;
+    return e === 'bien' ? 'var(--am-va-agua)' : e === 'mal' ? 'var(--am-tarde-agua)'
+         : e === 'curso' ? 'var(--am-curso-agua)' : 'var(--am-quieto-agua)';
+};
+const desEtiqueta = (est) => (DES.ESTADOS[String(est || '').toUpperCase()] || {}).et || (est || 'Sin estado');
+
+const DES_DIAS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+const DES_MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'set', 'oct', 'nov', 'dic'];
+const desDiaEnLetras = (f) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(f || ''))) return f || '';
+    const [a, m, d] = f.split('-').map(Number);
+    return DES_DIAS[new Date(a, m - 1, d).getDay()] + ' ' + d + ' ' + DES_MESES[m - 1];
+};
+
+/* NADA DE KILOBYTES EN PANTALLA. Acá había cuatro atajos de fecha que decían al lado
+   cuánto pesaba bajar cada uno -"+228 KB"-. Daniel: *"quita esta tontería de la app"*.
+   Tenía razón: al que liquida en la calle no le importa cuánto pesa, le importa la
+   fecha. Era mi plomería asomándose a la pantalla de otro. Quedan las dos fechas, que
+   es lo que pidió. */
+const desCuenta = (desde, hasta) => {
+    const n = DES.contarRango(desde, hasta);
+    return n === null ? '·' : n;
+};
+
+const desSelectorDeFechas = () => {
+    const r = desRango || DES.rangoDeLaSemana();
+    return `<div class="dsp-rango">
+        <div class="dsp-fechas">
+          <label><span>Desde</span><input id="des_d1" type="date" value="${esc(r.desde)}"></label>
+          <label><span>Hasta</span><input id="des_d2" type="date" value="${esc(r.hasta)}"></label>
+        </div>
+      </div>`;
+};
+
+const pantallaDespacho = () => {
+    if (desDatos === null) {
+        if (!desCargando) mirarDespachos().then(pintar);
+        return `<p class="am-vacio">Trayendo los despachos de catálogo…</p>`;
+    }
+    /* ESTE CARTEL TAPA LA PANTALLA ENTERA, ASI QUE SOLO SALE CUANDO DE VERDAD NO HAY
+       NADA QUE MIRAR: ni una guía en ninguna semana, o no se pudo ni preguntar.
+
+       Antes salía cada vez que la pestaña de turno venía vacía, y desde que los datos
+       se bajan por semanas eso pasa todos los días: entrar a "Por liquidar" sin nada
+       pendiente borraba las tres sub-pestañas y dejaba a Daniel encerrado, sin forma de
+       volver a Hoy. Una pantalla sin salida es un error aunque el texto sea cierto: si
+       hay algo en alguna semana, las sub-pestañas se pintan igual y el vacío se dice
+       abajo, en la lista, donde no estorba. */
+    const hayAlgo = (DES.elIndice() || {}).total;
+    if (!desDatos.length && !hayAlgo) {
+        /* NO SE PUDO PREGUNTAR NO ES QUE NO HAYA NADA. Se dice cuál de las dos es. */
+        /* Y LLEVA SUS PROPIOS BOTONES. Daniel, 15-sep-2026: *"¿cómo salgo de esto? no me
+           da opciones"*. La salida estaba -la barra de abajo-, pero en una ventana
+           angosta se confunde con el borde. Un cartel que ocupa la pantalla entera
+           tiene que traer su salida puesta, no confiar en que se vea la de al lado. */
+        return `<div class="am-aviso">${DES.seLeyo()
+            ? '<b>Todavía no hay despachos de catálogo.</b> El área existe pero llegó vacía.'
+            : '<b>No se pudo leer los despachos.</b> Esto no quiere decir que no haya: puede ser que el servidor esté reiniciando, que tarda como un minuto en volver.'}</div>
+          <div class="dsp-ver" style="justify-content:center; margin-top:.9rem;">
+            <button type="button" data-drecargar>Volver a preguntar</button>
+            <button type="button" data-dsalir>Ir a Inicio</button>
+          </div>`;
+    }
+
+    const L = desDeLaPestana();
+    /* LA CUENTA DE ABIERTAS SALE DEL ÍNDICE, que pesa 1,3 KB. Antes salía de tener las
+       3.129 filas en memoria, que es justo lo que ya no se baja. */
+    const idx = DES.elIndice() || { semanas: {} };
+    const nLiq = Object.keys(idx.semanas || {}).reduce((t, k) => t + (idx.semanas[k].sin || 0), 0);
+    const rr = desRango || DES.rangoDeLaSemana();
+    const sub = (id, rot, n) => `<div class="dsp-sub ${desSub === id ? 'on' : ''}" data-dsub="${id}">
+        ${esc(rot)}<span>${esc(String(n))}</span></div>`;
+
+    const atendidos = L.filter((f) => String(f.est).toUpperCase() === 'ATENDIDO').length;
+    const conInc = L.filter((f) => f.inc).length;
+    const gasto = L.reduce((a, f) => a + (Number(f.gasto) || 0), 0);
+
+    const filas = L.slice(0, 120).map((f) => `
+        <div class="am-fila" data-desp="${esc(f.id)}">
+          <span class="cinta" style="background:${desTono(f.est)}"></span>
+          <div style="min-width:0;flex:1">
+            <p class="am-fila-tit">${esc(f.rot || f.prom || '—')}</p>
+            <p class="am-fila-sub">${esc(f.age || '')} \u2192 ${esc(f.dest || '')}</p>
+            <p class="am-fila-sub">${DES.canalDe(f) !== 'catalogo'
+                ? '<b style="color:var(--am-curso)">' + esc(DES.CANALES[DES.canalDe(f)].et.toUpperCase()) + '</b> · ' : ''}${
+              esc(f.ase || '')}${f.gasto ? ' · S/ ' + f.gasto : ''}${f.inc ? ' · ' + esc(String(f.inc).slice(0, 34)) : ''}</p>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">
+            <span class="dsp-pastilla" style="background:${desAgua(f.est)};color:${desTono(f.est)}">${esc(desEtiqueta(f.est))}</span>
+            <span class="am-hora">${esc(String(f.desp || '').slice(8, 10))}/${esc(String(f.desp || '').slice(5, 7))}${f.foto ? ' 📷' : ''}</span>
+          </div>
+        </div>`).join('');
+
+    return `
+      <div class="dsp-subs">${sub('hoy', desSub === 'hoy' && desDiaMostrado && desDiaMostrado !== desHoy()
+            ? desDiaEnLetras(desDiaMostrado) : 'Hoy', desSub === 'hoy' ? L.length : desCuenta(desHoy(), desHoy()))}${
+        sub('liquidar', 'Por liquidar', nLiq)}${
+        sub('rango', 'Historial', desSub === 'rango' ? desDatos.length : desCuenta(rr.desde, rr.hasta))}</div>
+      ${desSub === 'rango' ? desSelectorDeFechas() : ''}
+      ${desCargando ? '<p class="am-nota">Trayendo…</p>' : ''}
+      <input id="des_busca" class="dsp-buscar" type="search" placeholder="Buscar rótulo, pedido, factura, destino…"
+             value="${esc(desBusca)}">
+      <div class="am-tres">
+        <div class="am-tarjeta"><b class="am-gordo">${L.length}</b><span class="am-pie">despachos</span></div>
+        <div class="am-tarjeta"><b class="am-gordo" style="color:var(--am-va)">${atendidos}</b><span class="am-pie">atendidos</span></div>
+        <div class="am-tarjeta"><b class="am-gordo" style="color:${conInc ? 'var(--am-tarde)' : 'var(--am-tinta)'}">${conInc}</b><span class="am-pie">incidencias</span></div>
+      </div>
+      ${gasto ? `<p class="am-nota">Gasto de lo que se ve: S/ ${gasto.toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>` : ''}
+      ${L.length ? `<div class="am-pila">${filas}</div>` : `<p class="am-vacio">${
+          desBusca ? 'Nada que coincida con lo que buscas.'
+        : desSub === 'liquidar' ? 'No queda ninguna guía por liquidar.'
+        : desSub === 'rango' ? 'No hubo despachos entre esas dos fechas.'
+        : 'Todavía no se cargó ninguna guía de este día.'}</p>`}
+      ${L.length > 120 ? `<p class="am-nota">Se muestran los primeros 120 de ${L.length}. Afina la búsqueda.</p>` : ''}`;
+};
+
+/* LO YA ESCRITO SE GUARDA ANTES DE REPINTAR. Tocar un estado, un canal o elegir una
+   foto vuelve a dibujar la ficha, y sin esto se borraba la factura y el gasto que el
+   liquidador acababa de teclear. Estaba copiado en tres sitios; si una copia se olvida
+   de un campo nuevo, ese campo se pierde solo a veces, que es lo peor de encontrar. */
+const desGuardarEscrito = () => {
+    desBorrador = desBorrador || {};
+    ['entr', 'repr', 'inc', 'fact', 'gasto', 'bulto', 'factA'].forEach((k) => {
+        const el = raiz && raiz.querySelector('#des_' + k);
+        if (el) desBorrador[k] = el.value;
+    });
+    return desBorrador;
+};
+
+/* ── LA FICHA, QUE ES DONDE SE LIQUIDA ─────────────────────────────────────────────── */
+const hojaDeDespacho = () => {
+    if (!desAbierto) return '';
+    const f = DES.filaDe(desAbierto) || (desDatos || []).find((x) => String(x.id) === String(desAbierto));
+    if (!f) return '';
+    const b = desBorrador || {};
+    const val = (k) => (b[k] !== undefined ? b[k] : (f[k] !== undefined ? f[k] : ''));
+    const est = String(val('est') || '').toUpperCase();
+
+    const dato = (r, v) => `<div class="dsp-dato"><span>${esc(r)}</span><b>${esc(v === '' || v === null || v === undefined ? '—' : v)}</b></div>`;
+    const campo = (id, rot, v, tipo) => `<label class="dsp-campo"><span>${esc(rot)}</span>
+        <input id="${id}" type="${tipo || 'text'}" value="${esc(v === null || v === undefined ? '' : v)}"></label>`;
+    /* ── EL CANAL, QUE ES LO QUE DECIDE A QUÉ MÓDULO CAE ─────────────────────
+       Daniel, 15-sep-2026: *"en la aplicación va a haber un solo tracking, yo puedo
+       poner retail o no retail"*. Acá se pone, y abajo dice en qué módulo de la web va
+       a aparecer: si la consecuencia no se lee al lado del botón, nadie sabe qué está
+       eligiendo. Va ARRIBA del estado a propósito —primero a dónde va, después cómo
+       quedó— y sale en todas las guías, no solo en las nuevas: las 3.129 importadas no
+       traen el campo y se asumen catálogo, así que una mal clasificada se corrige acá. */
+    const canal = String(val('canal') || DES.canalDe(f)).toLowerCase();
+    const bCanal = (k) => `<button type="button" class="dsp-eb ${canal === k ? 'on' : ''}" data-dcanal="${k}"
+        style="${canal === k ? 'background:var(--am-va-agua);color:var(--am-va);border-color:var(--am-va)' : ''}">
+        ${esc(DES.CANALES[k].et)}</button>`;
+    const bEstado = (k) => `<button type="button" class="dsp-eb ${est === k ? 'on' : ''}" data-dest="${k}"
+        style="${est === k ? 'background:' + desAgua(k) + ';color:' + desTono(k) + ';border-color:' + desTono(k) : ''}">
+        ${esc(DES.ESTADOS[k].et)}</button>`;
+    const adj = (cual, rot, pide) => {
+        const puesto = desAdjuntos[cual];
+        const hay = puesto || (f[cual] === 'plataforma') || (cual === 'foto' && f.foto);
+        return `<label class="dsp-adj ${hay ? 'hay' : (pide ? 'pide' : '')}">
+            <span class="ic">${cual === 'pdf' ? '📄' : '📷'}</span>
+            <span>${esc(rot)}${pide ? ' *' : ''}</span>
+            <small>${puesto ? 'listo' : (hay ? 'ya tiene' : 'tocar')}</small>
+            <input type="file" data-dadj="${cual}" accept="${cual === 'pdf' ? 'application/pdf' : 'image/*'}" style="display:none">
+        </label>`;
+    };
+    const verBotones = ['foto', 'foto2', 'pdf'].filter((k) => f[k] === 'plataforma');
+
+    return `
+    <div class="am-velo" data-velo>
+      <div class="am-hoja">
+        <div class="am-hoja-cab" style="background:${desAgua(f.est)}">
+          <p class="am-hoja-ttl" style="color:${desTono(f.est)}">${esc(f.rot || f.prom || 'Despacho')}</p>
+          <p class="am-hoja-sub">${esc(f.age || '')} \u2192 ${esc(f.dest || '')} · ${esc(f.ase || '')} · ${esc(f.desp || '')}</p>
+        </div>
+        <div class="am-hoja-cuerpo">
+          <div class="am-bloque"><h4>Lo que vino de comercial</h4>
+            ${dato('Líder', f.lider)}${dato('Promotor', f.prom)}${dato('Pedidos', f.ped)}
+            ${dato('Cantidad', f.cant)}${dato('Cobro de flete', f.flete)}
+            ${f.obs ? dato('Observación', f.obs) : ''}</div>
+
+          <div class="am-bloque"><h4>A qué módulo va</h4>
+            <div class="dsp-ests">${Object.keys(DES.CANALES).map(bCanal).join('')}</div>
+            <p class="am-nota" style="margin:.35rem 0 0">${
+              canal === 'retail'
+                ? 'Al guardar, esta guía aparece en <b>Despacho → Tracking Retail</b>.'
+                : 'Al guardar, esta guía aparece en <b>NO RETAIL → Despacho de Catálogo</b>.'}</p></div>
+
+          <div class="am-bloque"><h4>Cómo quedó</h4>
+            <div class="dsp-ests">${Object.keys(DES.ESTADOS).map(bEstado).join('')}</div>
+            ${campo('des_entr', 'Fecha de entrega', val('entr'), 'date')}
+            ${est === 'REPROGRAMAR' ? campo('des_repr', 'Nueva fecha', val('repr'), 'date') : ''}
+            ${campo('des_inc', 'Incidencia', val('inc'))}</div>
+
+          <div class="am-bloque"><h4>La prueba</h4>
+            <div class="dsp-adjs">${adj('foto', 'Foto', true)}${adj('foto2', 'Foto 2')}${adj('pdf', 'PDF')}</div>
+            ${verBotones.length ? `<div class="dsp-ver">${verBotones.map((k) =>
+                `<button type="button" data-dver="${k}">Ver ${k}</button>`).join('')}</div>` : ''}
+            ${(f.foto && f.foto !== 'plataforma') ? `<p class="am-nota" style="margin-top:.4rem">
+               La foto de este despacho sigue en el Drive del AppSheet. Desde acá no se puede abrir.</p>` : ''}</div>
+
+          <div class="am-bloque"><h4>Lo que llena el liquidador</h4>
+            ${campo('des_fact', 'Factura', val('fact'))}
+            <label class="dsp-campo"><span>Facturado a</span>
+              <select id="des_factA">
+                <option value="">—</option>
+                ${['Consulting', 'Empresas Comerciales'].map((o) =>
+                    `<option value="${o}" ${val('factA') === o ? 'selected' : ''}>${o}</option>`).join('')}
+              </select></label>
+            <div style="display:flex;gap:.5rem">
+              <div style="flex:1">${campo('des_gasto', 'Gasto S/', val('gasto'), 'number')}</div>
+              <div style="flex:1">${campo('des_bulto', 'Bultos', val('bulto'), 'number')}</div>
+            </div></div>
+
+          ${desAviso ? `<p class="am-hecho" style="color:${desAviso.indexOf('No se') === 0 || desAviso.indexOf('Para marcar') === 0 ? 'var(--am-tarde)' : 'var(--am-va)'}">${esc(desAviso)}</p>` : ''}
+          <button type="button" class="am-boton-fuerte" data-dguardar>${desGuardando ? 'Guardando…' : 'Guardar la liquidación'}</button>
+          <button type="button" class="am-boton-suave" data-dcerrar>Cerrar</button>
+        </div>
+      </div>
+    </div>`;
+};
+
+/* Ver una foto o el PDF a pantalla completa. */
+const verAdjuntoMovil = async (id, cual) => {
+    const a = await DES.traerAdjunto(id, cual);
+    if (!a || !a.dato) { desAviso = 'No se pudo traer el archivo.'; pintar(); return; }
+    const capa = document.createElement('div');
+    capa.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9600;display:flex;' +
+        'flex-direction:column;align-items:center;justify-content:center;gap:.7rem;padding:.8rem';
+    const esPdf = String(a.tipo || '').indexOf('pdf') >= 0;
+    capa.innerHTML = esPdf
+        ? `<iframe src="${a.dato}" style="width:100%;height:76vh;border:0;border-radius:10px;background:#fff"></iframe>`
+        : `<img src="${a.dato}" style="max-width:100%;max-height:76vh;border-radius:10px;object-fit:contain">`;
+    const cerrar = document.createElement('button');
+    cerrar.type = 'button'; cerrar.textContent = 'Cerrar';
+    cerrar.style.cssText = 'background:rgba(255,255,255,.16);color:#fff;border:0;border-radius:9px;' +
+        'padding:.6rem 1.4rem;font:700 .88rem var(--am-ui)';
+    cerrar.addEventListener('click', () => capa.remove());
+    capa.appendChild(cerrar);
+    capa.addEventListener('click', (e) => { if (e.target === capa) capa.remove(); });
+    document.body.appendChild(capa);
+};
+
+const guardarDespacho = async () => {
+    if (desGuardando || !desAbierto) return;
+    const f = DES.filaDe(desAbierto) || (desDatos || []).find((x) => String(x.id) === String(desAbierto));
+    if (!f) return;
+    const lee = (id) => { const e = raiz.querySelector('#' + id); return e ? e.value.trim() : undefined; };
+    const cambio = {};
+    const poner = (k, v) => { if (v !== undefined && v !== null) cambio[k] = v; };
+    poner('est', ((desBorrador || {}).est !== undefined ? desBorrador.est : f.est) || '');
+    /* EL CANAL SIEMPRE VIAJA, aunque no se haya tocado. Las 3.129 guías importadas no
+       traen el campo y se asumen catálogo; si solo se guardara al cambiarlo, el día que
+       alguien filtre por canal en el servidor las viejas quedarían fuera de los dos
+       módulos. Que lo asumido y lo guardado digan lo mismo cuesta doce caracteres. */
+    poner('canal', String(((desBorrador || {}).canal !== undefined
+        ? desBorrador.canal : DES.canalDe(f)) || 'catalogo').toLowerCase());
+    poner('entr', lee('des_entr')); poner('repr', lee('des_repr')); poner('inc', lee('des_inc'));
+    poner('fact', lee('des_fact')); poner('factA', lee('des_factA'));
+    const g = lee('des_gasto'); if (g !== undefined) cambio.gasto = g === '' ? null : Number(g);
+    const bu = lee('des_bulto'); if (bu !== undefined) cambio.bulto = bu === '' ? null : Number(bu);
+
+    if (DES.faltaLaFoto(f, desAdjuntos, cambio.est)) {
+        desAviso = 'Para marcar ATENDIDO hace falta la foto. Es la prueba de la entrega.';
+        pintar(); return;
+    }
+    desGuardando = true; desAviso = ''; pintar();
+    try {
+        await DES.liquidar(f.id, cambio, desAdjuntos, (t) => { desAviso = t; pintar(); });
+        desGuardando = false; desAbierto = null; desBorrador = null; desAdjuntos = {}; desAviso = '';
+        pintar();
+    } catch (e) {
+        desGuardando = false;
+        desAviso = 'No se pudo guardar: ' + ((e && e.message) || 'sin detalle') + '. Nada se perdió.';
+        pintar();
+    }
+};
+
 /* ── EL MENU ─────────────────────────────────────────────────────────────────────────────
    Dos niveles, como lo pidio: se entra a Temas y ahi se elige, no se elige desde el primer
    nivel. Avisos vive aca y ya no ocupa una pestaña abajo. */
@@ -2971,6 +3397,21 @@ const CABECERAS = {
     /* EL DIA ELEGIDO, no el de hoy. Si la cabecera dijera hoy mientras se edita otro dia,
        se estaria marcando sobre el equivocado sin que nada lo avise. */
     lista: () => ({ sub: `Turno noche · ${diaDeLaListaEnLetras()}`, ttl: 'Pasar lista' }),
+    /* EL SUBTÍTULO DICE LO QUE SE ESTÁ VIENDO, no el total del historial. Decía
+       "3.129 despachos" cuando en pantalla había 45: el número más grande era el
+       menos cierto. */
+    despacho: () => {
+        const L = desDeLaPestana();
+        const i = DES.elIndice() || { semanas: {} };
+        const abiertas = Object.keys(i.semanas || {}).reduce((t, k) => t + (i.semanas[k].sin || 0), 0);
+        const r = desRango || DES.rangoDeLaSemana();
+        const que = desSub === 'liquidar' ? `${L.length} sin liquidar`
+                  : desSub === 'rango' ? `${L.length} del ${desDiaEnLetras(r.desde)} al ${desDiaEnLetras(r.hasta)}`
+                  : `${L.length} · ${desDiaEnLetras(desDiaMostrado || desHoy())}`;
+        return { sub: desDatos === null ? 'Consultando…'
+                    : (abiertas && desSub !== 'liquidar' ? `${que} · ${abiertas} por liquidar` : que),
+                 ttl: 'Despacho' };
+    },
     avisos: () => ({ sub: avisosEstado === 'prendidos' ? 'Activados en este teléfono' : 'Apagados', ttl: 'Avisos' }),
     robots: () => {
         const F = (robotsDatos && robotsDatos.filas) || [];
@@ -3007,6 +3448,7 @@ const pintar = () => {
            scroll ni la encierra la rejilla de tres filas de la app. */
         : seccion === 'chat' ? (chatSala ? pantallaConversacion() : pantallaChat())
         : seccion === 'tareas' ? (pantallaTareas() + hojaDeTarea())
+        : seccion === 'despacho' ? (pantallaDespacho() + hojaDeDespacho())
         : seccion === 'robots' ? (pantallaRobots() + hojaDeRobot())
         : seccion === 'avisos' ? pantallaAvisos()
         : pantallaEnCamino(seccion);
@@ -3124,6 +3566,51 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         raiz.style.bottom = (ocupa > 6 && ocupa < 90 ? ocupa : 30) + 'px';
     }
 
+    /* El archivo elegido: se achica, se pasa a base64 y se queda en memoria hasta que
+       se toque Guardar. Así, si alguien cierra sin guardar, no queda una foto suelta
+       en el servidor. */
+    raiz.addEventListener('change', async (e) => {
+        const inp = e.target.closest('[data-dadj]');
+        if (!inp) return;
+        const cual = inp.getAttribute('data-dadj');
+        const arch = inp.files && inp.files[0];
+        if (!arch) return;
+        try {
+            desGuardarEscrito();
+            desAviso = 'Preparando ' + cual + '…'; pintar();
+            desAdjuntos[cual] = await DES.prepararAdjunto(arch, cual);
+            desAviso = 'Ya está ' + (cual === 'pdf' ? 'el PDF' : 'la ' + cual) + '. Toca Guardar para subirlo.';
+        } catch (err) {
+            desAviso = 'No se pudo usar ese archivo: ' + ((err && err.message) || '');
+        }
+        pintar();
+    });
+
+    /* Las fechas no son un filtro más: cambiarlas manda a buscar semanas al servidor. */
+    raiz.addEventListener('change', (e) => {
+        const d1 = e.target.closest('#des_d1');
+        const d2 = e.target.closest('#des_d2');
+        if (!d1 && !d2) return;
+        const r = Object.assign({}, desRango || DES.rangoDeLaSemana());
+        if (d1) r.desde = d1.value;
+        if (d2) r.hasta = d2.value;
+        if (!r.desde || !r.hasta) return;
+        if (r.hasta < r.desde) { if (d1) r.hasta = r.desde; else r.desde = r.hasta; }
+        desRango = r; desAbierto = null; desCargando = true; pintar();
+        mirarDespachos().then(pintar);
+    });
+
+    raiz.addEventListener('input', (e) => {
+        if (!e.target.closest('#des_busca')) return;
+        clearTimeout(desReloj);
+        const v = e.target.value;
+        desReloj = setTimeout(() => {
+            desBusca = String(v).trim(); pintar();
+            const n = raiz.querySelector('#des_busca');
+            if (n) { n.focus(); n.selectionStart = n.value.length; }
+        }, 320);
+    });
+
     raiz.addEventListener('click', (e) => {
         const s = e.target.closest('[data-seccion]');
         if (s) {
@@ -3147,6 +3634,20 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
                    segundo despues se pone roja. Lo cazo la prueba de la pantalla. */
                 metasService.cargarReglas().then(pintar).catch(() => {});
             }
+            /* DESPACHO EMPIEZA SIEMPRE EN HOY, Y VUELVE A PREGUNTAR.
+               Daniel, 15-sep-2026: *"me voy a otro modulo y regreso y sigo en el mismo
+               sitio"*. Se habia quedado en Por liquidar sin nada pendiente, y volver a
+               entrar lo devolvia al mismo vacio: la pantalla se acordaba de un callejon.
+
+               Un modulo de configuracion hace bien en recordar donde estabas. Este no:
+               es el trabajo del dia, se entra a ver que hay que cerrar HOY, y mientras
+               uno estaba en otra pantalla puede haber liquidado otro desde su telefono.
+               Acordarse de la sub-pestana solo sirve para heredar un callejon. */
+            if (seccion === 'despacho') {
+                desSub = 'hoy'; desAbierto = null; desBorrador = null; desAdjuntos = {};
+                desBusca = ''; desAviso = ''; desRango = null;
+                desDatos = null; desCargando = false;
+            }
             if (seccion === 'chat') { chatSala = null; prepararChat(); }
             if (seccion === 'avisos') mirarAvisos().then(pintar);
             pintar();
@@ -3158,6 +3659,37 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         if (falto) { marcar(falto.getAttribute('data-falto'), false); return; }
         if (e.target.closest('[data-guardar]')) { guardarLista(true); return; }
         if (e.target.closest('[data-foto]')) { mandarFoto(); return; }
+        /* ── DESPACHO ── */
+        const ds = e.target.closest('[data-dsub]');
+        if (ds) {
+            desSub = ds.getAttribute('data-dsub'); desAbierto = null; desCargando = true; pintar();
+            mirarDespachos().then(pintar);
+            return;
+        }
+        if (e.target.closest('[data-drecargar]')) {
+            desDatos = null; desCargando = false; pintar(); return;
+        }
+        if (e.target.closest('[data-dsalir]')) {
+            seccion = 'inicio'; menu = null; pintar(); return;
+        }
+        const dd = e.target.closest('[data-desp]');
+        if (dd) { desAbierto = dd.getAttribute('data-desp'); desBorrador = null;
+                  desAdjuntos = {}; desAviso = ''; pintar(); return; }
+        const dc = e.target.closest('[data-dcanal]');
+        if (dc) { desGuardarEscrito(); desBorrador.canal = dc.getAttribute('data-dcanal'); pintar(); return; }
+        const de = e.target.closest('[data-dest]');
+        if (de) { desGuardarEscrito(); desBorrador.est = de.getAttribute('data-dest'); pintar(); return; }
+        const dv = e.target.closest('[data-dver]');
+        if (dv) { verAdjuntoMovil(desAbierto, dv.getAttribute('data-dver')); return; }
+        if (e.target.closest('[data-dguardar]')) { guardarDespacho(); return; }
+        if (e.target.closest('[data-dcerrar]')) {
+            desAbierto = null; desBorrador = null; desAdjuntos = {}; desAviso = ''; pintar(); return;
+        }
+        if (seccion === 'despacho' && desAbierto && e.target.closest('[data-velo]')
+            && !e.target.closest('.am-hoja')) {
+            desAbierto = null; desBorrador = null; desAdjuntos = {}; desAviso = ''; pintar(); return;
+        }
+
         const fr = e.target.closest('[data-robot]');
         if (fr) { robotAbierto = parseInt(fr.getAttribute('data-robot'), 10); ordenEnCurso = ''; pintar(); return; }
         const rel = e.target.closest('[data-relanzar]');
