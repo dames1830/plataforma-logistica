@@ -618,16 +618,25 @@
         await mod.montarChat({ username: 'dames', role: 'admin' });
         const chat3 = window.__chat;
         // el aviso entra AHORA MISMO, cuando la lista todavia puede no estar
+        const tAviso = performance.now();
         navigator.serviceWorker.dispatchEvent(new MessageEvent('message',
           { data: { tipo: 'ir', url: './index.html#chat=' + idSala } }));
-        // y se le da tiempo a que el latido la reponga
-        for (let i = 0; i < 12; i++) {
-          if (document.querySelector('.chat-ventana[data-sala="' + idSala + '"]')) break;
-          await chat3.latir();
-          await esperar(300);
+        /* SIN AYUDARLE. Antes esta prueba llamaba a `latir()` a mano en un bucle, que es
+           justo lo que el chat NO hace solo: asi daba OK aunque en la vida real hubiera que
+           esperar veinte segundos -o un minuto con la pestaña oculta, que fue lo que le
+           paso a Daniel-. Ahora solo se espera y se cronometra. */
+        let tardoAviso = -1;
+        for (let i = 0; i < 100; i++) {          // hasta 10 s
+          if (document.querySelector('.chat-ventana[data-sala="' + idSala + '"]')) {
+            tardoAviso = performance.now() - tAviso; break;
+          }
+          await esperar(100);
         }
-        chk(!!document.querySelector('.chat-ventana[data-sala="' + idSala + '"]'),
+        chk(tardoAviso >= 0,
             'el aviso que llega ANTES de que baje la lista igual abre la conversacion');
+        chk(tardoAviso >= 0 && tardoAviso < 5000,
+            'y la abre en ' + Math.round(tardoAviso) + ' ms, sin esperar al latido'
+            + ' (antes: hasta 20 s, o un minuto con la pestaña oculta)');
       }
 
       // Y que un aviso de robot NO abra el chat
