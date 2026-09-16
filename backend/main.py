@@ -469,6 +469,20 @@ def init_db(ruta: Optional[str] = None):
     
     # Tablas con estructura optimizada (sin campos pesados innecesarios)
     cursor.execute('CREATE TABLE IF NOT EXISTS logistics_snapshots (area_id TEXT, snapshot_date TEXT, data_json TEXT NOT NULL, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (area_id, snapshot_date))')
+    # EL INDICE QUE HACE QUE LA PLATAFORMA ABRA. Daniel, 16-sep-2026: *"tanto en la web
+    # como en la aplicacion demasiado lento; ya pasaron como 40 segundos y sigue ahi"*.
+    #
+    # `/api/sync/versiones` -la llamada de 5 KB que la web pregunta ANTES de bajar nada, y
+    # que el chat repite cada 4 segundos- hace
+    #     SELECT area_id, MAX(updated_at) ... GROUP BY area_id
+    # y sin indice eso es un BARRIDO COMPLETO DE LA TABLA: para juntar 119 fechas, SQLite
+    # se lee los 419 MB de `data_json`. Medido el 16-sep: 11 SEGUNDOS por llamada, y todo
+    # lo demas esperandola.
+    #
+    # Con este indice la consulta se resuelve LEYENDO SOLO EL INDICE, sin tocar el texto
+    # de los datos. El orden de las columnas importa: primero por la que se agrupa.
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_snapshots_area_fecha '
+                   'ON logistics_snapshots (area_id, updated_at)')
     cursor.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, name TEXT NOT NULL, role TEXT NOT NULL, active INTEGER DEFAULT 1, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
     cursor.execute('CREATE TABLE IF NOT EXISTS role_permissions (role TEXT NOT NULL, module TEXT NOT NULL, allowed INTEGER DEFAULT 1, PRIMARY KEY (role, module))')
     cursor.execute('CREATE TABLE IF NOT EXISTS buffer_config (key TEXT PRIMARY KEY, value TEXT NOT NULL)')
