@@ -25,23 +25,23 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0813';
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0813';
-import * as ORD from '../services_v245/despachoOrden.js?v=29.0813';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0813';
+import * as adminService from '../services_v245/adminService.js?v=29.0814';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0814';
+import * as ORD from '../services_v245/despachoOrden.js?v=29.0814';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0814';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0813';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0813';
-import * as metasService from '../services_v245/metasService.js?v=29.0813';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0814';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0814';
+import * as metasService from '../services_v245/metasService.js?v=29.0814';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0813';
+import * as temaService from '../services_v245/temaService.js?v=29.0814';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0813';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0813';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0814';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0814';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
@@ -50,12 +50,12 @@ import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarCon
          traerAdjunto, pesoLegible, latir, agregarAlGrupo, sacarDelGrupo,
          /* LA MISMA MARCA QUE LA WEB. El calculo vive en chat.js; aca solo se pinta,
             con la cara de la app. Dos copias del mismo calculo se desincronizan. */
-         marcaDelMensaje } from '../chat.js?v=29.0813';
+         marcaDelMensaje } from '../chat.js?v=29.0814';
 /* LOS AVISOS DEL TELEFONO VIVEN EN UN SERVICIO COMPARTIDO desde el 15-sep-2026: la web
    usa exactamente estas funciones para suscribir la PC. Ver `avisos.js`. */
 import { LLAVE_AVISOS, puedeAvisos, mirarAvisos as mirarSuscripcion,
          prenderAvisos as suscribir, apagarAvisos as desuscribir }
-    from '../services_v245/avisos.js?v=29.0813';
+    from '../services_v245/avisos.js?v=29.0814';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -517,6 +517,13 @@ const CSS = `
 #app-movil .am-gente-agregar { width: 100%; border: 0; border-radius: 10px; padding: .7rem;
   background: var(--am-relleno); color: var(--am-sobre); font-family: var(--am-ui);
   font-size: .9rem; font-weight: 700; cursor: pointer; }
+
+/* LA ETIQUETA DEL MEDIO: "Daniel Ames agrego a Vicente Moron". Copiada de la maqueta. El
+   amarillo es --am-curso, que ya cambia por tema y esta medido para leerse en los cuatro. */
+#app-movil .am-aviso-chat { align-self: center; text-align: center; max-width: 88%;
+  font-family: var(--am-ui); font-size: .68rem; font-weight: 700; line-height: 1.35;
+  color: var(--am-curso); background: var(--am-curso-agua); border-radius: 50px;
+  padding: .22rem .75rem; margin: .3rem 0; }
 
 #app-movil .am-charla { flex: 1; overflow-y: auto; padding: .7rem .65rem; display: flex;
   flex-direction: column; gap: .3rem; }
@@ -1726,6 +1733,15 @@ const pantallaConversacion = () => {
         diaAnterior = d;
         const mio = m.de === YO.username;
         const a = m.adjunto;
+        /* EL AVISO ES UNA ETIQUETA, NO UN MENSAJE. Daniel, 16-sep-2026: *"sale como un
+           mensaje, dice agrego a Vicente Moron; deberia aparecer en el centro, como una etiqueta,
+           letra pequena amarilla, Daniel Ames agrego a Vicente Moron"*. La app no tenia este
+           caso y pintaba "agrego a" y "creo el grupo" como burbujas propias, a la derecha y sin
+           el nombre delante. Lleva el nombre porque el texto guardado empieza por el verbo. */
+        if (m.aviso) {
+            return (cambia ? `<span class="am-dia">${esc(comoSeLee(d))}</span>` : '')
+                + `<span class="am-aviso-chat">${esc(nombreDe(m.de))} ${esc(m.texto)}</span>`;
+        }
         return (cambia ? `<span class="am-dia">${esc(comoSeLee(d))}</span>` : '')
             + `<div class="am-msg ${mio ? 'mio' : ''} ${m.borrado ? 'borrado' : ''}">
                 ${!mio && s.tipo === 'grupo' ? `<span class="de">${esc(nombreDe(m.de))}</span>` : ''}

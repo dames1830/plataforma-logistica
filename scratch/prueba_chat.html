@@ -822,8 +822,19 @@
       chk(!!renglon && renglon.aviso === true, 'queda el renglon gris "agregó a Manuel Sosa" en la conversacion');
       chk(!!renglon && renglon.sistema === true, 'marcado para que NO suene ni ponga el globo rojo');
       await esperar(300);
-      chk(!!(ventG() && [...ventG().querySelectorAll('.chat-msg.aviso')].some(e => /agregó a/.test(e.textContent))),
-          'y se ve en gris dentro de la ventanita');
+      const etW = ventG() && [...ventG().querySelectorAll('.chat-msg.aviso')].filter(e => /agregó a/.test(e.textContent))[0];
+      chk(!!etW, 'y se ve dentro de la ventanita');
+      if (etW) {
+        const cs = getComputedStyle(etW);
+        chk(parseFloat(cs.borderTopLeftRadius) >= 20 && parseFloat(cs.borderTopWidth) === 0,
+            'como ETIQUETA y no como burbuja: redondeada entera y sin borde ('
+            + cs.borderTopLeftRadius + ', borde ' + cs.borderTopWidth + ')');
+        const cu = ventG().querySelector('.cuerpo').getBoundingClientRect(), re = etW.getBoundingClientRect();
+        chk(Math.abs((re.left + re.width / 2) - (cu.left + cu.width / 2)) < 4,
+            'en el centro de la conversacion');
+        chk(/^Daniel Ames agregó a /.test(etW.textContent.trim()),
+            'con el nombre delante: "' + etW.textContent.trim() + '"');
+      }
       chk(/3 personas/.test((ventG().querySelector('[data-integrantes]') || {}).textContent || ''),
           'el contador de la cabecera sube a 3 personas');
 

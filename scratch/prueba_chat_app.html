@@ -101,6 +101,7 @@ const MENSAJES = {
     { id:'n1', de:'dames', texto:'Mañana revisamos el buffer C', cuando:sello('19:10') }
   ],
   'gr_prueba': [
+    { id:'g0', de:'dames', texto:'agregó a Vicente Moron', cuando:sello('21:50'), aviso:true, sistema:true },
     { id:'g1', de:'apillpa', texto:'Quedaron 3 tareas sin asignar', cuando:sello('21:58') },
     { id:'g2', de:'dames', texto:'Las veo y les asigno gente', cuando:sello('22:02') }
   ]
@@ -191,6 +192,35 @@ const MENSAJES = {
     $('#app-movil [data-sala="du_dames__msosa"]').click();
     await esperar(700);
     mide($('#app-movil .am-cab-conv .quien b'), 'con quién hablo');
+
+    /* LA ETIQUETA DEL AVISO, en este tema. Daniel, 16-sep-2026: "sale como un mensaje;
+       deberia aparecer en el centro, letra pequena amarilla, dependiendo del tema". */
+    $('[data-chat-volver]').click(); await esperar(250);
+    $('#app-movil [data-sala="gr_prueba"]').click(); await esperar(600);
+    {
+      const et = $('#app-movil .am-aviso-chat');
+      if (T.id === 'indigo') {
+        ok(!!et, 'el aviso sale como ETIQUETA y no como mensaje');
+        ok(!$$('#app-movil .am-msg').some(b => /agregó a/.test(b.textContent)),
+           'y ya no hay ninguna burbuja con "agregó a"');
+        ok(!!et && /^Daniel Ames agregó a Vicente Moron$/.test(et.textContent.trim()),
+           'lleva el nombre delante', et ? et.textContent.trim() : '—');
+        ok(!!et && !et.querySelector('.hr'), 'y no lleva hora, como un mensaje');
+        const charla = $('#app-movil .am-charla');
+        if (et && charla) {
+          const re = et.getBoundingClientRect(), rc = charla.getBoundingClientRect();
+          const desvio = Math.abs((re.left + re.width / 2) - (rc.left + rc.width / 2));
+          ok(desvio < 3, 'va en el centro', Math.round(desvio) + ' px de desvío');
+          ok(re.width < rc.width * 0.9, 'y es chica, no ocupa el ancho de un mensaje',
+             Math.round(re.width) + ' de ' + Math.round(rc.width) + ' px');
+          ok(parseFloat(getComputedStyle(et).fontSize) <= 12, 'con letra pequeña',
+             getComputedStyle(et).fontSize);
+        }
+      }
+      mide(et, 'la etiqueta amarilla del aviso');
+    }
+    $('[data-chat-volver]').click(); await esperar(250);
+    $('#app-movil [data-sala="du_dames__msosa"]').click(); await esperar(600);
     mide($('#app-movil .am-cab-conv .quien span'), 'si está en línea');
     mide($('#app-movil .am-msg:not(.mio) .tx'), 'un mensaje recibido');
     ok(!!$('#app-movil .am-adj'), 'el adjunto se dibuja',
