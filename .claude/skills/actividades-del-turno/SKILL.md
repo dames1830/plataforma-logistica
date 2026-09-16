@@ -178,6 +178,23 @@ de esa mañana. Esa fue la causa de raíz del "se resetea".
 **2. Restar totales no sirve.** Entra mercadería nueva mientras se trabaja. El Buffer C cerró
 una noche con MÁS de lo que empezó y la resta daba −61 cuando el equipo había sacado 869.
 
+## UNA JORNADA CERRADA QUE NADIE GUARDÓ TOMA LAS METAS DE SUS DATOS — 16-sep-2026, v29.0817
+
+Con la jornada cerrada la meta queda fija con lo guardado esa noche. **Si no quedó nada guardado**
+—nadie tocó la pantalla, o la retención del servidor lo borró— la regla la dejaba en CERO para
+siempre. Pasó con el **14-sep**: `turno_actividades` guardaba solo 2 fechas y una era un registro
+de prueba de **2099**, así que guardar el 15 borró el 14, y salió "sin meta" en todo.
+
+Ahora `renderActividadesSection` avisa `sinRegistro` y `metaCongelada()` deja entrar las metas de
+las fuentes **solo en ese caso**. Todas tienen fecha de esa jornada (tareas, plan y reserva del
+arranque, Buffer C del arranque): **validado contra el 15, que sí estaba guardado, da EXACTO lo
+congelado** (47.569 · 436 · 14.862 · 505). Daniel: *"sí, hazlo"*.
+
+Lo que NO cambió: una jornada cerrada **con** registro mantiene su meta aunque las fuentes digan
+otra cosa, y la jornada de hoy sigue al candado. Slotting sigue siendo a mano.
+
+Desde ese día `turno_actividades` guarda 400 días y las fotos del cálculo 31.
+
 ## SI EL CUADRO SE PONE EN CERO SOLO, MIRA LA FECHA ANTES QUE LOS DATOS
 
 `renderAdminTab()` redibuja la pestaña cada vez que el radar trae datos y llamaba a

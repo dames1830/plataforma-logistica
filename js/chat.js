@@ -35,7 +35,7 @@
    para que le lleguen una notificacion"*. El mecanismo es el mismo que usa la app del
    celular; lo unico propio de aca es el boton y el cartelito que explica que va a llegar. */
 import { puedeAvisos, mirarAvisos, prenderAvisos, apagarAvisos, queLlega }
-    from './services_v245/avisos.js?v=29.0816';
+    from './services_v245/avisos.js?v=29.0817';
 
 /* `typeof window` y no `window` a secas: `scratch/probar_marcas_chat.mjs` carga este
    archivo desde Node para comprobar el calculo de las marcas sin navegador, y sin la

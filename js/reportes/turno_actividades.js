@@ -13,6 +13,7 @@
  * tienen marcas.js y picking_piso.js: el que dibuja no sale a buscar datos.
  *
  *   OPC.estado      lo guardado del turno: actividades, horarios, metas a mano
+ *   OPC.sinRegistro esa jornada NO tenía nada guardado (el estado es heredado o de fábrica)
  *   OPC.fuentes     los números que llegan solos, por actividad
  *   OPC.alGuardar   se llama con el estado cada vez que algo cambia
  *
@@ -32,7 +33,7 @@ const CSS = "#ta {\n  color-scheme: var(--scheme);\n    --bg: var(--panel-deeper
 const HTML = "<div class=\"page\">\n\n\n  <section class=\"panel\">\n    <div>\n      <div class=\"slots\">\n        <div class=\"slot\">\n          <span class=\"slab\">Stock <b>activo</b> de ahora</span>\n          <input type=\"file\" data-slot=\"now-activo\" accept=\".csv,text/csv\">\n          <div class=\"sinfo\" data-info=\"now-activo\"></div>\n        </div>\n        <div class=\"slot\">\n          <span class=\"slab\">Stock <b>reserva</b> de ahora</span>\n          <input type=\"file\" data-slot=\"now-reserva\" accept=\".xlsx,.csv\">\n          <div class=\"sinfo\" data-info=\"now-reserva\"></div>\n        </div>\n      </div>\n    </div>\n  </section>\n\n  <section class=\"panel neon\">\n    <!-- El cuadro va en su propio marco, del título a la leyenda. La tabla de\n         abajo queda fuera: es para escribir, no para mirar. -->\n    <div class=\"marco neon\">\n      <div class=\"phead\"><h2>Gantt de actividades</h2><input type=\"date\" class=\"cal\" id=\"ta_g_dia\" title=\"Ver otra jornada\"><span class=\"fh\" id=\"ta_g_fh\"></span></div>\n      <div class=\"gwrap\"><div class=\"gg\" id=\"ta_gg\"></div></div>\n      <div class=\"leg\">\n        <span><span class=\"sw\" style=\"border:1px dashed var(--plan-line); height:8px\"></span>Lo que debía hacerse</span>\n        <span><span class=\"sw\" style=\"background:var(--ok)\"></span>Hecho</span>\n        <span><span class=\"sw\" style=\"background:var(--warn)\"></span>Se pasó del plan</span>\n        <span><span class=\"sw\" style=\"background:var(--accent)\"></span>En curso</span>\n        <span><span style=\"display:inline-block;width:0;border-left:1px dashed var(--now);height:12px;vertical-align:-2px;margin-right:8px\"></span>Ahora</span>\n      </div>\n    </div>\n\n    <div class=\"twrap\" style=\"margin-top:22px\">\n      <table id=\"ta_t_hor\">\n        <thead><tr>\n          <th class=\"l\">Actividad</th><th>Plan · empieza</th><th>Plan · termina</th>\n          <th>Real · empezó</th><th>Real · terminó</th><th>Desvío</th>\n          <th title=\"Marcada, la actividad entra al Cumplimiento del turno\">¿Tiene meta?</th><th></th>\n        </tr></thead>\n        <tbody></tbody>\n      </table>\n    </div>\n    <div style=\"margin-top:12px\"><button class=\"btn-a\" id=\"ta_b_add\">+ Agregar actividad</button></div>\n  </section>\n\n  <section class=\"panel neon\">\n    <div class=\"phead\"><h2>Cumplimiento del turno</h2><input type=\"date\" class=\"cal\" id=\"ta_c_dia\" title=\"Ver otra jornada\"><span class=\"fh\" id=\"ta_c_fh\"></span><button class=\"cand\" id=\"ta_cand\"></button></div>\n    <div class=\"rings\" id=\"ta_rings\"></div>\n    <div class=\"twrap\">\n      <table id=\"ta_t_cum\">\n        <thead><tr>\n          <th class=\"l\">Actividad</th><th>Unidad</th><th>Meta</th><th>Avance</th>\n          <th>Falta</th><th>A esta hora</th><th>%</th><th>Estado</th><th></th>\n        </tr></thead>\n        <tbody></tbody>\n      </table>\n    </div>\n    <div style=\"margin-top:12px\"><button class=\"btn-a\" id=\"ta_b_add2\">+ Agregar actividad</button></div>\n  </section>\n\n</div>";
 
 /** Dibuja el reporte dentro de `raiz` y avisa por `OPC.alGuardar` cuando algo cambia. */
-import { icono } from '../services_v245/iconos.js?v=29.0816';
+import { icono } from '../services_v245/iconos.js?v=29.0817';
 
 export const montarTurno = function (RAIZ, OPC) {
   OPC = OPC || {};
@@ -866,7 +867,18 @@ export const montarTurno = function (RAIZ, OPC) {
    * esas conservan la regla vieja, para no moverle los números a un turno cerrado.
    */
   function metaCongelada() {
-    if (OPC.fuentes && OPC.fuentes.jornadaCerrada) return true;
+    /* UNA JORNADA CERRADA QUE NADIE GUARDÓ toma las metas de SUS PROPIOS DATOS.
+     *
+     * Congelar la meta de una noche cerrada protege lo que quedó guardado esa noche. Pero
+     * si no quedó nada guardado no hay nada que proteger, y la regla la dejaba en CERO
+     * para siempre: el 16-sep-2026 Daniel abrió el 14 —su registro lo había borrado la
+     * retención del servidor— y salió "sin meta" en todo, con los avances medidos.
+     *
+     * Las metas salen de fuentes CON FECHA de esa jornada: las tareas de ese día, el plan
+     * y la reserva del arranque de esa noche, el Buffer C del arranque. Ninguna es el
+     * stock vivo de hoy. Comprobado contra el 15, que sí estaba guardado: da EXACTO lo
+     * que se congeló esa noche (47.569 · 436 · 14.862 · 505). Daniel: *"sí, hazlo"*. */
+    if (OPC.fuentes && OPC.fuentes.jornadaCerrada) return !OPC.sinRegistro;
     if (S.metaFija === true) return true;
     if (S.metaFija === false) return false;
     return S.procs.some(function (p) { return p.meta > 0; });
@@ -1019,7 +1031,8 @@ export const montarTurno = function (RAIZ, OPC) {
     var b = $('#ta_cand');
     if (!b) return;
     var cerrada = !!(OPC.fuentes && OPC.fuentes.jornadaCerrada);
-    var fija = metaCongelada();
+    // Cerrada es cerrada: aunque sus metas se hayan tomado de sus datos, ya no se mueven.
+    var fija = cerrada || metaCongelada();
     b.classList.toggle('fija', fija);
     b.disabled = cerrada;
     b.innerHTML = icono(fija ? 'candado' : 'candado_abierto', 18);

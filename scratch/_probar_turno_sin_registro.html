@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="es" data-tema="pbi">
+<head>
+<meta charset="utf-8">
+<title>Prueba · jornada cerrada sin registro</title>
+<!--
+  UNA JORNADA CERRADA QUE NADIE GUARDÓ TOMA LAS METAS DE SUS PROPIOS DATOS — con el módulo real.
+
+  El caso es el del 14-sep-2026: su registro lo borró la retención del servidor y salía "sin meta"
+  en todo. Las fuentes llevan los números de ESE día sacados del servidor (tareas, historial del
+  buffer y la foto del Buffer C del arranque, que se baja de producción: solo lectura, 1 KB).
+
+  Y se comprueba que lo demás NO cambió: una jornada cerrada CON registro sigue con su meta fija,
+  y la jornada de hoy sigue a las fuentes como siempre.
+-->
+</head>
+<body style="font-family:monospace; background:#111; color:#ddd; padding:16px">
+<pre id="salida">cargando…</pre>
+<div id="caja"></div>
+<script type="module">
+const res = [];
+const chk = (ok, texto) => res.push((ok ? 'OK    ' : 'FALLA ') + texto);
+const { montarTurno } = await import('../js/reportes/turno_actividades.js?t=' + Date.now());
+const caja = document.getElementById('caja');
+
+const foto = (await (await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/buffer_c_arranque?date=2026-09-14&t=' + Date.now())).json()).data;
+const totalC = Object.values(foto.detalle).reduce((s, x) => s + x, 0);
+
+/* Lo que dan las fuentes del 14 (calculado del servidor el 16-sep) */
+const fuentes14 = (cerrada) => ({
+  jornadaCerrada: cerrada,
+  almacenamiento: { meta: 44998, avance: 27458, unidad: 'pares' },
+  paletas: { meta: 365, avance: 96, unidad: 'paletas' },
+  separacion: { meta: 10954, avance: 4764, unidad: 'unidades' },
+  arranqueBufferC: { hora: foto.hora, fecha: foto.fecha, bufferC: foto.detalle, fuera: null }
+});
+
+const metas = () => {
+  const m = {};
+  caja.querySelectorAll('#ta_t_cum tbody tr').forEach(tr => {
+    const n = tr.querySelector('[data-k="n"]').value;
+    m[n] = Number(tr.querySelector('[data-k="meta"]').value);
+    m[n + ' · avance'] = Number(tr.querySelector('[data-k="av"]').value);
+  });
+  return m;
+};
+const candado = () => {
+  const b = caja.querySelector('#ta_cand');
+  return b ? (b.classList.contains('fija') ? 'cerrado' : 'abierto') + (b.disabled ? ' y apagado' : '') : 'no está';
+};
+
+/* A. Jornada CERRADA SIN registro (el 14): las metas salen de sus datos */
+montarTurno(caja, { estado: null, sinRegistro: true, fuentes: fuentes14(true), fecha: '2026-09-14' });
+let m = metas();
+chk(m['Almacenamiento'] === 44998, `14 sin registro · Almacenamiento meta ${m['Almacenamiento']} (debe ser 44.998)`);
+chk(m['Bajada de paletas'] === 365, `14 sin registro · Bajada de paletas meta ${m['Bajada de paletas']} (365)`);
+chk(m['Separación de mercadería'] === 10954, `14 sin registro · Separación meta ${m['Separación de mercadería']} (10.954)`);
+chk(m['Limpieza de Buffer C'] === totalC && totalC === 1082, `14 sin registro · Limpieza de Buffer C meta ${m['Limpieza de Buffer C']} (lo que había en el C al arrancar: ${totalC})`);
+chk(m['Almacenamiento · avance'] === 27458 && m['Bajada de paletas · avance'] === 96 && m['Separación de mercadería · avance'] === 4764,
+    `14 sin registro · los avances siguen igual (${m['Almacenamiento · avance']} · ${m['Bajada de paletas · avance']} · ${m['Separación de mercadería · avance']})`);
+chk(m['Slotting'] === 0, `14 sin registro · Slotting, que es a mano, queda en ${m['Slotting']} para escribirlo`);
+chk(!/sin meta/.test(caja.querySelector('#ta_rings').textContent.replace(/Slotting[\s\S]*?(?=Limpieza)/, '')),
+    'los anillos ya no dicen "sin meta" (salvo Slotting)');
+chk(candado() === 'cerrado y apagado', `el candado se ve cerrado y apagado (${candado()})`);
+
+/* B. Jornada CERRADA CON registro y meta guardada: manda lo guardado, aunque las fuentes digan otra cosa */
+const guardado15 = { dia: '2026-09-15', ini: '19:00', fin: '06:30', metaFija: true, procs: [
+  { n: 'Almacenamiento', u: 'pares', meta: 47569, av: 29198, fuente: 'almacenamiento', cuenta: true, aMano: {} },
+  { n: 'Bajada de paletas', u: 'paletas', meta: 436, av: 105, fuente: 'paletas', cuenta: true, aMano: {} }
+] };
+montarTurno(caja, { estado: JSON.parse(JSON.stringify(guardado15)), sinRegistro: false, fecha: '2026-09-15',
+  fuentes: { jornadaCerrada: true, almacenamiento: { meta: 99999, avance: 1, unidad: 'pares' }, paletas: { meta: 999, avance: 1, unidad: 'paletas' } } });
+m = metas();
+chk(m['Almacenamiento'] === 47569 && m['Bajada de paletas'] === 436, `15 con registro · la meta guardada NO se mueve (${m['Almacenamiento']} · ${m['Bajada de paletas']})`);
+chk(m['Almacenamiento · avance'] === 29198, `15 con registro · el avance guardado tampoco (${m['Almacenamiento · avance']})`);
+
+/* C. Jornada CERRADA CON registro pero con la meta en 0: sigue como antes (no se inventa) */
+montarTurno(caja, { estado: { dia: '2026-09-13', procs: [{ n: 'Almacenamiento', u: 'pares', meta: 0, av: 0, fuente: 'almacenamiento', cuenta: true, aMano: {} }] },
+  sinRegistro: false, fecha: '2026-09-13', fuentes: { jornadaCerrada: true, almacenamiento: { meta: 5000, avance: 10, unidad: 'pares' } } });
+m = metas();
+chk(m['Almacenamiento'] === 0, `cerrada con registro y meta 0 · queda en 0 como siempre (${m['Almacenamiento']})`);
+
+/* D. La jornada de HOY sin registro: la meta sigue a las fuentes, como siempre */
+montarTurno(caja, { estado: null, sinRegistro: true, fecha: '2026-09-16',
+  fuentes: { jornadaCerrada: false, almacenamiento: { meta: 12345, avance: 100, unidad: 'pares' } } });
+m = metas();
+chk(m['Almacenamiento'] === 12345, `hoy · la meta sigue a la fuente (${m['Almacenamiento']})`);
+chk(candado() === 'cerrado' || candado() === 'abierto', `hoy · el candado se puede usar (${candado()})`);
+
+const fallas = res.filter(r => r.startsWith('FALLA')).length;
+document.getElementById('salida').textContent = res.join('\n') + '\n\n' + (fallas ? `HAY ${fallas} FALLA(S)` : `TODO BIEN (${res.length})`);
+window.__resultado = { fallas, res };
+</script>
+</body>
+</html>
