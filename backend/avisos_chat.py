@@ -45,6 +45,10 @@ import json
 import os
 import sqlite3
 
+# La barra invertida seguida de 'n': asi quedan los saltos de linea cuando alguien pega
+# un PEM en el panel de un servicio web. Se arma con chr() para que no la toque nadie.
+ESCAPE_SALTO = chr(92) + 'n'
+
 AREA_SUS = 'push_suscripciones'
 AREA_SALAS = 'chat_salas'
 
@@ -57,8 +61,55 @@ NO_SON_SALAS = ('chat_salas', 'chat_leidos', 'chat_presencia')
 _ya_avise_que_falta = False
 
 
+def forma_de_la_llave(bruto=None):
+    """En que formato esta guardada la llave. NUNCA devuelve su valor.
+
+    Sirve para contestar "¿por que no sale el aviso?" sin tener que ver la contrasena.
+    """
+    b = (bruto if bruto is not None else os.environ.get('VAPID_PRIVADA', '')) or ''
+    limpio = b.strip().strip('"').strip("'").strip()
+    return {
+        'largo': len(limpio),
+        'es_pem': 'BEGIN' in limpio,
+        'saltos_escapados': ESCAPE_SALTO in limpio,
+        'tenia_comillas': b.strip() != limpio,
+        'parece_base64url': len(limpio) in (42, 43, 44) and 'BEGIN' not in limpio,
+    }
+
+
+def _llave_usable():
+    """La llave privada en el formato que pywebpush entiende, venga como venga.
+
+    EL 16-sep-2026 EL AVISO AL CELULAR MORIA EXACTAMENTE ACA. La llave estaba puesta en Render
+    -el chequeo decia `puede_avisar: true`- pero en formato **PEM**, el bloque
+    "-----BEGIN PRIVATE KEY-----" que es como lo deja el generador. Y `py_vapid.from_string()`
+    NO acepta PEM: revienta con "Could not deserialize key data" y el aviso se perdia sin que
+    nadie se enterara.
+
+    MEDIDO, NO SUPUESTO (`scratch/probar_llave_vapid.py`): `from_string` acepta el base64url
+    crudo, el base64 estandar con mas y barras, uno con espacios de sobra y hasta uno entre
+    comillas. Con el PEM falla, venga en una linea o en varias.
+
+    Se normaliza TODO al base64url de 43 caracteres, que es el que acepta cualquier version.
+    Asi da igual como este guardada y da igual quien la pegue.
+    """
+    bruto = (os.environ.get('VAPID_PRIVADA', '') or '').strip().strip('"').strip("'").strip()
+    if not bruto or 'BEGIN' not in bruto:
+        return bruto
+    # Es un PEM. Al pegarlo en un panel web los saltos suelen quedar escritos, no dados.
+    pem = bruto.replace(ESCAPE_SALTO, '\n')
+    try:
+        import base64
+        from py_vapid import Vapid01 as Vapid
+        v = Vapid.from_pem(pem.encode())
+        num = v.private_key.private_numbers().private_value
+        return base64.urlsafe_b64encode(num.to_bytes(32, 'big')).decode().rstrip('=')
+    except Exception:
+        return bruto      # que falle con su error de siempre, pero ya queda anotado
+
+
 def _clave():
-    return os.environ.get('VAPID_PRIVADA', '')
+    return _llave_usable()
 
 
 def _correo():

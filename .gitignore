@@ -65,3 +65,4 @@ v.json
 
 # Los JSON que deja `distribucion.py --probar`: son de una corrida en seco.
 robot/_prueba_*.json
+scratch/_libs/
