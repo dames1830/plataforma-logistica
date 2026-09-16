@@ -35,7 +35,7 @@
    para que le lleguen una notificacion"*. El mecanismo es el mismo que usa la app del
    celular; lo unico propio de aca es el boton y el cartelito que explica que va a llegar. */
 import { puedeAvisos, mirarAvisos, prenderAvisos, apagarAvisos, queLlega }
-    from './services_v245/avisos.js?v=29.0800';
+    from './services_v245/avisos.js?v=29.0803';
 
 /* `typeof window` y no `window` a secas: `scratch/probar_marcas_chat.mjs` carga este
    archivo desde Node para comprobar el calculo de las marcas sin navegador, y sin la
@@ -849,7 +849,10 @@ const CSS = `
   /* Un link largo o un codigo sin espacios se parte antes que empujar la ventana. */
   min-width: 0; overflow-wrap: anywhere; }
 .chat-msg .de { font-size: 10px; font-weight: 700; color: var(--brand-pale); margin-bottom: 0.15rem; }
-.chat-msg .pie { margin-top: 0.25rem; font-size: 10px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+/* LA HORA VA CON --text-muted Y NO CON --text-dim. Medido sobre la burbuja de verdad, el
+   gris apagado daba 3,03 a 1 en Indigo y 3,36 en PBI, contra un minimo legible de 4,5 — y
+   es texto de 10 px. En la app del celular esto ya se habia subido por el mismo motivo. */
+.chat-msg .pie { margin-top: 0.25rem; font-size: 10px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 /* ── LAS MARCAS DE ENTREGADO Y LEIDO ── OJO: NADA DE COMILLAS INVERTIDAS ACA ADENTRO,
    esto vive dentro de una plantilla de texto y una sola la corta. Ya paso al escribir
    este mismo comentario: el CSS entero se leyo como codigo. ──────────────────────────────────────────────────────
@@ -1021,12 +1024,22 @@ const pintarLista = () => {
        Si hay tres, salen tres. Las demas se encuentran por el buscador de arriba.
        Las que tienen mensajes sin leer van primero -no se puede esconder un mensaje nuevo-,
        pero el tope de cinco es tope: ocupan lugar, no lo agregan. */
+    /* EL DIBUJO SE COMPARA ANTES DE TOCAR LA PANTALLA, igual que en `pintarVentanas`.
+       Sin esto la lista se rehacia entera en CADA vuelta -mas de una vez por segundo-, y si el
+       redibujo caia entre que se aprieta el boton y se suelta, la fila sobre la que se apreto
+       ya no existia: el navegador no dispara el clic y la conversacion no abria. Daniel,
+       16-sep-2026: *"le doy clic a uno, no abre; le doy clic al otro, no abre"*. */
+    const poner = (html) => {
+        if (caja.__ultimoDibujo === html) return;      // nada cambio: no se toca la pantalla
+        caja.__ultimoDibujo = html;
+        caja.innerHTML = html;
+    };
     if (!q) {
         const alaVista = ordenadas.filter(s => sinLeer(s.id))
             .concat(ordenadas.filter(s => !sinLeer(s.id)))
             .slice(0, EN_LA_LISTA);
-        caja.innerHTML = alaVista.map(filaSala).join('')
-            || '<div class="vacio">Todavía no hay conversaciones. Busca a alguien arriba.</div>';
+        poner(alaVista.map(filaSala).join('')
+            || '<div class="vacio">Todavía no hay conversaciones. Busca a alguien arriba.</div>');
         return;
     }
     const salasQ = ordenadas.filter(s => nombreDeSala(s).toLowerCase().indexOf(q) >= 0);
@@ -1039,7 +1052,7 @@ const pintarLista = () => {
     let html = '';
     if (salasQ.length) html += '<div class="sec">Conversaciones</div>' + salasQ.map(filaSala).join('');
     if (personas.length) html += '<div class="sec">Personas de la web</div>' + personas.map(filaPersona).join('');
-    caja.innerHTML = html || '<div class="vacio">Nadie con ese nombre.</div>';
+    poner(html || '<div class="vacio">Nadie con ese nombre.</div>');
 };
 
 /* AL REPINTAR NO SE PIERDE NI EL CURSOR NI LO ESCRITO A MEDIAS.
@@ -1196,9 +1209,22 @@ const iconoConNumero = (n) => {
     return c.toDataURL('image/png');
 };
 
+/* EL PNG SE DIBUJA UNA SOLA VEZ POR NUMERO.
+ *
+ * `toDataURL` es sincrono y caro -crea el lienzo, dibuja y codifica el PNG entero a texto-, y
+ * `pintarGlobo` corre en CADA dibujo del chat: mas de una vez por segundo. Haciendolo siempre,
+ * el hilo del navegador se queda ocupado y LOS CLICS SE ENCOLAN: Daniel, 16-sep-2026, *"le doy
+ * clic a uno, no abre; le doy clic al otro, no abre... y de ahi recien me abre los tres de
+ * porrazo"*. Lo mismo vale para `setAppBadge`, que es una llamada al sistema.
+ *
+ * Con la guarda, un chat quieto no hace NADA en cada vuelta. */
+let ultimoPintado = { favicon: -1, badge: -1 };
+
 const pintarFavicon = (n) => {
+    if (ultimoPintado.favicon === n) return;
     const l = document.querySelector('link[rel="icon"]');
     if (!l) return;
+    ultimoPintado.favicon = n;
     if (faviconOriginal === null) {
         faviconOriginal = { href: l.getAttribute('href') || '', tipo: l.getAttribute('type') || '' };
     }
@@ -1215,8 +1241,10 @@ const pintarFavicon = (n) => {
 
 /** El globito de la barra de tareas. Sin la web instalada no hace nada, y esta bien asi. */
 const pintarBadge = (n) => {
+    if (ultimoPintado.badge === n) return;
     try {
         if (typeof navigator === 'undefined' || !('setAppBadge' in navigator)) return;
+        ultimoPintado.badge = n;
         if (n > 0) navigator.setAppBadge(n); else navigator.clearAppBadge();
     } catch (e) { /* el navegador no quiso: el numero igual se ve en la pestaña */ }
 };
@@ -1301,15 +1329,27 @@ const pintarAvisos = () => {
             + 'Despu\u00e9s vuelve a entrar aqu\u00ed.</p>';
         return;
     }
+    /* CON LOS AVISOS YA PRENDIDOS, SOLO EL BOTON.
+     *
+     * Daniel, 16-sep-2026, mandando dos capturas del cartel: *"tambien quita todo esto del
+     * chat, solo que quede el boton"*. Y tiene razon: el texto y la lista estan para que uno
+     * sepa QUE le va a llegar ANTES de darle el permiso al navegador. Una vez dado, ya no
+     * deciden nada \u2014 solo ocupan media pantalla del panel cada vez que se abre.
+     *
+     * APAGADO SE QUEDAN. Ahi si hacen falta: un "\u00bfpermitir notificaciones?" a secas se
+     * contesta que no sin leerlo, y volver atras obliga a entrar a los ajustes del navegador.
+     * Es la misma decision que ya se habia tomado para la app del celular. */
+    if (avisosEstado === 'prendidos') {
+        cartel.innerHTML = '<button type="button" class="apagar" id="chat-avisos-apagar">'
+            + 'Apagar en esta PC</button>';
+        return;
+    }
     const lista = queLlega(YO && YO.role).map(x => `<li>${esc(x)}</li>`).join('');
-    cartel.innerHTML = avisosEstado === 'prendidos'
-        ? `<p><b>Esta PC ya te avisa.</b> Te llega aunque el navegador est\u00e9 cerrado:</p>
-           <ul>${lista}</ul>
-           <button type="button" class="apagar" id="chat-avisos-apagar">Apagar en esta PC</button>`
-        : `<p><b>Que esta PC te avise</b>, aunque el navegador est\u00e9 cerrado:</p>
-           <ul>${lista}</ul>
-           <button type="button" class="prender" id="chat-avisos-prender">Activar los avisos</button>
-           <span class="nota">Tu celular se activa aparte, desde la app.</span>`;
+    cartel.innerHTML =
+        `<p><b>Que esta PC te avise</b>, aunque el navegador est\u00e9 cerrado:</p>
+         <ul>${lista}</ul>
+         <button type="button" class="prender" id="chat-avisos-prender">Activar los avisos</button>
+         <span class="nota">Tu celular se activa aparte, desde la app.</span>`;
 };
 
 const cambiarAvisos = async (prender) => {
@@ -1386,11 +1426,16 @@ const abrirSala = async (id) => {
         abiertas.unshift({ id, plegada: false });
         if (abiertas.length > MAX_VENTANAS) abiertas.pop();
     }
-    await bajarSala(id);
-    marcarLeida(id);
+    /* SE DIBUJA PRIMERO Y SE BAJA DESPUES.
+       `bajarSala` es una llamada de red; esperandola antes de pintar, la ventana no aparecia
+       hasta que el servidor contestara y el clic se sentia muerto. Lo que ya se tiene en
+       memoria se muestra en el acto y el resto entra cuando llega. */
     esconderToast();
     pintar();
     acomodarReloj();
+    await bajarSala(id);
+    marcarLeida(id);
+    pintar();
     /* `raiz` es null en la app del celular, que usa estos datos y dibuja su propia
        pantalla. Sin la guarda, esto tumbaba el latido entero. */
     const caja = raiz && raiz.querySelector(`[data-escribir="${id}"]`);
@@ -1667,6 +1712,7 @@ export const desmontarChat = () => {
     pintarBadge(0);
     if (tituloBase) document.title = tituloBase;
     tituloBase = ''; faviconOriginal = null; ultimoTitulo = { n: -1, visible: null };
+    ultimoPintado = { favicon: -1, badge: -1 };
     if (reloj) { clearInterval(reloj); reloj = null; }
     if (raiz && raiz.parentNode) raiz.parentNode.removeChild(raiz);
     const est = document.getElementById('chat-estilos');
@@ -1680,5 +1726,8 @@ export const desmontarChat = () => {
 if (typeof window !== 'undefined') window.__chat = { latir, mandar, crearDirecta, crearGrupo, borrar, bajarSala, marcasDelServidor,
                   mandarConAdjunto, subirAdjunto, achicarFoto,
                   anunciarme, mirarQuienEsta, enLinea, nombreBonito, sincronizarReloj,
+                  /* Para probar el cartel de avisos sin que el navegador conceda el
+                     permiso de verdad, que en una prueba automatica no se puede. */
+                  fingirEstadoAvisos: (e) => { avisosEstado = e; avisosAbierto = true; pintarAvisos(); },
                   estado: () => ({ salas, mensajes, leidos, noLeidos, abiertas, versionesVistas,
                                    sinLeer: sinLeerTotal() }) };

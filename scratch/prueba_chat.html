@@ -192,6 +192,10 @@
         chk(!/\(\d+\)/.test(tituloDelChat), 'y el nombre de la pestaña pierde el contador');
       }
       tocarTitulo = true;
+      /* SE DEVUELVE LA PESTAÑA A 'hidden'. Lo que sigue da por sentado el comportamiento de
+         siempre -el mensaje sube el contador-, y con la pestaña a la vista se abre solo y
+         queda leido. Dejarla en 'visible' hacia fallar dos casos de mas abajo. */
+      fingirPestana('hidden');
 
       // 5. borrar un mensaje: solo el administrador
       await chat.borrar(idSala, suyo.id);
@@ -364,8 +368,18 @@
       document.getElementById('chat-buscar').value = 'prueba turno';
       document.getElementById('chat-buscar').dispatchEvent(new Event('input'));
       await esperar(300);
-      chk(document.querySelectorAll('#chat-lista [data-sala]').length >= filasLista,
-          'buscando se llega a las que no entran en las cinco');
+      /* SOLO TIENE SENTIDO SI HAY MAS DE CINCO. Con menos, todas estan a la vista y no hay
+         ninguna "que no entre": lo que se comprueba entonces es que el buscador ENCUENTRA. */
+      const hallados = [...document.querySelectorAll('#chat-lista [data-sala]')]
+        .map(f => f.textContent.toLowerCase());
+      if (cuantasSalas > 5) {
+        chk(document.querySelectorAll('#chat-lista [data-sala]').length >= filasLista,
+            'buscando se llega a las que no entran en las cinco');
+      } else {
+        chk(hallados.length > 0 && hallados.every(t => t.indexOf('prueba turno') >= 0),
+            'buscando "prueba turno" salen solo las que coinciden: ' + hallados.length
+            + ' de ' + cuantasSalas + ' (no hacen falta las cinco, hay menos)');
+      }
       document.getElementById('chat-buscar').value = '';
       document.getElementById('chat-buscar').dispatchEvent(new Event('input'));
       await esperar(200);
@@ -445,6 +459,68 @@
       chk(alVolver > 0 && alVolver <= 5,
           'y vuelven a salir las ultimas conversaciones: ' + alVolver + ' (antes de cerrar habia '
           + conBusqueda + ' resultado(s) de la busqueda)');
+
+      /* 15bis. EL CLIC TIENE QUE ABRIR, Y AL TOQUE (Daniel, 16-sep-2026)
+         "le doy clic a uno, no abre; le doy clic al otro, no abre... y de ahi recien me abre
+         los tres de porrazo". Dos causas, y las dos se miden aca:
+           a) la lista se rehacia en CADA vuelta: si el redibujo cae entre apretar y soltar, la
+              fila ya no existe y el navegador descarta el clic;
+           b) el iconito de la pestaña se volvia a generar en PNG en cada vuelta -`toDataURL`
+              es sincrono y caro-, y con el hilo ocupado los clics se encolan. */
+      fingirPestana('visible');
+      document.getElementById('chat-burbuja').click();      // abrir el panel
+      await esperar(300);
+
+      // (a) en reposo, la lista NO se vuelve a escribir
+      const cajaLista = document.getElementById('chat-lista');   // `lista` ya existe arriba
+      let reescrituras = 0;
+      const obs = new MutationObserver(() => { reescrituras++; });
+      obs.observe(cajaLista, { childList: true });
+      // (b) y el PNG del iconito no se vuelve a generar
+      let pngs = 0;
+      const toDataURLReal = HTMLCanvasElement.prototype.toDataURL;
+      HTMLCanvasElement.prototype.toDataURL = function (...a) { pngs++; return toDataURLReal.apply(this, a); };
+
+      await esperar(3000);                                   // tres segundos quieto
+      obs.disconnect();
+      HTMLCanvasElement.prototype.toDataURL = toDataURLReal;
+      chk(reescrituras === 0,
+          'quieto 3 s, la lista no se rehace ni una vez (se rehizo ' + reescrituras + ')');
+      chk(pngs === 0,
+          'y el iconito de la pestaña no se vuelve a generar (' + pngs + ' veces)');
+
+      // (c) el clic abre la ventanita SIN esperar al servidor
+      const filaClic = document.querySelector('#chat-lista [data-sala]');
+      const salaClic = filaClic && filaClic.getAttribute('data-sala');
+      const t0 = performance.now();
+      filaClic.click();
+      let tardo = -1;
+      for (let i = 0; i < 40; i++) {                          // se mira cada 10 ms
+        if (document.querySelector('.chat-ventana[data-sala="' + salaClic + '"]')) { tardo = performance.now() - t0; break; }
+        await esperar(10);
+      }
+      chk(tardo >= 0 && tardo < 150,
+          'al hacer clic, la ventanita aparece en ' + Math.round(tardo) + ' ms (sin esperar al servidor)');
+      fingirPestana('hidden');
+
+      /* 15ter. EL CARTEL DE AVISOS, YA PRENDIDO, ES SOLO EL BOTON (Daniel, 16-sep-2026)
+         "tambien quita todo esto del chat, solo que quede el boton". El texto y la lista
+         siguen estando APAGADO, que es cuando hacen falta para decidir. */
+      chat.fingirEstadoAvisos('prendidos');
+      await esperar(150);
+      const cartel = document.getElementById('chat-avisos-cartel');
+      chk(!!cartel.querySelector('#chat-avisos-apagar'), 'prendido: el boton de apagar sigue estando');
+      chk(cartel.querySelectorAll('p, ul, li').length === 0,
+          'y no queda nada mas: ni texto ni lista (' + cartel.querySelectorAll('p, ul, li').length + ' sobrantes)');
+      chk(cartel.textContent.trim() === 'Apagar en esta PC',
+          'lo unico que se lee es "' + cartel.textContent.trim() + '"');
+
+      chat.fingirEstadoAvisos('apagados');
+      await esperar(150);
+      chk(!!cartel.querySelector('#chat-avisos-prender')
+          && cartel.querySelectorAll('li').length > 0,
+          'apagado si explica que va a llegar antes de pedir el permiso: '
+          + cartel.querySelectorAll('li').length + ' puntos');
 
       // 16. EL CHAT SE LEE EN LOS CUATRO TEMAS
       //     En Negro el acento es BLANCO: el boton Enviar quedaba blanco sobre blanco y la
