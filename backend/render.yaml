@@ -16,3 +16,12 @@ services:
         value: "/data/database.db"
       - key: PYTHON_VERSION
         value: "3.11.9"
+      # LOS AVISOS DEL CHAT AL CELULAR. El VALOR se pone A MANO en el panel de
+      # Render (Environment > Add Environment Variable): la llave privada es una
+      # contrasena y nunca entra al repositorio. `sync: false` es justamente eso:
+      # la variable queda declarada, el valor lo guarda Render.
+      # Es la misma llave que usa el robot del Contabo. Ver backend/avisos_chat.py.
+      - key: VAPID_PRIVADA
+        sync: false
+      - key: VAPID_CORREO
+        sync: false
