@@ -32,6 +32,29 @@
     let tocarTitulo = true;
     const chk = (cond, msg) => { res.push((cond ? 'OK    ' : 'FALLA ') + msg); pintar(); return !!cond; };
     const esperar = (ms) => new Promise(r => setTimeout(r, ms));
+
+    /* Lo que la prueba creo en beta, la prueba lo deja como estaba. */
+    const creadoPorLaPrueba = [];
+    const limpiarLoDeLaPrueba = async () => {
+      const API_L = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+      for (const id of creadoPorLaPrueba) {
+        try {
+          await fetch(API_L + '/chat_' + id + '?date=MASTER',
+                      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '[]' });
+        } catch (e) { /* si no se puede, se limpia a mano */ }
+      }
+      try {
+        const r = await fetch(API_L + '/chat_salas?date=MASTER&t=' + Date.now());
+        const j = await r.json();
+        const d = (j && j.data) || [];
+        const quedan = d.filter(x => creadoPorLaPrueba.indexOf(x && x.id) < 0);
+        if (quedan.length !== d.length) {
+          await fetch(API_L + '/chat_salas?date=MASTER',
+                      { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(quedan) });
+        }
+      } catch (e) { /* idem */ }
+    };
     pintar = () => {
       const fallas = res.filter(r => r.indexOf('FALLA') === 0).length;
       salida.innerHTML = res.join(String.fromCharCode(10)) + String.fromCharCode(10) + String.fromCharCode(10)
@@ -315,6 +338,7 @@
 
       // 9. un grupo
       const idGrupo = await chat.crearGrupo('Prueba turno noche', [OTRO, 'msosa']);
+      creadoPorLaPrueba.push(idGrupo);        // para borrarlo al terminar
       await esperar(600);
       const salas = await (await fetch(API + '/chat_salas?date=MASTER&t=' + Date.now())).json();
       const grupo = ((salas && salas.data) || []).filter(s => s.id === idGrupo)[0];
@@ -556,6 +580,40 @@
           'y en el panel vuelven a leerse los nombres de las personas');
       window.fetch = fetchReal;
 
+      /* 15quinquies. AL TOCAR EL AVISO, SE ABRE ESA CONVERSACION (Daniel, 16-sep-2026)
+         "lo abri pero no me mando de frente al chat, solo me abrio la aplicacion". El aviso
+         decia "#chat" a secas y nadie en la web escuchaba el mensaje del service worker.
+         Ahora lleva la sala y se abre. Se simula el mensaje tal cual lo manda sw.js. */
+      const cerrarTodas = document.querySelectorAll('.chat-ventana [data-cerrar]');
+      cerrarTodas.forEach(b => b.click());
+      await esperar(300);
+      chk(document.querySelectorAll('.chat-ventana').length === 0,
+          'se cierran las ventanitas para probar el aviso');
+
+      // El destino que arma el servidor: './index.html#chat=<idSala>'
+      const oyentes = navigator.serviceWorker ? true : false;
+      if (oyentes) {
+        const ev = new MessageEvent('message', { data: { tipo: 'ir', url: './index.html#chat=' + idSala } });
+        navigator.serviceWorker.dispatchEvent(ev);
+        await esperar(700);
+        chk(!!document.querySelector('.chat-ventana[data-sala="' + idSala + '"]'),
+            'al tocar el aviso se abre ESA conversacion, no solo la app');
+      } else {
+        chk(true, '(este navegador no tiene service worker: no se puede probar el aviso)');
+      }
+
+      // Y que un aviso de robot NO abra el chat
+      if (oyentes) {
+        const cerrar2 = document.querySelectorAll('.chat-ventana [data-cerrar]');
+        cerrar2.forEach(b => b.click());
+        await esperar(250);
+        navigator.serviceWorker.dispatchEvent(new MessageEvent('message',
+          { data: { tipo: 'ir', url: './index.html#robots' } }));
+        await esperar(400);
+        chk(document.querySelectorAll('.chat-ventana').length === 0,
+            'y el aviso de un robot no abre ninguna conversacion');
+      }
+
       // 16. EL CHAT SE LEE EN LOS CUATRO TEMAS
       //     En Negro el acento es BLANCO: el boton Enviar quedaba blanco sobre blanco y la
       //     burbuja, blanca con el icono blanco. No se mira: se mide.
@@ -606,9 +664,27 @@
       }
       document.documentElement.setAttribute('data-tema', temaAntes || 'indigo');
 
+      /* LA PRUEBA RECOGE LO SUYO.
+         Creaba un grupo en CADA corrida y no lo borraba nunca. A las catorce corridas beta
+         tenia siete grupos de pruebas, y el chat baja TODAS las salas en cada latido: la
+         prueba se iba haciendo mas lenta ella sola y dejaba sucio el chat de beta.
+         Se borra al final, y tambien si algo se cayo antes. */
+      /* SE APAGA EL CHAT ANTES DE LIMPIAR. Sigue latiendo cada pocos segundos y tiene las
+         salas en memoria: limpiar con el vivo dejaba la sala repuesta al primer latido. */
+      mod.desmontarChat();
+      await esperar(400);
+      await limpiarLoDeLaPrueba();
+      await esperar(600);
+      const quedaronAlFinal = await (await fetch(API + '/chat_salas?date=MASTER&t=' + Date.now())).json();
+      const sueltas = ((quedaronAlFinal && quedaronAlFinal.data) || [])
+        .filter(x => creadoPorLaPrueba.indexOf(x && x.id) >= 0);
+      chk(sueltas.length === 0,
+          'la prueba recoge lo suyo: no deja grupos sueltos en beta (' + sueltas.length + ')');
+
       pintar();
     } catch (e) {
       res.push('FALLA se cayó la prueba: ' + (e && e.message));
+      try { await limpiarLoDeLaPrueba(); } catch (e2) { /* ya da igual */ }
       pintar();
       console.error(e);
     }

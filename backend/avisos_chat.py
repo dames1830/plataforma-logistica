@@ -53,7 +53,14 @@ AREA_SUS = 'push_suscripciones'
 AREA_SALAS = 'chat_salas'
 
 # A donde lleva el aviso al tocarlo: al chat, no al inicio.
+# A donde lleva el aviso al tocarlo. Lleva la SALA, no solo la seccion: Daniel,
+# 16-sep-2026: *"lo abri pero no me mando de frente al chat, solo me abrio la
+# aplicacion"*. Con `#chat` a secas la app no sabia cual conversacion abrir.
 DESTINO = './index.html#chat'
+
+
+def _destino_de(id_sala):
+    return DESTINO + '=' + str(id_sala or '')
 
 # Las areas que empiezan con chat_ y NO son una sala de conversacion.
 NO_SON_SALAS = ('chat_salas', 'chat_leidos', 'chat_presencia')
@@ -265,7 +272,7 @@ def avisar_del_mensaje(ruta_db, area, msg, log=None):
         datos = json.dumps({
             'titulo': titulo,
             'cuerpo': cuerpo,
-            'url': DESTINO,
+            'url': _destino_de(id_sala),
             # MISMA ETIQUETA POR SALA: dos mensajes seguidos de la misma persona
             # se reemplazan en vez de apilarse. Es lo mismo que hacen los robots.
             'etiqueta': 'chat_' + id_sala,
