@@ -1086,6 +1086,51 @@ async def consultar_asn(expediente: Optional[str] = None, asn: Optional[str] = N
 
 
 @app.get("/api/health")
+def _estado_push():
+    """Si este servidor PUEDE avisar al celular, y si no, que le falta.
+
+    Sin esto, cuando un aviso no llega no hay forma de saberlo desde fuera: la llave vive
+    como variable de entorno del panel de Render -`sync: false` en render.yaml-, y no la
+    publica ningun sitio. El 16-sep-2026 el chat no avisaba al celular de Daniel y hubo que
+    adivinar entre cuatro causas posibles sin poder mirar ninguna.
+
+    NUNCA DEVUELVE LA LLAVE, solo si esta puesta. Es una contrasena.
+    """
+    try:
+        try:
+            import pywebpush  # noqa: F401
+            hay_libreria = True
+        except ImportError:
+            hay_libreria = False
+        llave = bool(os.environ.get("VAPID_PRIVADA", "").strip())
+        aparatos = 0
+        try:
+            conn = sqlite3.connect(db_path()); cur = conn.cursor()
+            cur.execute("SELECT data_json FROM logistics_snapshots "
+                        "WHERE area_id = ? AND snapshot_date = ?",
+                        ("push_suscripciones", "MASTER"))
+            fila = cur.fetchone(); conn.close()
+            if fila and fila[0]:
+                datos = json.loads(fila[0])
+                if isinstance(datos, list):
+                    aparatos = len([x for x in datos
+                                    if isinstance(x, dict) and x.get("endpoint") and not x.get("baja")])
+        except Exception:
+            pass
+        return {
+            "llave_puesta": llave,
+            "libreria_instalada": hay_libreria,
+            "aparatos_suscritos": aparatos,
+            "puede_avisar": bool(llave and hay_libreria and aparatos > 0),
+            "que_falta": ("la llave VAPID_PRIVADA en el panel de Render" if not llave
+                          else "la libreria pywebpush" if not hay_libreria
+                          else "que alguien se suscriba desde la app o la web" if aparatos == 0
+                          else ""),
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
 def health():
     try:
         db_size = os.path.getsize(db_path()) if os.path.exists(db_path()) else 0
@@ -1097,6 +1142,8 @@ def health():
             "db_size_mb": db_size / (1024*1024),
             "disk_free_mb": free / (1024*1024),
             "timestamp": ahora().isoformat(),
+            # ¿Puede este servidor avisar al celular? Ver `_estado_push`.
+            "avisos_push": _estado_push(),
             # Estado del candado de escritura -fase 3-. Sirve para saber si ya se puede
             # encender sin dejar a nadie fuera: cuando `escrituras_anonimas` deje de subir,
             # es que todos los robots y PC ya mandan token.
