@@ -217,12 +217,13 @@ export const cuadroQuePaso = (R, segmento, ayer) => {
     }
 
     // 2. La brecha de productividad
-    const con = (R.gente || []).filter(p => p.ritmo);
+    const con = (R.gente || []).filter(p => p.pares_hora)
+        .sort((a, b) => b.pares_hora - a.pares_hora);
     if (con.length >= 3) {
         const mej = con[0], peo = con[con.length - 1];
-        const veces = +(mej.ritmo / peo.ritmo).toFixed(1);
+        const veces = +(mej.pares_hora / peo.pares_hora).toFixed(1);
         m.push({ t: 'La distancia entre el que más rinde y el que menos',
-                 d: `${esc(mej.usuario)} rinde ${F(mej.ritmo)} y ${esc(peo.usuario)} ${F(peo.ritmo)}: `
+                 d: `${esc(mej.usuario)} saca ${F(mej.pares_hora)} pares por hora y ${esc(peo.usuario)} ${F(peo.pares_hora)}: `
                   + `<b>${veces} veces</b>. Son ${con.length} personas con horas suficientes para medirse; `
                   + `las otras ${R._personas.length - con.length} entraron poco rato y no entran en el podio.`,
                  tipo: veces > 2.5 ? 'aviso' : 'dato' });
@@ -293,25 +294,25 @@ export const cuadroQuePaso = (R, segmento, ayer) => {
    pareciendo lento. Tampoco hay corte de horas — acá están todos.
    -------------------------------------------------------------------------- */
 
+/* EN PARES POR HORA desde el 16-sep-2026. Daniel: *"todo se debe calcular por pares, nada en
+   líneas"*. Antes eran "picks por hora", con la caja de prepack pesando su factor. */
 export const cuadroProductividad = (C) => {
-    const g = (C && C.gente || []).filter(p => p.picks_hora);
+    const g = (C && C.gente || []).filter(p => p.pares_hora);
     if (!g.length) return '';
     const filas = g.map((p, i) => `
         <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.03);">
           ${td(`<span style="color:${i < 3 ? 'var(--yellow)' : 'var(--text-muted)'}; font-weight:800;">${i + 1}</span>`)}
           ${td(`<b style="color:var(--text-strong);">${esc(p.usuario)}</b>`)}
-          ${td(`<b style="color:var(--success-soft);">${F(p.picks_hora)}</b>`, true)}
+          ${td(`<b style="color:var(--success-soft);">${F(p.pares_hora)}</b>`, true)}
           ${td(F(p.pares), true)}
           ${td(p.horas, true, 'color:var(--text-muted);')}
-          ${td(F(p.sueltos), true, 'color:var(--text-muted);')}
-          ${td(F(p.cajas), true, 'color:var(--text-muted);')}
         </tr>`).join('');
-    return panel(`⚡ PRODUCTIVIDAD · ${F(C.picks_hora)} PICKS POR HORA`,
-        'Una sola cifra para todos. Un pick es una ida a una ubicación a sacar algo. El par suelto y la caja de '
-      + 'prepack se suman en la misma cuenta, cada uno pesando el tiempo que de verdad cuesta. '
+    return panel(`⚡ PRODUCTIVIDAD · ${F(C.pares_hora)} PARES POR HORA`,
+        'Una sola cifra para todos: los pares que sacó cada persona por hora. El calzado suelto cuenta por sus pares, '
+      + 'el prepack por los pares de sus cajas y el no calzado por sus unidades. '
       + '<b style="color:rgba(var(--ink-rgb), 0.6);">Cubre todo lo que sacó la persona, calzado y no calzado.</b>',
-        tabla(th('#') + th('Usuario') + th('Picks por hora', 1) + th('Pares que sacó', 1)
-            + th('Horas', 1) + th('De ahí, sueltos', 1) + th('De ahí, cajas', 1), filas, '420px'),
+        tabla(th('#') + th('Usuario') + th('Pares por hora', 1) + th('Pares que sacó', 1)
+            + th('Horas', 1), filas, '420px'),
         'Las horas son las de cada persona, de su primer pick al último. Acá no hay corte de horas: están todos, '
       + 'incluidos los que entraron un rato — por eso alguien con media hora puede encabezar.');
 };

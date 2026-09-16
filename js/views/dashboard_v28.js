@@ -1,58 +1,58 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, infoTablaMarcas, traerTablaMarcas, publicarTablaMarcas, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia , traerAreaPublicada, traerDemandaGuardada} from '../services_v245/csvHub_v6.js?v=29.0818';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, infoTablaMarcas, traerTablaMarcas, publicarTablaMarcas, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia , traerAreaPublicada, traerDemandaGuardada} from '../services_v245/csvHub_v6.js?v=29.0819';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0818';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0818';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0818';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0818';
-import * as metasService from '../services_v245/metasService.js?v=29.0818';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0818';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0818';
+import * as adminService from '../services_v245/adminService.js?v=29.0819';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0819';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0819';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0819';
+import * as metasService from '../services_v245/metasService.js?v=29.0819';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0819';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0819';
 /* EL SELLO DE CADA REPORTE: cuando se proceso lo que se esta mirando.
    Se pinta solo; ver la tabla AREAS_POR_PANTALLA en el propio servicio. */
-import { vigilarSellos } from '../services_v245/selloService.js?v=29.0818';
+import { vigilarSellos } from '../services_v245/selloService.js?v=29.0819';
 /* EL REPORTE DE DISTRIBUCION, compartido con el enlace publico. */
-import * as distribucionReporte from '../reportes/distribucion.js?v=29.0818';
+import * as distribucionReporte from '../reportes/distribucion.js?v=29.0819';
 /* EL CATALOGO DE LOS REPORTES PUBLICOS. Lo comparten esta matriz de permisos
    y la pagina publica: antes la lista estaba escrita a mano en los dos lados
    y cada submodulo nuevo se quedaba fuera de los dos. */
 import { CATALOGO as CAT_PUB, MODULOS as MOD_PUB, permisosDe as permisosPub,
          paraGuardar as permisosParaGuardar, cuentaModulos as cuentaModPub }
-    from '../services_v245/catalogoReportesPublicos.js?v=29.0818';
+    from '../services_v245/catalogoReportesPublicos.js?v=29.0819';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, ubicacionDeReservaCuenta,
          _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0818';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0818';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0818';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0818';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0818';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0818';
-import { CARGOS_ASISTENCIA as CARGOS_ASISTENCIA_COMUNES } from '../services_v245/asistencia_comunes.js?v=29.0818';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0818';
-import { renderCapacidad } from './capacidad.js?v=29.0818';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0818';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0818';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0818';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0818';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0818';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0818';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0818';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0818';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0818';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0818';
-import { montarRecibidoSinPicar } from '../reportes/recibido_sin_picar.js?v=29.0818';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0818';
-import { montarCorreoHoy } from '../reportes/correo_hoy.js?v=29.0818';
-import { montarPedidosWms } from '../reportes/pedidos_wms.js?v=29.0818';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0818';
-import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0818';
-import { montarCruce } from '../reportes/cruce_wms.js?v=29.0818';
-import { montarProduccionProyeccion } from '../reportes/produccion_proyeccion.js?v=29.0818';
-import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0818';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0818';
-import { montarSlotting } from './slotting.js?v=29.0818';
-import { montarEventos } from './eventos.js?v=29.0818';
-import * as eventosService from '../services_v245/eventosService.js?v=29.0818';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0819';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0819';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0819';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0819';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0819';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0819';
+import { CARGOS_ASISTENCIA as CARGOS_ASISTENCIA_COMUNES } from '../services_v245/asistencia_comunes.js?v=29.0819';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0819';
+import { renderCapacidad } from './capacidad.js?v=29.0819';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0819';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0819';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0819';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0819';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0819';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0819';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0819';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0819';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0819';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0819';
+import { montarRecibidoSinPicar } from '../reportes/recibido_sin_picar.js?v=29.0819';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0819';
+import { montarCorreoHoy } from '../reportes/correo_hoy.js?v=29.0819';
+import { montarPedidosWms } from '../reportes/pedidos_wms.js?v=29.0819';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0819';
+import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0819';
+import { montarCruce } from '../reportes/cruce_wms.js?v=29.0819';
+import { montarProduccionProyeccion } from '../reportes/produccion_proyeccion.js?v=29.0819';
+import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0819';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0819';
+import { montarSlotting } from './slotting.js?v=29.0819';
+import { montarEventos } from './eventos.js?v=29.0819';
+import * as eventosService from '../services_v245/eventosService.js?v=29.0819';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -415,7 +415,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0818';
+const VERSION = '29.0819';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3325,7 +3325,7 @@ export const renderDashboard = async (container, user, onLogout) => {
      todas. */
   const abrirPortalNoRetail = async (destino) => {
       const { renderDespachoNoRetailPortal } =
-          await import('../reportes/despacho_no_retail.js?v=29.0818');
+          await import('../reportes/despacho_no_retail.js?v=29.0819');
       return renderDespachoNoRetailPortal(destino, {
           fetchAndParseNoRetailClients,
           showNRPhotoLoader,
@@ -4574,7 +4574,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const abrirZonaBuffer = async () => {
-      const { montarZonaBuffer } = await import('../reportes/zona_buffer.js?v=29.0818');
+      const { montarZonaBuffer } = await import('../reportes/zona_buffer.js?v=29.0819');
       return montarZonaBuffer({
           estado: estadoBuffer,
           contentArea,
@@ -5140,7 +5140,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0818');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0819');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5403,7 +5403,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0818');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0819');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -11688,7 +11688,7 @@ const renderRFSection = (container) => {
              pesa como un Power Pivot: se avisa y listo. */
           let PP;
           try {
-              PP = await import('../services_v245/maestroPowerPivot.js?v=29.0818');
+              PP = await import('../services_v245/maestroPowerPivot.js?v=29.0819');
           } catch (err) {
               console.warn('[MAESTRO] No cargó el lector del Power Pivot:', err && err.message);
           }
@@ -11750,7 +11750,7 @@ const renderRFSection = (container) => {
       inputMarcas.onchange = async (ev) => {
           const archivo = ev.target.files && ev.target.files[0];
           if (!archivo) return;
-          const PP = await import('../services_v245/maestroPowerPivot.js?v=29.0818');
+          const PP = await import('../services_v245/maestroPowerPivot.js?v=29.0819');
           let pares;
           try {
               const matriz = await new Promise((resolve, reject) => {
@@ -14621,7 +14621,7 @@ const renderRFSection = (container) => {
           se ata una sola vez al entrar y esas dieciséis quedaron intactas. El
           porqué completo está en la cabecera de ese archivo. */
        (async () => {
-           const { montarInventarios } = await import('../reportes/inventarios.js?v=29.0818');
+           const { montarInventarios } = await import('../reportes/inventarios.js?v=29.0819');
            montarInventarios(l2Container, {
                renderUploadArea,
                showPremiumConfirm,
@@ -16363,7 +16363,7 @@ const renderRFSection = (container) => {
     } else if (tabId === 'no_retail' && activeSub === 'catalogo_despacho') {
         await new Promise(r => setTimeout(r, 0));
         const { renderDespachoCatalogo } =
-            await import('../reportes/despacho_catalogo.js?v=29.0818');
+            await import('../reportes/despacho_catalogo.js?v=29.0819');
         renderDespachoCatalogo(container, 'catalogo');
     } else if (tabId === 'despacho' && activeSub === 'tracking_retail') {
         /* LA MISMA PANTALLA, OTRO CANAL. Lo unico que cambia entre este modulo y el de
@@ -16371,7 +16371,7 @@ const renderRFSection = (container) => {
            cada cosa, y dos numeros distintos del mismo dia al mes de empezar. */
         await new Promise(r => setTimeout(r, 0));
         const { renderDespachoCatalogo } =
-            await import('../reportes/despacho_catalogo.js?v=29.0818');
+            await import('../reportes/despacho_catalogo.js?v=29.0819');
         renderDespachoCatalogo(container, 'retail');
     } else if (tabId === 'no_retail' && activeSub === 'tracking_no_retail') {
         await new Promise(r => setTimeout(r, 0));
@@ -19031,7 +19031,7 @@ const renderRFSection = (container) => {
              `renderDashboard` y que ahora, viviendo afuera, no alcanza sola.
              `tareasDeAlmacenaje` va como función y no como lista: la caché se
              reemplaza entera cuando entran tareas nuevas. */
-          const { barrerParaSlotting } = await import('../reportes/slotting_barrido.js?v=29.0818');
+          const { barrerParaSlotting } = await import('../reportes/slotting_barrido.js?v=29.0819');
           const corrida = await barrerParaSlotting(
             (Array.isArray(zonasDeLaCorrida) && zonasDeLaCorrida.length)
               ? zonasDeLaCorrida
@@ -27391,7 +27391,7 @@ window.__menuMapa = (btn) => {
              lado es un `let` que leen el plan del Excel y el prepack: si se
              pasara la lista, esos dos nunca se enterarían de la foto nueva. */
           (async () => {
-              const { renderAnalisisReserva } = await import('../reportes/analisis_reserva.js?v=29.0818');
+              const { renderAnalisisReserva } = await import('../reportes/analisis_reserva.js?v=29.0819');
               renderAnalisisReserva(skuBuf, {
                   htmlConsolidacionReserva,
                   engancharClicConsolidacion,
@@ -30396,154 +30396,9 @@ window.__menuMapa = (btn) => {
       </div>`;
   };
 
-  /**
-   * LA EQUIVALENCIA DEL PREPACK, PLEGADA.
-   *
-   * Daniel quiere ver UNA cifra de productividad —*"¿cómo lo interpreto en el
-   * comité?"*— y que el factor corra por dentro. Pero el número tiene que poder
-   * defenderse, así que la tabla está, escondida detrás de un desplegable.
-   *
-   * Cada fila se puede comprobar con calculadora: el factor es los segundos de
-   * la caja divididos por los 18 s del pick suelto, con los dos ya redondeados.
-   * Por eso la división de la pantalla da exactamente el número de al lado.
-   */
-  const cuadroEquivalencia = () => {
-    const E = EQUIVALENCIA_PREPACK;
-    const filas = Object.keys(E.curvas).map(Number).sort((a, b) => a - b).map(c => {
-      const x = E.curvas[c];
-      const flojo = x.muestra < E.minimo_muestra;
-      return `
-        <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.04);">
-          <td style="padding:0.35rem 0.7rem; color:rgba(var(--ink-rgb), 0.75);">caja de ${c}</td>
-          <td style="padding:0.35rem 0.7rem; text-align:right; color:rgba(var(--ink-rgb), 0.55);">${nMil(x.muestra)}</td>
-          <td style="padding:0.35rem 0.7rem; text-align:right; color:rgba(var(--ink-rgb), 0.55);">${x.seg} s</td>
-          <td style="padding:0.35rem 0.7rem; text-align:right; ${flojo ? 'color:rgba(var(--ink-rgb), 0.3); text-decoration:line-through;' : 'color:rgba(var(--ink-rgb), 0.75);'}">${x.factor}</td>
-          <td style="padding:0.35rem 0.7rem; text-align:right; font-weight:800; color:var(--success-soft);">${x.usa}</td>
-          <td style="padding:0.35rem 0.7rem; color:rgba(var(--ink-rgb), 0.35); font-size:var(--t-xs);">${flojo ? `solo ${x.muestra} medicion${x.muestra === 1 ? '' : 'es'}: se usa el general` : ''}</td>
-        </tr>`;
-    }).join('');
-
-    return `
-      <details style="margin-top:0.7rem;">
-        <summary style="cursor:pointer; color:var(--brand-pale); font-weight:800; font-size:var(--t-xs); letter-spacing:0.3px;">▸ Cómo se calcula el ritmo</summary>
-        <div style="margin-top:0.7rem; padding:0.8rem 0 0.2rem;">
-          <div style="margin-bottom:0.6rem; line-height:1.8;">
-            El hueco entre un pick y el siguiente <b style="color:rgba(var(--ink-rgb), 0.6);">de la misma persona</b> es lo que costó ese pick:
-            caminar hasta el sitio y sacar. Los huecos de más de 5 minutos no cuentan — eso es una parada, no trabajo.
-            Un pick suelto tarda <b style="color:rgba(var(--ink-rgb), 0.6);">${E.segundos_suelto} s</b>, medido sobre ${nMil(E.muestra_suelto)} huecos.
-          </div>
-          <table style="width:100%; border-collapse:collapse; font-size:var(--t-xs);">
-            <thead>
-              <tr style="color:rgba(var(--ink-rgb), 0.35); text-align:left;">
-                <th style="padding:0.35rem 0.7rem; font-weight:700;">Qué se saca</th>
-                <th style="padding:0.35rem 0.7rem; text-align:right; font-weight:700;">Medido en</th>
-                <th style="padding:0.35rem 0.7rem; text-align:right; font-weight:700;">Tarda</th>
-                <th style="padding:0.35rem 0.7rem; text-align:right; font-weight:700;">Factor</th>
-                <th style="padding:0.35rem 0.7rem; text-align:right; font-weight:700;">Se usa</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>${filas}</tbody>
-          </table>
-          <div style="margin-top:0.6rem; line-height:1.8;">
-            El factor es <b style="color:rgba(var(--ink-rgb), 0.6);">los segundos de la caja divididos por los ${E.segundos_suelto} s del suelto</b>,
-            así que cada fila se puede comprobar a mano. Cuando una curva tiene menos de ${E.minimo_muestra} mediciones no se le cree
-            y se le aplica el general (<b style="color:rgba(var(--ink-rgb), 0.6);">${E.factor_general}</b>).
-            Los factores están medidos sobre los archivos del 27-jul al 7-ago; si el ritmo del almacén cambia, hay que volver a medirlos.
-          </div>
-        </div>
-      </details>`;
-  };
-
-  /**
-   * PREPACK CONTRA SUELTO — por qué la cifra de arriba es la que es.
-   *
-   * ES EL ARGUMENTO, no un cuadro más. Las dos formas fáciles de medir dan
-   * resultados OPUESTOS sobre la misma jornada: contando pares gana quien saca
-   * cajas, contando movimientos gana quien saca sueltos, y cada uno puede
-   * presentar el número que le conviene. Las dos mienten. Por eso se mide el
-   * esfuerzo, que es lo único que no cambia de opinión según quién lo mire.
-   *
-   * Se eligen a propósito las dos personas MÁS OPUESTAS del período —la de más
-   * pares por hora contra la de más esfuerzo por hora—: si son la misma, no hay
-   * contradicción que mostrar y el bloque no se dibuja.
-   */
-  const bloquePrepack = (R) => {
-    const gente = (R.gente || []).filter(p => !p.bajo_corte && p.horas > 0);
-    if (gente.length < 2 || !R.prepack || !R.prepack.lineas) return '';
-
-    const porPares = [...gente].sort((a, b) => (b.pares / b.horas) - (a.pares / a.horas))[0];
-    const porEsfuerzo = [...gente].sort((a, b) => (b.esfuerzo / b.horas) - (a.esfuerzo / a.horas))[0];
-    if (porPares.usuario === porEsfuerzo.usuario) return '';
-
-    const f = (p, campo) => Math.round(p[campo] / p.horas);
-    const veces = (a, b) => (a / b).toFixed(1).replace('.', ',');
-
-    // Lo que el prepack le ahorra al almacén: cada caja es UN viaje que, par por
-    // par, habrían sido tantos viajes como pares lleva.
-    const viajesAhorrados = R.prepack.pares - R.prepack.lineas;
-    const pctParesEnCaja = 100 * R.prepack.pares / R.pares;
-    const pctMovEnCaja = 100 * R.prepack.lineas / R.lineas;
-
-    const fila = (rotulo, a, b, dice) => `
-      <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.04);">
-        <td style="padding:0.6rem 1.2rem; color:rgba(var(--ink-rgb), 0.7);">${rotulo}</td>
-        <td style="padding:0.6rem 0.9rem; text-align:right; font-weight:800; color:var(--text-strong);">${nMil(a)}</td>
-        <td style="padding:0.6rem 0.9rem; text-align:right; font-weight:800; color:var(--text-strong);">${nMil(b)}</td>
-        <td style="padding:0.6rem 1.2rem; color:rgba(var(--ink-rgb), 0.45); font-size:var(--t-xs);">${dice}</td>
-      </tr>`;
-
-    const parA = f(porPares, 'pares'), parB = f(porEsfuerzo, 'pares');
-    const movA = Math.round(porPares.lineas / porPares.horas), movB = Math.round(porEsfuerzo.lineas / porEsfuerzo.horas);
-    const esfA = f(porPares, 'esfuerzo'), esfB = f(porEsfuerzo, 'esfuerzo');
-
-    return `
-      <div class="glass-panel" style="padding:0; overflow:hidden; border:1px solid rgba(var(--warning-rgb), 0.25);">
-        <div style="padding:1rem 1.3rem; border-bottom:1px solid rgba(var(--ink-rgb), 0.06);">
-          <h3 style="margin:0 0 2px; color:var(--text-strong); font-size:var(--t-md); font-weight:900; letter-spacing:0.5px;">📦 PREPACK CONTRA SUELTO</h3>
-          <div style="font-size:var(--t-xs); color:rgba(var(--warning-rgb), 0.7); font-weight:600;">La misma jornada, medida de tres formas</div>
-        </div>
-        <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm); color:var(--text-grey);">
-          <thead>
-            <tr style="color:var(--text-muted); text-align:left;">
-              <th style="padding:0.6rem 1.2rem; font-weight:700;">Si medimos por…</th>
-              <th style="padding:0.6rem 0.9rem; text-align:right; font-weight:700;">${escPick(porPares.usuario)}</th>
-              <th style="padding:0.6rem 0.9rem; text-align:right; font-weight:700;">${escPick(porEsfuerzo.usuario)}</th>
-              <th style="padding:0.6rem 1.2rem; font-weight:700;">Qué diría</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${fila('Pares por hora', parA, parB,
-                `que ${escPick(porPares.usuario)} rinde <b style="color:var(--warning-soft);">${veces(parA, parB)} veces más</b>`)}
-            ${fila('Movimientos por hora <span style="opacity:.6">(cada caja = 1)</span>', movA, movB,
-                `que ${escPick(porEsfuerzo.usuario)} rinde <b style="color:var(--warning-soft);">${veces(movB, movA)} veces más</b>`)}
-            <tr style="background:rgba(var(--success-rgb), 0.06);">
-              <td style="padding:0.6rem 1.2rem; color:var(--text-strong); font-weight:800;">Esfuerzo real — <span style="color:var(--success-soft);">el que usamos</span></td>
-              <td style="padding:0.6rem 0.9rem; text-align:right; font-weight:900; color:var(--success-soft);">${nMil(esfA)}</td>
-              <td style="padding:0.6rem 0.9rem; text-align:right; font-weight:900; color:var(--success-soft);">${nMil(esfB)}</td>
-              <td style="padding:0.6rem 1.2rem; color:rgba(var(--ink-rgb), 0.6); font-size:var(--t-xs);">
-                que ${escPick(esfA >= esfB ? porPares.usuario : porEsfuerzo.usuario)} rinde
-                <b style="color:var(--success-soft);">${veces(Math.max(esfA, esfB), Math.min(esfA, esfB))} veces más</b>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <div style="padding:0.8rem 1.3rem; background:rgba(var(--warning-rgb), 0.07); font-size:var(--t-sm); color:rgba(var(--ink-rgb), 0.7); line-height:1.8;">
-          Las dos formas fáciles de medir dan <b style="color:var(--warning-soft);">resultados opuestos</b>, y las dos mienten:
-          contando pares gana quien saca cajas, contando movimientos gana quien saca sueltos. Por eso se mide el esfuerzo.
-        </div>
-        <div style="padding:0.9rem 1.3rem; border-top:1px solid rgba(var(--ink-rgb), 0.06); font-size:var(--t-sm); color:rgba(var(--ink-rgb), 0.55); line-height:1.9;">
-          <b style="color:rgba(var(--ink-rgb), 0.8);">Lo que el prepack le ahorra al almacén.</b>
-          En este período salieron <b style="color:var(--text-strong);">${nMil(R.prepack.pares)} pares en ${nMil(R.prepack.lineas)} cajas</b>.
-          Par por par habrían costado un movimiento cada uno: son
-          <b style="color:var(--success-soft);">${nMil(viajesAhorrados)} viajes ahorrados</b>.
-          El <b style="color:var(--text-strong);">${pctParesEnCaja.toFixed(1)}% de los pares</b> sale en caja usando solo el
-          <b style="color:var(--text-strong);">${pctMovEnCaja.toFixed(1)}% de los movimientos</b>.
-          <br>El estudio completo —de dónde sale cada segundo, jornada por jornada— está en
-          <b style="color:var(--brand-pale);">Picking → Análisis Prepack</b>.
-        </div>
-      </div>`;
-  };
+  /* PREPACK CONTRA SUELTO y la tabla plegada del factor SE FUERON el 16-sep-2026. Explicaban por qué
+     la productividad se medía con el esfuerzo (la caja de prepack pesando su factor) y no con pares.
+     Daniel lo dio vuelta: *"todo se debe calcular por pares, nada en líneas"*. */
 
   /**
    * PREPACK — la pantalla entera vive en `js/reportes/picking_prepack.js`.
@@ -30808,10 +30663,8 @@ window.__menuMapa = (btn) => {
                 <tr>
                   <th style="padding:0.7rem 1.2rem; text-align:left;">#</th>
                   <th style="padding:0.7rem 0.9rem; text-align:left;">Persona</th>
-                  <th style="padding:0.7rem 0.9rem; text-align:right;">Ritmo</th>
                   <th style="padding:0.7rem 0.9rem; text-align:right;">Pares/hora</th>
                   <th style="padding:0.7rem 0.9rem; text-align:right;">Pares</th>
-                  <th style="padding:0.7rem 0.9rem; text-align:right;">Líneas</th>
                   <th style="padding:0.7rem 0.9rem; text-align:right;">Horas</th>
                   <th style="padding:0.7rem 1.2rem; text-align:right;">Ubicaciones</th>
                 </tr>
@@ -30821,10 +30674,8 @@ window.__menuMapa = (btn) => {
                   <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.03);">
                     <td style="padding:0.55rem 1.2rem; color:${i < 3 ? 'var(--yellow)' : 'var(--text-muted)'}; font-weight:800;">${i + 1}</td>
                     <td style="padding:0.55rem 0.9rem; color:var(--text-strong); font-weight:700;">${escPick(p.usuario)}</td>
-                    <td style="padding:0.55rem 0.9rem; text-align:right; font-weight:900; color:var(--success-soft);">${nMil(p.ritmo)}</td>
-                    <td style="padding:0.55rem 0.9rem; text-align:right; font-weight:700;">${nMil(p.pares_hora)}</td>
+                    <td style="padding:0.55rem 0.9rem; text-align:right; font-weight:900; color:var(--success-soft);">${nMil(p.pares_hora)}</td>
                     <td style="padding:0.55rem 0.9rem; text-align:right;">${nMil(p.pares)}</td>
-                    <td style="padding:0.55rem 0.9rem; text-align:right; color:var(--text-muted);">${nMil(p.lineas)}</td>
                     <td style="padding:0.55rem 0.9rem; text-align:right; color:var(--text-muted);">${p.horas}</td>
                     <td style="padding:0.55rem 1.2rem; text-align:right; color:var(--text-muted);">${nMil(p.ubicaciones)}</td>
                   </tr>`).join('')}
@@ -30832,12 +30683,10 @@ window.__menuMapa = (btn) => {
             </table>
           </div>
           <div style="padding:0.8rem 1.3rem; background:rgba(var(--shadow-rgb), 0.25); font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.4); line-height:1.8;">
-            <b style="color:rgba(var(--ink-rgb), 0.6);">Ritmo</b> es una sola cifra, con el prepack pesando por dentro: una caja de 10
-            equivale a <b style="color:rgba(var(--ink-rgb), 0.6);">1,83</b> picks sueltos, no a 10, porque
-            <b style="color:rgba(var(--ink-rgb), 0.6);">el trabajo es llegar al sitio, no levantar la caja</b>.
+            <b style="color:rgba(var(--ink-rgb), 0.6);">Pares/hora</b> son los pares que sacó cada persona por hora: el suelto por sus pares,
+            el prepack por los pares de sus cajas y el no calzado por sus unidades. Desde el 16-sep-2026 todo se mide en pares, nada en líneas.
             Las horas son las de cada persona —de su primer pick al último—, no las del turno.
             ${bajo ? `<br>Quedan fuera del podio <b style="color:rgba(var(--ink-rgb), 0.6);">${bajo} ${bajo === 1 ? 'persona que trabajó' : 'personas que trabajaron'} menos de ${HORAS_MIN_RANKING} h</b>, pero sus pares sí están en los totales de arriba.` : ''}
-            ${cuadroEquivalencia()}
           </div>
         </div>
 
@@ -30853,7 +30702,6 @@ window.__menuMapa = (btn) => {
           return cuadroQuePaso(R, pickFiltro.seg, ayer);
         })()}
 
-        ${bloquePrepack(R)}
 
         ${avisoPiso}
         ${balance ? cuadroBalance(balance) : ''}
@@ -31233,12 +31081,12 @@ window.__menuMapa = (btn) => {
         /* El buscador se carga aparte y NO frena al resto: si el servidor viejo
            todavia no tiene /api/asn, el cuadro dice que no se pudo consultar y
            los demas siguen dibujandose igual. */
-        import('../reportes/asn_buscador.js?v=29.0818').then(m => {
+        import('../reportes/asn_buscador.js?v=29.0819').then(m => {
           const cb = container.querySelector('#asn_buscador');
           if (cb) m.montarBuscadorAsn(cb, { api: 'https://logistics-backend-wv0x.onrender.com' });
         }).catch(e => console.warn('[ASN] no se pudo cargar el buscador:', e));
 
-        const { montarAsnDetalle } = await import('../reportes/asn_detalle.js?v=29.0818');
+        const { montarAsnDetalle } = await import('../reportes/asn_detalle.js?v=29.0819');
         const caja = container.querySelector('#asn_detalle');
         /* El HOY va de aca, con getLogicalDate(): el paquete trae el suyo -el del
            robot- y si la corrida fallo, ese "hoy" es de ayer y todo el calendario
