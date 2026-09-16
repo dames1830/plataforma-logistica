@@ -25,23 +25,23 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0807';
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0807';
-import * as ORD from '../services_v245/despachoOrden.js?v=29.0807';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0807';
+import * as adminService from '../services_v245/adminService.js?v=29.0808';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0808';
+import * as ORD from '../services_v245/despachoOrden.js?v=29.0808';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0808';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0807';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0807';
-import * as metasService from '../services_v245/metasService.js?v=29.0807';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0808';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0808';
+import * as metasService from '../services_v245/metasService.js?v=29.0808';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0807';
+import * as temaService from '../services_v245/temaService.js?v=29.0808';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0807';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0807';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0808';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0808';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
@@ -50,12 +50,12 @@ import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarCon
          traerAdjunto, pesoLegible,
          /* LA MISMA MARCA QUE LA WEB. El calculo vive en chat.js; aca solo se pinta,
             con la cara de la app. Dos copias del mismo calculo se desincronizan. */
-         marcaDelMensaje } from '../chat.js?v=29.0807';
+         marcaDelMensaje } from '../chat.js?v=29.0808';
 /* LOS AVISOS DEL TELEFONO VIVEN EN UN SERVICIO COMPARTIDO desde el 15-sep-2026: la web
    usa exactamente estas funciones para suscribir la PC. Ver `avisos.js`. */
 import { LLAVE_AVISOS, puedeAvisos, mirarAvisos as mirarSuscripcion,
          prenderAvisos as suscribir, apagarAvisos as desuscribir }
-    from '../services_v245/avisos.js?v=29.0807';
+    from '../services_v245/avisos.js?v=29.0808';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -3872,7 +3872,25 @@ export const prefiereEscritorio = () => {
    mensaje del service worker -ahi la direccion no cambia-. Sin el segundo, tocar el aviso
    con la app abierta dejaba a Daniel en la pantalla donde estuviera. */
 const irDesdeElAviso = (destino) => {
-    if (!destino || String(destino).indexOf('#robots') < 0) return;
+    const d = String(destino || '');
+    if (!d) return;
+
+    /* EL AVISO DEL CHAT LLEVA A SU CONVERSACION, no a la lista.
+       Daniel, 16-sep-2026: *"lo abri pero no me mando de frente al chat, solo me abrio la
+       aplicacion"*. Esta funcion entendia UNICAMENTE `#robots` y descartaba todo lo demas,
+       asi que el aviso del chat abria la app y la dejaba donde estuviera.
+       El destino viene como `#chat=<idSala>`; sin sala, al menos la lista. */
+    const chat = d.indexOf('#chat');
+    if (chat >= 0) {
+        seccion = 'chat';
+        menu = null;
+        const sala = d.slice(chat + '#chat'.length).replace(/^=/, '');
+        if (sala) abrirConversacion(decodeURIComponent(sala));
+        else { chatSala = null; if (raiz) pintar(); prepararChat(); }
+        return;
+    }
+
+    if (d.indexOf('#robots') < 0) return;
     seccion = 'robots';
     robotAbierto = null;
     robotsDatos = null;          /* que se relea: el aviso es de algo que acaba de pasar */
@@ -3883,7 +3901,17 @@ const irDesdeElAviso = (destino) => {
 export const renderAppMovil = async (contenedor, user, onLogout) => {
     YO = user;
     alSalir = onLogout;
-    seccion = (String(location.hash || '').indexOf('robots') >= 0) ? 'robots' : 'inicio';
+    /* CON LA APP CERRADA el aviso llega por el hash de la direccion, no como mensaje del
+       service worker. Los dos caminos tienen que abrir lo mismo. */
+    const _hash = String(location.hash || '');
+    seccion = _hash.indexOf('robots') >= 0 ? 'robots'
+            : _hash.indexOf('chat') >= 0 ? 'chat'
+            : 'inicio';
+    if (seccion === 'chat') {
+        const _i = _hash.indexOf('#chat');
+        const _sala = _hash.slice(_i + '#chat'.length).replace(/^=/, '');
+        if (_sala) chatSala = decodeURIComponent(_sala);
+    }
 
     /* ══ EL EXCEL QUE LLEGO POR COMPARTIR ══════════════════════════════════
        Cuando se comparte el archivo desde WhatsApp, Android abre la app con el archivo

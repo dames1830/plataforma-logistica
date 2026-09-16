@@ -35,7 +35,7 @@
    para que le lleguen una notificacion"*. El mecanismo es el mismo que usa la app del
    celular; lo unico propio de aca es el boton y el cartelito que explica que va a llegar. */
 import { puedeAvisos, mirarAvisos, prenderAvisos, apagarAvisos, queLlega }
-    from './services_v245/avisos.js?v=29.0807';
+    from './services_v245/avisos.js?v=29.0808';
 
 /* `typeof window` y no `window` a secas: `scratch/probar_marcas_chat.mjs` carga este
    archivo desde Node para comprobar el calculo de las marcas sin navegador, y sin la
@@ -1693,6 +1693,36 @@ export const arrancarDatosDelChat = async (session) => {
 
     for (const s of salas) { await bajarSala(s.id); reponerContador(s.id); }
     acomodarReloj();
+    /* AL TOCAR EL AVISO DE WINDOWS, ABRIR ESA CONVERSACION.
+       El `sw.js` avisa con `{tipo:'ir', url:'...#chat=<sala>'}`. Lo escuchaba SOLO la app del
+       celular, asi que en la PC el aviso traia la ventana al frente y dejaba a la persona
+       donde estuviera. Es el mismo aviso y el mismo problema: va en los dos sitios. */
+    try {
+        if (navigator.serviceWorker && !window.__chatEscuchaAvisos) {
+            window.__chatEscuchaAvisos = true;
+            navigator.serviceWorker.addEventListener('message', (ev) => {
+                const d = ev && ev.data;
+                if (!d || d.tipo !== 'ir') return;
+                const u = String(d.url || '');
+                const i = u.indexOf('#chat');
+                if (i < 0) return;
+                const sala = u.slice(i + '#chat'.length).replace(/^=/, '');
+                if (sala) abrirSala(decodeURIComponent(sala));
+                else abrirPanel();
+            });
+        }
+    } catch (e) { /* sin service worker, el aviso igual abre la web */ }
+
+    /* Y con la pestaña cerrada, el destino llega por la direccion. */
+    try {
+        const h = String(location.hash || '');
+        const i = h.indexOf('#chat');
+        if (i >= 0) {
+            const sala = h.slice(i + '#chat'.length).replace(/^=/, '');
+            if (sala) setTimeout(() => abrirSala(decodeURIComponent(sala)), 0);
+        }
+    } catch (e) { /* da igual */ }
+
     /* `pintarGlobo()` va PRIMERO y aparte del latido: al volver a la pestaña, el nombre tiene
        que dejar de parpadear en el acto y no cuando termine `latir()`, que es una llamada de
        red y puede tardar segundos. */
