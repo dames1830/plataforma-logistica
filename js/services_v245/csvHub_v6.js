@@ -1,4 +1,4 @@
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0814';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0815';
 
 // Almacenamiento en memoria CACHÉ para respuesta rápida UI
 export const dataStore = {
@@ -204,7 +204,7 @@ const getApiBase = (defaultUrl) => {
 };
 const API_BASE = getApiBase('https://logistics-backend-wv0x.onrender.com/api');
 const SHARED_API = 'https://logistics-shared-api.onrender.com/api';
-const VERSION = '29.0814';
+const VERSION = '29.0815';
 const CACHE_KEY = `logistics_v24_prod_`;
 const API_URL    = `${API_BASE}/logistics`;
 
@@ -1048,6 +1048,79 @@ export const traerMaestroPublicado = async () => {
     await saveToDB(MAESTRO_AREA, filas);
     localStorage.setItem(MAESTRO_CACHE_KEY, JSON.stringify(ficha));
     return { origen: 'servidor', filas: filas.length, ficha };
+};
+
+/* ── LA TABLA DE MARCAS ───────────────────────────────────────────────────────────────────
+ *
+ * Traduce la MarcaStd del Power Pivot a la marca del negocio: "Bata 3d", "Bata Comfit" y "Bata
+ * Red" son Bata; "Disney" y "Marvel" son B.G Licenses. Daniel la tenía en un Excel de OneDrive
+ * (Marcas.xlsx) y la aplicaba a mano. Desde el 16-sep-2026 se publica acá y la usa la web al
+ * convertir el Power Pivot. Daniel: *"ese archivo también quisiera que lo cuelgue en la nube"*.
+ *
+ * SIEMPRE `?date=MASTER`, EN LA LECTURA Y EN LA ESCRITURA. Estas áreas no están en
+ * SINGLETON_AREAS del backend, y MASTER es lo que las hace reemplazarse en vez de dejar una
+ * copia nueva por día. Así no hubo que tocar el servidor.
+ *
+ * Y LAS TRES RESPUESTAS, igual que el maestro: la ficha, `null` si nunca se publicó, o
+ * `{ error }` si no se pudo preguntar. Un servidor reiniciando no puede verse como "no hay
+ * tabla": el maestro desde el Power Pivot se bloquearía diciendo que falta, cuando está. */
+const MARCAS_AREA = 'marcas_maestro';
+const MARCAS_FICHA = 'marcas_maestro_meta';
+
+export const infoTablaMarcas = async () => {
+    try {
+        const res = await fetch(`${API_URL}/${MARCAS_FICHA}?date=MASTER&t=${Date.now()}`);
+        if (!res.ok) return { error: `el servidor contestó ${res.status}` };
+        const j = await res.json();
+        const f = j && j.data;
+        if (!f || Array.isArray(f) || !f.equivalencias) return null;
+        return { equivalencias: f.equivalencias, marcas: f.marcas || 0,
+                 usuario: f.usuario || '—', fecha: f.fecha || j.updated_at || '' };
+    } catch (e) {
+        console.warn('[MARCAS] No se pudo consultar la ficha:', e && e.message);
+        return { error: (e && e.message) || 'no se pudo conectar con el servidor' };
+    }
+};
+
+/** [{MarcaStd, Marcas}] · null si nunca se publicó · { error } si no se pudo preguntar */
+export const traerTablaMarcas = async () => {
+    try {
+        const res = await fetch(`${API_URL}/${MARCAS_AREA}?date=MASTER&t=${Date.now()}`);
+        if (!res.ok) return { error: `el servidor contestó ${res.status}` };
+        const j = await res.json();
+        const d = j && j.data;
+        if (!Array.isArray(d) || !d.length) return null;
+        return d.filter(p => p && p.MarcaStd != null && p.Marcas);
+    } catch (e) {
+        console.warn('[MARCAS] No se pudo traer la tabla:', e && e.message);
+        return { error: (e && e.message) || 'no se pudo conectar con el servidor' };
+    }
+};
+
+/**
+ * Publica la tabla. Primero las equivalencias y DESPUÉS la ficha: si el envío falla a mitad,
+ * la ficha sigue describiendo la tabla anterior. Es el mismo orden que el maestro.
+ */
+export const publicarTablaMarcas = async (pares, username = 'sistema') => {
+    if (!Array.isArray(pares) || !pares.length) throw new Error('La tabla de marcas está vacía.');
+    const enviar = async (area, cuerpo) => {
+        const res = await fetch(`${API_URL}/${area}?date=MASTER`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(cuerpo)
+        });
+        if (!res.ok) throw new Error(`El servidor rechazó ${area} (${res.status}).`);
+        return res;
+    };
+    await enviar(MARCAS_AREA, pares);
+    const ficha = {
+        equivalencias: pares.length,
+        marcas: new Set(pares.map(p => p.Marcas)).size,
+        usuario: username,
+        fecha: selloLocal()
+    };
+    await enviar(MARCAS_FICHA, ficha);
+    return ficha;
 };
 
 /**
