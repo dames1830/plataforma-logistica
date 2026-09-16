@@ -1,58 +1,58 @@
-import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia , traerAreaPublicada, traerDemandaGuardada} from '../services_v245/csvHub_v6.js?v=29.0814';
+import { parseFile, guardarAreaManual, parseBufferFiles, getAreaData, clearAreaData, generateKPIs, calculateBufferPallets, fetchBufferConfig, saveBufferConfig, pingServer, saveBufferReport, loadBufferReport, fetchBufferHistory, saveBufferHistoryRecord, updateBufferHistoryRecord, deleteBufferHistoryRecord, saveKPIResults, loadKPIResults, loadKPIResultsRange, fetchKPIDates, dataStore, setDateFilter, currentDateFilter, getUploadMeta, getVacioMeta, initPersistentData, updateTablaTallas, getCol, getAreaLength, saveLastBufferKPI, loadLastBufferKPI, publicarAnalisisBuffer, traerAnalisisBuffer, publicarFactores, bajarFactores, traerFactoresCalculados, fetchReservaHistory, fetchFotosReserva, guardarFotoReserva, fetchBaseReserva, guardarBaseReserva, publicarMaestro, infoTablaMarcas, traerTablaMarcas, publicarTablaMarcas, traerMaestroPublicado, infoMaestroPublicado, revisarMaestro, esAreaDeLaNube, esAreaDeDemanda, AREA_CANONICA, extractTalla, tallaDeSku, cargarTablaTallasNube, fechaDelServidor, textoFechaServidor, cargarPickingDias, guardarPickingDias, borrarPickingDia , traerAreaPublicada, traerDemandaGuardada} from '../services_v245/csvHub_v6.js?v=29.0815';
 // PULSE_ENGINE_V18_2_0_CLEAN_BUILD
-import * as adminService from '../services_v245/adminService.js?v=29.0814';
-import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0814';
-import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0814';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0814';
-import * as metasService from '../services_v245/metasService.js?v=29.0814';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0814';
-import * as robotsService from '../services_v245/robotsService.js?v=29.0814';
+import * as adminService from '../services_v245/adminService.js?v=29.0815';
+import { login as authLogin, getSession } from '../services_v245/auth.js?v=29.0815';
+import * as syncEngine from '../services_v245/sync_engine_v24_9.js?v=29.0815';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0815';
+import * as metasService from '../services_v245/metasService.js?v=29.0815';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0815';
+import * as robotsService from '../services_v245/robotsService.js?v=29.0815';
 /* EL SELLO DE CADA REPORTE: cuando se proceso lo que se esta mirando.
    Se pinta solo; ver la tabla AREAS_POR_PANTALLA en el propio servicio. */
-import { vigilarSellos } from '../services_v245/selloService.js?v=29.0814';
+import { vigilarSellos } from '../services_v245/selloService.js?v=29.0815';
 /* EL REPORTE DE DISTRIBUCION, compartido con el enlace publico. */
-import * as distribucionReporte from '../reportes/distribucion.js?v=29.0814';
+import * as distribucionReporte from '../reportes/distribucion.js?v=29.0815';
 /* EL CATALOGO DE LOS REPORTES PUBLICOS. Lo comparten esta matriz de permisos
    y la pagina publica: antes la lista estaba escrita a mano en los dos lados
    y cada submodulo nuevo se quedaba fuera de los dos. */
 import { CATALOGO as CAT_PUB, MODULOS as MOD_PUB, permisosDe as permisosPub,
          paraGuardar as permisosParaGuardar, cuentaModulos as cuentaModPub }
-    from '../services_v245/catalogoReportesPublicos.js?v=29.0814';
+    from '../services_v245/catalogoReportesPublicos.js?v=29.0815';
 import { NIVELES_RESERVA, COLS_RESERVA, paletaDeReservaExiste, ubicacionDeReservaCuenta,
          _padreDeProducto, indicePorSku,
          consolidacionDeReserva, fotoChicaDeReserva, selloDeLaFoto,
-         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0814';
-import * as zonasService from '../services_v245/zonasService.js?v=29.0814';
-import * as tallasService from '../services_v245/tallasService.js?v=29.0814';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0814';
-import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0814';
-import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0814';
-import { CARGOS_ASISTENCIA as CARGOS_ASISTENCIA_COMUNES } from '../services_v245/asistencia_comunes.js?v=29.0814';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0814';
-import { renderCapacidad } from './capacidad.js?v=29.0814';
-import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0814';
-import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0814';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0814';
-import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0814';
-import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0814';
-import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0814';
-import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0814';
-import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0814';
-import { montarTurno } from '../reportes/turno_actividades.js?v=29.0814';
-import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0814';
-import { montarRecibidoSinPicar } from '../reportes/recibido_sin_picar.js?v=29.0814';
-import { montarPendiente } from '../reportes/pendiente.js?v=29.0814';
-import { montarCorreoHoy } from '../reportes/correo_hoy.js?v=29.0814';
-import { montarPedidosWms } from '../reportes/pedidos_wms.js?v=29.0814';
-import { montarRotacion } from '../reportes/rotacion.js?v=29.0814';
-import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0814';
-import { montarCruce } from '../reportes/cruce_wms.js?v=29.0814';
-import { montarProduccionProyeccion } from '../reportes/produccion_proyeccion.js?v=29.0814';
-import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0814';
-import * as slottingService from '../services_v245/slottingService.js?v=29.0814';
-import { montarSlotting } from './slotting.js?v=29.0814';
-import { montarEventos } from './eventos.js?v=29.0814';
-import * as eventosService from '../services_v245/eventosService.js?v=29.0814';
+         cierreDeFragmentados, planDeConsolidacion, prepackChicoDeReserva } from '../reportes/reserva_consolidacion.js?v=29.0815';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0815';
+import * as tallasService from '../services_v245/tallasService.js?v=29.0815';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, esEscolar, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0815';
+import { listarArchivos, descargarArchivo, borrarArchivo } from '../services_v245/archivosNube.js?v=29.0815';
+import { icono, hayIcono } from '../services_v245/iconos.js?v=29.0815';
+import { CARGOS_ASISTENCIA as CARGOS_ASISTENCIA_COMUNES } from '../services_v245/asistencia_comunes.js?v=29.0815';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0815';
+import { renderCapacidad } from './capacidad.js?v=29.0815';
+import { ESCALA_FOTO, escalaParaFoto, paraFoto, botonCopiar, cerrarConEsc, laminaResumen, filasPorBloque, enBloques, aRGB } from '../services_v245/laminas.js?v=29.0815';
+import { TEMAS, setTema, temaActual, colorTema, veloTema, resolverColoresChart } from '../services_v245/temaService.js?v=29.0815';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_OSCURO, temaDePlataforma } from '../reportes/marcas.js?v=29.0815';
+import { procesarArchivoPicking, juntarDias as juntarDiasPicking, HORAS_MIN_RANKING, EQUIVALENCIA_PREPACK, indexarMaestroPicking, juntarCronometros, esPrepack } from '../reportes/picking.js?v=29.0815';
+import { pintarPrepack } from '../reportes/picking_prepack.js?v=29.0815';
+import { cuadroPorHora, cuadroCurvas, cuadroRecorrido, cuadroRepetida, cuadroCorridas, cuadroArticulos, cuadroGenero, cuadroQuePaso, cuadroProductividad, cuadroTiempoEntrePicks, cuadroTotal } from '../reportes/picking_cuadros.js?v=29.0815';
+import { calcularBalance, cuadroBalance, calcularCobertura, cuadroCobertura, usarNombreCorto } from '../reportes/picking_piso.js?v=29.0815';
+import { procesarLayout, getColSafe } from '../reportes/layout_calculo.js?v=29.0815';
+import { montarTurno } from '../reportes/turno_actividades.js?v=29.0815';
+import { montarSinSalida } from '../reportes/sku_sin_salida.js?v=29.0815';
+import { montarRecibidoSinPicar } from '../reportes/recibido_sin_picar.js?v=29.0815';
+import { montarPendiente } from '../reportes/pendiente.js?v=29.0815';
+import { montarCorreoHoy } from '../reportes/correo_hoy.js?v=29.0815';
+import { montarPedidosWms } from '../reportes/pedidos_wms.js?v=29.0815';
+import { montarRotacion } from '../reportes/rotacion.js?v=29.0815';
+import { montarProduccionHora } from '../reportes/produccion_hora.js?v=29.0815';
+import { montarCruce } from '../reportes/cruce_wms.js?v=29.0815';
+import { montarProduccionProyeccion } from '../reportes/produccion_proyeccion.js?v=29.0815';
+import { marca, fin, resumen } from '../services_v245/medir.js?v=29.0815';
+import * as slottingService from '../services_v245/slottingService.js?v=29.0815';
+import { montarSlotting } from './slotting.js?v=29.0815';
+import { montarEventos } from './eventos.js?v=29.0815';
+import * as eventosService from '../services_v245/eventosService.js?v=29.0815';
 
 // Utilidad: deshabilita btn, muestra label de carga, ejecuta fn, restaura
 async function withLoading(btn, loadingLabel, fn) {
@@ -415,7 +415,7 @@ window.alert = function(message) {
     showPremiumAlert(title, cleanMessage, type);
 };
 
-const VERSION = '29.0814';
+const VERSION = '29.0815';
 const CACHE_KEY = `logistics_v24_prod_`;
 const DB_TASKS_KEY = 'almacenaje_tasks_history_v1';
 console.log(`[PULSE] Engine v${VERSION} Initialized`);
@@ -3325,7 +3325,7 @@ export const renderDashboard = async (container, user, onLogout) => {
      todas. */
   const abrirPortalNoRetail = async (destino) => {
       const { renderDespachoNoRetailPortal } =
-          await import('../reportes/despacho_no_retail.js?v=29.0814');
+          await import('../reportes/despacho_no_retail.js?v=29.0815');
       return renderDespachoNoRetailPortal(destino, {
           fetchAndParseNoRetailClients,
           showNRPhotoLoader,
@@ -4574,7 +4574,7 @@ export const renderDashboard = async (container, user, onLogout) => {
   };
 
   const abrirZonaBuffer = async () => {
-      const { montarZonaBuffer } = await import('../reportes/zona_buffer.js?v=29.0814');
+      const { montarZonaBuffer } = await import('../reportes/zona_buffer.js?v=29.0815');
       return montarZonaBuffer({
           estado: estadoBuffer,
           contentArea,
@@ -5140,7 +5140,7 @@ export const renderDashboard = async (container, user, onLogout) => {
         btn.innerHTML = '⏳ PROCESANDO...';
         
         try {
-            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0814');
+            const { saveUsers, savePermissions, save, savePerformanceLog } = await import('../services_v245/adminService.js?v=29.0815');
             
             const extractData = (json) => (json && json.data) ? json.data : json;
 
@@ -5403,7 +5403,7 @@ export const renderDashboard = async (container, user, onLogout) => {
           try { estado = JSON.parse(localStorage.getItem(SIM_CACHE) || 'null'); } catch (e) { estado = null; }
       }
 
-      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0814');
+      const { montarSimulador } = await import('../reportes/simulador.js?v=29.0815');
 
       /* EL GUARDADO VA CON FRENO. `alGuardar` se dispara en cada dibujo —o sea en
          cada tecla— y sin esto sería un POST por letra escrita. */
@@ -11376,10 +11376,13 @@ const renderRFSection = (container) => {
 
       // TRES RESPUESTAS, NO DOS: ver infoMaestroPublicado en csvHub_v6.js. Tratar el
       // "no se pudo preguntar" como "no hay nada" es lo que hizo que un reinicio de
-      // Render de 90 segundos se viera como un Maestro perdido.
-      const respuesta = await infoMaestroPublicado();
+      // Render de 90 segundos se viera como un Maestro perdido. Lo mismo vale para la
+      // tabla de marcas, y se piden las dos a la vez.
+      const [respuesta, respMarcas] = await Promise.all([infoMaestroPublicado(), infoTablaMarcas()]);
       const sinRespuesta = !!(respuesta && respuesta.error);
       const ficha = sinRespuesta ? null : respuesta;
+      const marcasSinRespuesta = !!(respMarcas && respMarcas.error);
+      const fichaMarcas = marcasSinRespuesta ? null : respMarcas;
       if (!caja.isConnected) return;
 
       const enLaPc = (dataStore.articulos || []).length;
@@ -11393,7 +11396,14 @@ const renderRFSection = (container) => {
       const dias = ficha ? diasDesde(ficha.fecha) : null;
       // El Maestro cambia cada 10 días más o menos: a los 15 ya conviene revisarlo
       const colorAntiguedad = dias === null ? 'var(--text-muted)' : dias <= 12 ? 'var(--success)' : dias <= 20 ? 'var(--warning)' : 'var(--danger)';
+      const diasMarcas = fichaMarcas ? diasDesde(fichaMarcas.fecha) : null;
 
+      const rotulo = (t) => `<div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.4); text-transform:uppercase; font-weight:800; letter-spacing:0.5px;">${t}</div>`;
+
+      /* SIN LEYENDAS. Debajo de cada tarjeta iba un texto gris explicando cómo funciona; Daniel,
+         16-sep-2026, al aprobar la maqueta: "quítale la leyenda". Los AVISOS de estado -la copia
+         vieja, el servidor que no contesta, lo que falta publicar- se quedan: esos no explican
+         la pantalla, dicen algo que está pasando. */
       caja.innerHTML = `
         <div class="animate-fade-in" style="display:flex; flex-direction:column; gap:1.2rem; max-width:820px;">
 
@@ -11405,20 +11415,20 @@ const renderRFSection = (container) => {
 
             <div style="padding:1.2rem; display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px;">
               <div>
-                <div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.4); text-transform:uppercase; font-weight:800; letter-spacing:0.5px;">Artículos publicados</div>
+                ${rotulo('Artículos publicados')}
                 <div style="font-size:var(--t-xl); font-weight:900; color:var(--text-strong); line-height:1.3;">${ficha ? ficha.filas.toLocaleString('es-PE') : '—'}</div>
               </div>
               <div>
-                <div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.4); text-transform:uppercase; font-weight:800; letter-spacing:0.5px;">Publicado</div>
+                ${rotulo('Publicado')}
                 <div style="font-size:var(--t-md); font-weight:800; color:${colorAntiguedad}; line-height:1.6;">${ficha ? fmtFecha(ficha.fecha) : (sinRespuesta ? 'No se pudo consultar' : 'Nunca')}</div>
                 <div style="font-size:var(--t-xs); color:${colorAntiguedad};">${dias === null ? '' : dias === 0 ? 'hoy' : `hace ${dias} día${dias === 1 ? '' : 's'}`}</div>
               </div>
               <div>
-                <div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.4); text-transform:uppercase; font-weight:800; letter-spacing:0.5px;">Lo subió</div>
+                ${rotulo('Lo subió')}
                 <div style="font-size:var(--t-md); font-weight:800; color:var(--text-pale); line-height:1.6;">${ficha ? String(ficha.usuario) : '—'}</div>
               </div>
               <div>
-                <div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.4); text-transform:uppercase; font-weight:800; letter-spacing:0.5px;">En esta PC</div>
+                ${rotulo('En esta PC')}
                 <div style="font-size:var(--t-md); font-weight:800; color:${enLaPc ? 'var(--success)' : 'var(--text-muted)'}; line-height:1.6;">${enLaPc ? enLaPc.toLocaleString('es-PE') + ' filas' : 'sin cargar'}</div>
               </div>
             </div>
@@ -11438,6 +11448,16 @@ const renderRFSection = (container) => {
               Todavía no hay ninguna copia publicada. Hasta que la haya, cada PC depende del archivo que haya subido por su cuenta.
             </div>` : ''}
 
+            <!-- Mientras se lee el Power Pivot: unos 4 segundos. Se muestra y se esconde con
+                 style.display, NO con hidden: un display puesto le gana al hidden. -->
+            <div id="nube_progreso" style="display:none; padding:1rem 1.2rem; border-top:1px solid rgba(var(--ink-rgb), 0.06);">
+              <div id="nube_progreso_texto" style="font-size:var(--t-sm); color:var(--text-muted);">Leyendo el Power Pivot...</div>
+              <div style="height:8px; border-radius:6px; background:rgba(var(--ink-rgb), 0.08); overflow:hidden; margin:0.5rem 0 0.3rem;">
+                <i id="nube_progreso_barra" style="display:block; height:100%; width:0; background:linear-gradient(90deg,var(--primary-2),var(--brand-light)); transition:width 0.25s;"></i>
+              </div>
+              <div style="font-size:var(--t-xs); color:var(--text-muted);">No se sube el archivo: se pasa a valores en esta PC.</div>
+            </div>
+
             <div style="padding:1.1rem 1.2rem; border-top:1px solid rgba(var(--ink-rgb), 0.06); display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
               <input type="file" id="nube_archivo" accept=".xlsx" style="display:none;">
               <button id="nube_elegir" class="btn" style="width:auto; padding:9px 18px; font-size:var(--t-sm); background:linear-gradient(135deg,var(--primary-2),var(--brand-light)); color:var(--text-strong); border:none; font-weight:900; cursor:pointer;">📤 PUBLICAR MAESTRO (.xlsx)</button>
@@ -11445,10 +11465,50 @@ const renderRFSection = (container) => {
             </div>
           </div>
 
-          <div style="font-size:var(--t-xs); color:rgba(var(--ink-rgb), 0.32); line-height:1.8;">
-            El archivo se revisa antes de publicar: tiene que traer las columnas <b style="color:rgba(var(--ink-rgb), 0.5);">CodArticulo</b>, <b style="color:rgba(var(--ink-rgb), 0.5);">G. Gender</b> y <b style="color:rgba(var(--ink-rgb), 0.5);">Gender RIMS</b>, y venir completo. Si algo no cuadra, no se publica.<br>
-            Cada PC lo baja una sola vez y lo guarda; solo lo vuelve a bajar cuando se publica uno nuevo.<br>
-            Lo que se publique en pruebas no toca producción.
+          <div class="glass-panel" style="background:rgba(var(--bg-rgb), 0.9); border:2px solid var(--primary-2); border-radius:14px; overflow:hidden;">
+            <div style="padding:1rem 1.2rem; background:rgba(var(--primary2-rgb), 0.1); border-bottom:1px solid rgba(var(--primary2-rgb), 0.3);">
+              <h3 style="color:var(--text-strong); font-weight:900; margin:0 0 2px 0; font-size:var(--t-lg); letter-spacing:1px;">🏷️ TABLA DE MARCAS</h3>
+              <div style="font-size:var(--t-xs); color:rgba(var(--brand-pale-rgb), 0.75); font-weight:600;">Traduce la MarcaStd del Power Pivot a la marca del negocio. Se usa al publicar el maestro desde el Power Pivot.</div>
+            </div>
+
+            <div style="padding:1.2rem; display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px;">
+              <div>
+                ${rotulo('Equivalencias')}
+                <div style="font-size:var(--t-xl); font-weight:900; color:var(--text-strong); line-height:1.3;">${fichaMarcas ? fichaMarcas.equivalencias.toLocaleString('es-PE') : '—'}</div>
+                <div style="font-size:var(--t-xs); color:var(--text-muted);">${fichaMarcas ? `en ${fichaMarcas.marcas} marcas` : ''}</div>
+              </div>
+              <div>
+                ${rotulo('Publicada')}
+                <div style="font-size:var(--t-md); font-weight:800; color:${fichaMarcas ? 'var(--success)' : 'var(--text-muted)'}; line-height:1.6;">${fichaMarcas ? fmtFecha(fichaMarcas.fecha) : (marcasSinRespuesta ? 'No se pudo consultar' : 'Nunca')}</div>
+                <div style="font-size:var(--t-xs); color:var(--success);">${diasMarcas === null ? '' : diasMarcas === 0 ? 'hoy' : `hace ${diasMarcas} día${diasMarcas === 1 ? '' : 's'}`}</div>
+              </div>
+              <div>
+                ${rotulo('La subió')}
+                <div style="font-size:var(--t-md); font-weight:800; color:var(--text-pale); line-height:1.6;">${fichaMarcas ? String(fichaMarcas.usuario) : '—'}</div>
+              </div>
+              <div>
+                ${rotulo('Marca desconocida')}
+                <div style="font-size:var(--t-md); font-weight:800; color:var(--text-pale); line-height:1.6;">va como Otros</div>
+              </div>
+            </div>
+
+            ${marcasSinRespuesta ? `
+            <div style="padding:0.8rem 1.2rem; background:rgba(var(--danger-rgb), 0.08); border-top:1px solid rgba(var(--danger-rgb), 0.25); font-size:var(--t-sm); color:var(--danger-pale); line-height:1.6;">
+              ⚠️ No se pudo consultar la tabla publicada (${String(respMarcas.error)}). Puede ser que el servidor esté reiniciando: vuelva a entrar en un minuto.
+            </div>` : ''}
+
+            ${!fichaMarcas && !marcasSinRespuesta ? `
+            <div style="padding:0.8rem 1.2rem; background:rgba(var(--warning-rgb), 0.08); border-top:1px solid rgba(var(--warning-rgb), 0.25); font-size:var(--t-sm); color:var(--warning-soft); line-height:1.6;">
+              Todavía no hay tabla de marcas publicada. Sin ella no se puede publicar el maestro desde el Power Pivot.
+            </div>` : ''}
+
+            <div id="marcas_lista" style="display:none; border-top:1px solid rgba(var(--ink-rgb), 0.06); padding:0.8rem 1.2rem 1rem;"></div>
+
+            <div style="padding:1.1rem 1.2rem; border-top:1px solid rgba(var(--ink-rgb), 0.06); display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+              <input type="file" id="marcas_archivo" accept=".xlsx,.xls" style="display:none;">
+              <button id="marcas_elegir" class="btn" style="width:auto; padding:9px 18px; font-size:var(--t-sm); background:linear-gradient(135deg,var(--primary-2),var(--brand-light)); color:var(--text-strong); border:none; font-weight:900; cursor:pointer;">📤 PUBLICAR MARCAS (.xlsx)</button>
+              ${fichaMarcas ? `<button id="marcas_ver" class="btn" style="width:auto; padding:9px 18px; font-size:var(--t-sm); background:rgba(var(--ink-rgb),0.05); color:var(--text-soft); border:1px solid rgba(var(--ink-rgb),0.15); font-weight:800; cursor:pointer;">👁 VER LA TABLA</button>` : ''}
+            </div>
           </div>
         </div>`;
 
@@ -11456,11 +11516,196 @@ const renderRFSection = (container) => {
       const etiqueta = caja.querySelector('#nube_nombre');
       caja.querySelector('#nube_elegir').onclick = () => inputArchivo.click();
 
+      const soltar = () => { etiqueta.textContent = ''; inputArchivo.value = ''; };
+      const escapar = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+      /* EL MISMO CIERRE PARA LOS DOS CAMINOS: la guarda del 80%, la confirmación y la
+         publicación son las de siempre. El Power Pivot solo llega distinto hasta acá. */
+      const confirmarYPublicar = async (filas, revision, detalleExtra) => {
+          if (sinRespuesta) {
+              soltar();
+              showPremiumAlert('NO SE PUEDE PUBLICAR AHORA',
+                  'No se pudo consultar qué Maestro hay publicado, así que no se puede comparar contra el archivo nuevo.\n\nPuede que el servidor esté reiniciando. Espere un minuto y vuelva a entrar.',
+                  'error');
+              return;
+          }
+          // Se dice en números qué va a cambiar ANTES de tocar nada
+          const antes = ficha ? ficha.filas : 0;
+          const diferencia = revision.articulos - antes;
+          const aviso = (ficha && antes > 0 && revision.articulos < antes * 0.8)
+              ? '\n\n⚠️ El archivo nuevo tiene bastante menos artículos que el publicado. Revise que no esté cortado.'
+              : '';
+          let texto;
+          if (detalleExtra) {
+              texto = detalleExtra(antes, diferencia, aviso);
+          } else {
+              const detalle = !ficha
+                  ? `Se van a publicar ${revision.articulos.toLocaleString('es-PE')} artículos. Es la primera publicación.`
+                  : `Publicado hoy:  ${antes.toLocaleString('es-PE')} artículos\nArchivo nuevo:  ${revision.articulos.toLocaleString('es-PE')} artículos\nDiferencia:     ${diferencia >= 0 ? '+' : ''}${diferencia.toLocaleString('es-PE')}`;
+              texto = `${detalle}${aviso}\n\nA partir de ahora todas las PC van a usar este archivo.`;
+          }
+
+          if (!await showPremiumConfirm('PUBLICAR PARA TODA LA EMPRESA', texto, aviso ? 'danger' : 'warning')) {
+              soltar();
+              return;
+          }
+          const boton = caja.querySelector('#nube_elegir');
+          try {
+              await withLoading(boton, '⌛ PUBLICANDO...', async () => {
+                  await publicarMaestro(filas, user.username || 'sistema');
+              });
+              showPremiumAlert('PUBLICADO',
+                  `${revision.articulos.toLocaleString('es-PE')} artículos quedaron publicados.\n\nCada PC lo va a bajar la próxima vez que abra la web.`,
+                  'success');
+              renderArchivosNube(caja);
+          } catch (err) {
+              showPremiumAlert('NO SE PUDO PUBLICAR',
+                  `${String(err && err.message || err)}\n\nLa copia anterior sigue publicada: no se perdió nada.`, 'error');
+          } finally {
+              soltar();
+          }
+      };
+
+      /* ── EL POWER PIVOT ─────────────────────────────────────────────────────────────────
+         Daniel, 16-sep-2026: "me pasan un maestro de artículos que es un Power Pivot,
+         demasiado pesado; quiero cargarlo así como está, y que la web lo convierta en valores
+         y le agregue la temporada y la marca". El lector vive en maestroPowerPivot.js. */
+      const publicarDesdePowerPivot = async (archivo, PP) => {
+          const progreso = caja.querySelector('#nube_progreso');
+          const barra = caja.querySelector('#nube_progreso_barra');
+          const pasoTxt = caja.querySelector('#nube_progreso_texto');
+
+          /* SIN TABLA DE MARCAS NO SE PUBLICA. Publicar igual dejaría todas las marcas como
+             "Otros", y de la marca cuelgan las zonas de almacenaje: las tareas saldrían sin
+             ubicación. Se pregunta ANTES de leer los 168 MB. */
+          /* Estos avisos van con <br> y no con \n: el cartel pone el texto dentro de un <p>, y ahí
+             un salto de línea se ve como un espacio. */
+          const tabla = await traerTablaMarcas();
+          if (tabla && tabla.error) {
+              soltar();
+              showPremiumAlert('NO SE PUEDE PUBLICAR AHORA',
+                  `No se pudo consultar la tabla de marcas (${escapar(tabla.error)}).<br><br>Puede que el servidor esté reiniciando. Espera un minuto y vuelve a entrar.`, 'error');
+              return;
+          }
+          if (!tabla) {
+              soltar();
+              showPremiumAlert('FALTA LA TABLA DE MARCAS',
+                  'Para publicar el maestro desde el Power Pivot hace falta la <b>tabla de marcas</b>: es la que convierte la MarcaStd en la marca del negocio.<br><br>'
+                + 'Publícala primero con el botón <b>PUBLICAR MARCAS</b>, abajo, y vuelve a subir el Power Pivot.<br><br>'
+                + 'No se publicó nada: el maestro de antes sigue igual.', 'error');
+              return;
+          }
+
+          progreso.style.display = 'block';
+          barra.style.width = '0';
+          let leido;
+          try {
+              leido = await PP.leerPowerPivot(archivo, (fraccion, que) => {
+                  barra.style.width = Math.round(Math.max(0, Math.min(1, fraccion)) * 100) + '%';
+                  pasoTxt.textContent = que;
+              });
+          } catch (err) {
+              progreso.style.display = 'none';
+              soltar();
+              showPremiumAlert('NO SE PUDO LEER EL POWER PIVOT', escapar(err && err.message || err), 'error');
+              return;
+          }
+          barra.style.width = '100%';
+          pasoTxt.textContent = 'Agregando Marcas y Temporada...';
+          // Lo que sigue no suelta el hilo: se deja pintar este texto antes de empezar
+          await new Promise(listo => setTimeout(listo, 30));
+
+          let convertido;
+          try {
+              /* EL TRIMESTRE SALE DE LA FECHA LÓGICA DE LA JORNADA, nunca de toISOString():
+                 ese devuelve UTC y a las 19:00 de Lima ya es el día siguiente. */
+              convertido = PP.convertirAlMaestro(leido, PP.diccionarioDeMarcas(tabla), PP.trimestreDe(getLogicalDate()));
+          } catch (err) {
+              progreso.style.display = 'none';
+              soltar();
+              showPremiumAlert('ARCHIVO RECHAZADO', escapar(err && err.message || err), 'error');
+              return;
+          }
+          progreso.style.display = 'none';
+          etiqueta.textContent = '';
+
+          const { filas, resumen: r } = convertido;
+          const revision = revisarMaestro(filas);
+          if (!revision.ok) {
+              soltar();
+              showPremiumAlert('ARCHIVO RECHAZADO', revision.motivo, 'error');
+              return;
+          }
+
+          /* EL RESUMEN VA COMO TEXTO DE FRASE. showPremiumConfirm lo pone dentro de un <p>, y un
+             <p> no admite tablas ni divs: el navegador lo cierra antes y el resto sale suelto.
+             Por eso las filas son <span> con display:flex, que sí caben. */
+          const fila = (a, b) => `<span style="display:flex; justify-content:space-between; gap:1rem; padding:0.28rem 0; border-bottom:1px solid rgba(var(--ink-rgb),0.06);"><span>${a}</span><b style="color:var(--text-strong); font-variant-numeric:tabular-nums; white-space:nowrap;">${b}</b></span>`;
+          const [anio, q] = String(r.trimestreActual).split('-Q');
+          const qAntes = +q === 1 ? `${+anio - 1}-Q4` : `${anio}-Q${+q - 1}`;
+          const semana = (/W\d{1,2}/i.exec(archivo.name) || [])[0];
+          const mb = (bytes, dec) => (bytes / 1048576).toLocaleString('es-PE', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+          const pesoMB = mb(new Blob([JSON.stringify(filas)]).size, 1);
+          // Lo que pesa hoy: la copia de esta PC, que es la publicada que bajó
+          const pesoHoy = enLaPc ? mb(new Blob([JSON.stringify(dataStore.articulos)]).size, 1) : '';
+          const archivoMB = mb(archivo.size, 0);
+          const desconocidas = r.marcasDesconocidas;
+
+          await confirmarYPublicar(filas, revision, (antes, diferencia, aviso) =>
+              `<span style="display:block; text-align:left; font-size:var(--t-sm);">`
+            + (ficha ? fila('Publicado hoy', `${antes.toLocaleString('es-PE')} artículos`) : '')
+            + fila(`Power Pivot${semana ? ' ' + semana.toUpperCase() : ''}`, `${r.articulos.toLocaleString('es-PE')} artículos`)
+            + (ficha ? fila('Diferencia', `${diferencia >= 0 ? '+' : ''}${diferencia.toLocaleString('es-PE')}`) : '')
+            + `<br><b style="color:var(--text-strong);">Temporada</b> — trimestre de hoy: <b style="color:var(--text-strong);">${r.trimestreActual}</b>`
+            + fila(`T. Actual (${r.trimestreActual} en adelante)`, r.temporadaActual.toLocaleString('es-PE'))
+            + fila(`T. Anterior (${qAntes} para atrás, ND y en blanco)`, r.temporadaAnterior.toLocaleString('es-PE'))
+            + (desconocidas.length
+                ? `<br><span style="display:block; background:rgba(var(--warning-rgb),0.1); border:1px solid rgba(var(--warning-rgb),0.35); border-radius:10px; padding:0.6rem 0.8rem;">⚠️ <b style="color:var(--text-strong);">${desconocidas.length === 1 ? '1 marca no está' : `${desconocidas.length} marcas no están`} en tu tabla</b> y ${desconocidas.length === 1 ? 'va' : 'van'} como <b style="color:var(--text-strong);">Otros</b>:<br>`
+                  + desconocidas.slice(0, 6).map(d => `· <b style="color:var(--text-strong);">${escapar(d.marcaStd)}</b> — ${d.articulos.toLocaleString('es-PE')} artículo${d.articulos === 1 ? '' : 's'}`).join('<br>')
+                  + (desconocidas.length > 6 ? `<br>· y ${desconocidas.length - 6} más` : '')
+                  + (desconocidas.length === 1
+                      ? `<br>Si no es Otros, agrégala a tu Marcas.xlsx, publica la tabla y vuelve a publicar el maestro.</span>`
+                      : `<br>Si no son Otros, agrégalas a tu Marcas.xlsx, publica la tabla y vuelve a publicar el maestro.</span>`)
+                : `<br><b style="color:var(--text-strong);">Marcas:</b> las ${r.marcaStdDistintas} MarcaStd que trae el archivo están en tu tabla. ✔`)
+            + (aviso ? `<br><br><b style="color:var(--danger);">${aviso.trim()}</b>` : '')
+            + `<br><br>Se publican <b style="color:var(--text-strong);">${pesoMB} MB</b> en valores${pesoHoy ? ` (hoy hay ${pesoHoy} MB)` : ''}. El archivo de ${archivoMB} MB no sale de esta PC.`
+            + `</span>`);
+      };
+
       inputArchivo.onchange = async (ev) => {
           const archivo = ev.target.files && ev.target.files[0];
           if (!archivo) return;
           etiqueta.textContent = `Leyendo ${archivo.name}...`;
 
+          /* ¿POWER PIVOT? Se decide mirando solo el índice del zip, ANTES de pasárselo a la
+             librería de Excel: con un Power Pivot de 168 MB esa librería cuelga la pestaña.
+             Si el lector no carga, NO se sigue por el camino de siempre con un archivo que
+             pesa como un Power Pivot: se avisa y listo. */
+          let PP;
+          try {
+              PP = await import('../services_v245/maestroPowerPivot.js?v=29.0815');
+          } catch (err) {
+              console.warn('[MAESTRO] No cargó el lector del Power Pivot:', err && err.message);
+          }
+          if (PP && await PP.esPowerPivot(archivo)) {
+              etiqueta.textContent = `${archivo.name} · ${(archivo.size / 1048576).toLocaleString('es-PE', { maximumFractionDigits: 1 })} MB`;
+              try {
+                  await publicarDesdePowerPivot(archivo, PP);
+              } catch (err) {
+                  caja.querySelector('#nube_progreso').style.display = 'none';
+                  soltar();
+                  showPremiumAlert('NO SE PUDO PUBLICAR', escapar(err && err.message || err), 'error');
+              }
+              return;
+          }
+          if (!PP && archivo.size > 40 * 1048576) {
+              soltar();
+              showPremiumAlert('NO SE PUDO LEER',
+                  'No se pudo revisar el archivo: puede que se haya cortado la conexión.<br><br>Recarga la página y vuelve a intentarlo.', 'error');
+              return;
+          }
+
+          // ── EL CAMINO DE SIEMPRE: el maestro ya trabajado en valores ──
           let filas;
           try {
               filas = await new Promise((resolve, reject) => {
@@ -11475,71 +11720,149 @@ const renderRFSection = (container) => {
                   lector.readAsArrayBuffer(archivo);
               });
           } catch (err) {
-              etiqueta.textContent = '';
-              inputArchivo.value = '';
+              soltar();
               showPremiumAlert('NO SE PUDO LEER', String(err && err.message || err), 'error');
               return;
           }
 
           const revision = revisarMaestro(filas);
           if (!revision.ok) {
-              etiqueta.textContent = '';
-              inputArchivo.value = '';
+              soltar();
               showPremiumAlert('ARCHIVO RECHAZADO', revision.motivo, 'error');
               return;
           }
 
-          // SIN SABER QUE HAY PUBLICADO, NO SE PUBLICA.
-          //
+          // SIN SABER QUE HAY PUBLICADO, NO SE PUBLICA: lo resuelve confirmarYPublicar.
           // Si no se pudo consultar la ficha, `antes` valdría 0: el texto diría "Es la
-          // primera publicación" y la guarda del 80% de más abajo no se activaría nunca.
-          // O sea que un archivo cortado pisaría el Maestro bueno sin una advertencia,
-          // y justamente en el momento en que el servidor no está fino.
-          if (sinRespuesta) {
-              inputArchivo.value = '';
-              etiqueta.textContent = '';
+          // primera publicación" y la guarda del 80% no se activaría nunca.
+          await confirmarYPublicar(filas, revision, null);
+      };
+
+      /* ── LA TABLA DE MARCAS ─────────────────────────────────────────────────────────────── */
+      const inputMarcas = caja.querySelector('#marcas_archivo');
+      caja.querySelector('#marcas_elegir').onclick = () => inputMarcas.click();
+
+      inputMarcas.onchange = async (ev) => {
+          const archivo = ev.target.files && ev.target.files[0];
+          if (!archivo) return;
+          const PP = await import('../services_v245/maestroPowerPivot.js?v=29.0815');
+          let pares;
+          try {
+              const matriz = await new Promise((resolve, reject) => {
+                  const lector = new FileReader();
+                  lector.onload = (e) => {
+                      try {
+                          const libro = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+                          resolve(XLSX.utils.sheet_to_json(libro.Sheets[libro.SheetNames[0]], { header: 1, defval: '' }));
+                      } catch (err) { reject(err); }
+                  };
+                  lector.onerror = () => reject(new Error('No se pudo leer el archivo.'));
+                  lector.readAsArrayBuffer(archivo);
+              });
+              pares = PP.leerTablaMarcas(matriz);
+          } catch (err) {
+              inputMarcas.value = '';
+              showPremiumAlert('ARCHIVO RECHAZADO', escapar(err && err.message || err), 'error');
+              return;
+          }
+
+          /* SE DICE QUÉ CAMBIA antes de publicar, igual que el maestro. Y si no se pudo
+             preguntar qué hay publicado, no se publica: "no contestó" no es "no hay". */
+          const anterior = await traerTablaMarcas();
+          if (anterior && anterior.error) {
+              inputMarcas.value = '';
               showPremiumAlert('NO SE PUEDE PUBLICAR AHORA',
-                  'No se pudo consultar qué Maestro hay publicado, así que no se puede comparar contra el archivo nuevo.\n\nPuede que el servidor esté reiniciando. Espere un minuto y vuelva a entrar.',
-                  'error');
+                  `No se pudo consultar la tabla publicada (${escapar(anterior.error)}).<br><br>Puede que el servidor esté reiniciando. Espera un minuto y vuelve a entrar.`, 'error');
               return;
           }
+          const k = (s) => String(s || '').trim().toLowerCase();
+          const antes = {};
+          (anterior || []).forEach(p => { antes[k(p.MarcaStd)] = p; });
+          const ahora = {};
+          pares.forEach(p => { ahora[k(p.MarcaStd)] = p; });
+          const nuevas = pares.filter(p => !antes[k(p.MarcaStd)]);
+          const cambiadas = pares.filter(p => antes[k(p.MarcaStd)] && antes[k(p.MarcaStd)].Marcas !== p.Marcas);
+          const quitadas = (anterior || []).filter(p => !ahora[k(p.MarcaStd)]);
 
-          // Se dice en números qué va a cambiar ANTES de tocar nada
-          const antes = ficha ? ficha.filas : 0;
-          const diferencia = revision.articulos - antes;
-          const detalle = !ficha
-              ? `Se van a publicar ${revision.articulos.toLocaleString('es-PE')} artículos. Es la primera publicación.`
-              : `Publicado hoy:  ${antes.toLocaleString('es-PE')} artículos\nArchivo nuevo:  ${revision.articulos.toLocaleString('es-PE')} artículos\nDiferencia:     ${diferencia >= 0 ? '+' : ''}${diferencia.toLocaleString('es-PE')}`;
+          const fila = (a, b) => `<span style="display:flex; justify-content:space-between; gap:1rem; padding:0.28rem 0; border-bottom:1px solid rgba(var(--ink-rgb),0.06);"><span>${a}</span><b style="color:var(--text-strong); white-space:nowrap;">${b}</b></span>`;
+          const lista = (arr, fmt) => arr.slice(0, 8).map(fmt).join('<br>') + (arr.length > 8 ? `<br>· y ${arr.length - 8} más` : '');
+          const b = (s) => `<b style="color:var(--text-strong);">${escapar(s)}</b>`;
+          const cambios = []
+              .concat(nuevas.length ? [lista(nuevas, p => `· ${b(p.MarcaStd)} → ${b(p.Marcas)} <i>(nueva)</i>`)] : [])
+              .concat(cambiadas.length ? [lista(cambiadas, p => `· ${b(p.MarcaStd)}: ${escapar(antes[k(p.MarcaStd)].Marcas)} → ${b(p.Marcas)}`)] : [])
+              .concat(quitadas.length ? [lista(quitadas, p => `· ${b(p.MarcaStd)} <i>(ya no está)</i>`)] : []);
 
-          const aviso = (ficha && antes > 0 && revision.articulos < antes * 0.8)
-              ? '\n\n⚠️ El archivo nuevo tiene bastante menos artículos que el publicado. Revise que no esté cortado.'
-              : '';
+          const mensaje = `<span style="display:block; text-align:left; font-size:var(--t-sm);">`
+              + (anterior ? fila('Publicada hoy', `${anterior.length.toLocaleString('es-PE')} equivalencias`) : '')
+              + fila('Archivo nuevo', `${pares.length.toLocaleString('es-PE')} equivalencias`)
+              + (anterior
+                  ? (cambios.length ? `<br><b style="color:var(--text-strong);">Cambios:</b><br>${cambios.join('<br>')}` : '<br>No cambia ninguna equivalencia.')
+                  : '<br>Es la primera publicación.')
+              + `<br><br>El maestro ya publicado <b style="color:var(--text-strong);">no cambia</b>: la tabla nueva se usa la próxima vez que publiques el maestro.`
+              + `</span>`;
 
-          if (!await showPremiumConfirm('PUBLICAR PARA TODA LA EMPRESA',
-                `${detalle}${aviso}\n\nA partir de ahora todas las PC van a usar este archivo.`,
-                aviso ? 'danger' : 'warning')) {
-              etiqueta.textContent = '';
-              inputArchivo.value = '';
+          if (!await showPremiumConfirm('PUBLICAR LA TABLA DE MARCAS', mensaje, 'warning')) {
+              inputMarcas.value = '';
               return;
           }
-
-          const boton = caja.querySelector('#nube_elegir');
+          const boton = caja.querySelector('#marcas_elegir');
           try {
               await withLoading(boton, '⌛ PUBLICANDO...', async () => {
-                  await publicarMaestro(filas, user.username || 'sistema');
+                  await publicarTablaMarcas(pares, user.username || 'sistema');
               });
-              showPremiumAlert('PUBLICADO',
-                  `${revision.articulos.toLocaleString('es-PE')} artículos quedaron publicados.\n\nCada PC lo va a bajar la próxima vez que abra la web.`,
-                  'success');
+              showPremiumAlert('PUBLICADA',
+                  `${pares.length.toLocaleString('es-PE')} equivalencias quedaron publicadas.`, 'success');
               renderArchivosNube(caja);
           } catch (err) {
               showPremiumAlert('NO SE PUDO PUBLICAR',
-                  `${String(err && err.message || err)}\n\nLa copia anterior sigue publicada: no se perdió nada.`, 'error');
+                  `${escapar(err && err.message || err)}<br><br>La tabla anterior sigue publicada: no se perdió nada.`, 'error');
           } finally {
-              inputArchivo.value = '';
-              etiqueta.textContent = '';
+              inputMarcas.value = '';
           }
       };
+
+      /* VER LA TABLA: agrupada por marca, con cuántos artículos del maestro de ESTA PC tiene
+         cada una. La marca del maestro es la columna "Marcas": se busca por nombre. */
+      const botonVer = caja.querySelector('#marcas_ver');
+      if (botonVer) {
+          botonVer.onclick = async () => {
+              const cajaLista = caja.querySelector('#marcas_lista');
+              if (cajaLista.style.display === 'block') {
+                  cajaLista.style.display = 'none';
+                  botonVer.textContent = '👁 VER LA TABLA';
+                  return;
+              }
+              botonVer.textContent = '⌛ ...';
+              const tabla = await traerTablaMarcas();
+              if (!Array.isArray(tabla)) {
+                  botonVer.textContent = '👁 VER LA TABLA';
+                  showPremiumAlert('NO SE PUDO TRAER LA TABLA',
+                      tabla && tabla.error ? escapar(tabla.error) : 'No hay tabla publicada.', 'error');
+                  return;
+              }
+              const grupos = {};
+              tabla.forEach(p => { (grupos[p.Marcas] = grupos[p.Marcas] || []).push(p.MarcaStd); });
+              const art = (dataStore.articulos || []);
+              const iMarca = Array.isArray(art[0]) ? art[0].map(t => String(t).trim()).indexOf('Marcas') : -1;
+              const cuenta = {};
+              if (iMarca >= 0) art.slice(1).forEach(r => { const m = String(r[iMarca] || '').trim(); cuenta[m] = (cuenta[m] || 0) + 1; });
+              const orden = Object.keys(grupos).sort((a, b) => (cuenta[b] || 0) - (cuenta[a] || 0) || a.localeCompare(b));
+              const th = (t, der) => `<th style="text-align:${der ? 'right' : 'left'}; font-size:var(--t-xs); text-transform:uppercase; letter-spacing:0.5px; color:rgba(var(--ink-rgb),0.45); padding:0.35rem 0.4rem; border-bottom:1px solid rgba(var(--ink-rgb),0.1);">${t}</th>`;
+              cajaLista.innerHTML = `
+                <table style="width:100%; border-collapse:collapse; font-size:var(--t-sm);">
+                  <thead><tr>${th('Marca')}${th('MarcaStd que la forman')}${iMarca >= 0 ? th('Artículos', true) : ''}</tr></thead>
+                  <tbody>${orden.map(m => `
+                    <tr>
+                      <td style="padding:0.38rem 0.4rem; border-bottom:1px solid rgba(var(--ink-rgb),0.05); font-weight:800; color:var(--text-strong); white-space:nowrap; vertical-align:top;">${escapar(m)}</td>
+                      <td style="padding:0.38rem 0.4rem; border-bottom:1px solid rgba(var(--ink-rgb),0.05); color:var(--text-muted); font-size:var(--t-xs); line-height:1.5;">${grupos[m].map(escapar).join(', ')}</td>
+                      ${iMarca >= 0 ? `<td style="padding:0.38rem 0.4rem; border-bottom:1px solid rgba(var(--ink-rgb),0.05); text-align:right; font-weight:700; color:var(--text-pale); font-variant-numeric:tabular-nums; vertical-align:top;">${(cuenta[m] || 0).toLocaleString('es-PE')}</td>` : ''}
+                    </tr>`).join('')}
+                  </tbody>
+                </table>`;
+              cajaLista.style.display = 'block';
+              botonVer.textContent = '▲ OCULTAR LA TABLA';
+          };
+      }
   };
 
   /**
@@ -14293,7 +14616,7 @@ const renderRFSection = (container) => {
           se ata una sola vez al entrar y esas dieciséis quedaron intactas. El
           porqué completo está en la cabecera de ese archivo. */
        (async () => {
-           const { montarInventarios } = await import('../reportes/inventarios.js?v=29.0814');
+           const { montarInventarios } = await import('../reportes/inventarios.js?v=29.0815');
            montarInventarios(l2Container, {
                renderUploadArea,
                showPremiumConfirm,
@@ -16035,7 +16358,7 @@ const renderRFSection = (container) => {
     } else if (tabId === 'no_retail' && activeSub === 'catalogo_despacho') {
         await new Promise(r => setTimeout(r, 0));
         const { renderDespachoCatalogo } =
-            await import('../reportes/despacho_catalogo.js?v=29.0814');
+            await import('../reportes/despacho_catalogo.js?v=29.0815');
         renderDespachoCatalogo(container, 'catalogo');
     } else if (tabId === 'despacho' && activeSub === 'tracking_retail') {
         /* LA MISMA PANTALLA, OTRO CANAL. Lo unico que cambia entre este modulo y el de
@@ -16043,7 +16366,7 @@ const renderRFSection = (container) => {
            cada cosa, y dos numeros distintos del mismo dia al mes de empezar. */
         await new Promise(r => setTimeout(r, 0));
         const { renderDespachoCatalogo } =
-            await import('../reportes/despacho_catalogo.js?v=29.0814');
+            await import('../reportes/despacho_catalogo.js?v=29.0815');
         renderDespachoCatalogo(container, 'retail');
     } else if (tabId === 'no_retail' && activeSub === 'tracking_no_retail') {
         await new Promise(r => setTimeout(r, 0));
@@ -18703,7 +19026,7 @@ const renderRFSection = (container) => {
              `renderDashboard` y que ahora, viviendo afuera, no alcanza sola.
              `tareasDeAlmacenaje` va como función y no como lista: la caché se
              reemplaza entera cuando entran tareas nuevas. */
-          const { barrerParaSlotting } = await import('../reportes/slotting_barrido.js?v=29.0814');
+          const { barrerParaSlotting } = await import('../reportes/slotting_barrido.js?v=29.0815');
           const corrida = await barrerParaSlotting(
             (Array.isArray(zonasDeLaCorrida) && zonasDeLaCorrida.length)
               ? zonasDeLaCorrida
@@ -27063,7 +27386,7 @@ window.__menuMapa = (btn) => {
              lado es un `let` que leen el plan del Excel y el prepack: si se
              pasara la lista, esos dos nunca se enterarían de la foto nueva. */
           (async () => {
-              const { renderAnalisisReserva } = await import('../reportes/analisis_reserva.js?v=29.0814');
+              const { renderAnalisisReserva } = await import('../reportes/analisis_reserva.js?v=29.0815');
               renderAnalisisReserva(skuBuf, {
                   htmlConsolidacionReserva,
                   engancharClicConsolidacion,
@@ -30905,12 +31228,12 @@ window.__menuMapa = (btn) => {
         /* El buscador se carga aparte y NO frena al resto: si el servidor viejo
            todavia no tiene /api/asn, el cuadro dice que no se pudo consultar y
            los demas siguen dibujandose igual. */
-        import('../reportes/asn_buscador.js?v=29.0814').then(m => {
+        import('../reportes/asn_buscador.js?v=29.0815').then(m => {
           const cb = container.querySelector('#asn_buscador');
           if (cb) m.montarBuscadorAsn(cb, { api: 'https://logistics-backend-wv0x.onrender.com' });
         }).catch(e => console.warn('[ASN] no se pudo cargar el buscador:', e));
 
-        const { montarAsnDetalle } = await import('../reportes/asn_detalle.js?v=29.0814');
+        const { montarAsnDetalle } = await import('../reportes/asn_detalle.js?v=29.0815');
         const caja = container.querySelector('#asn_detalle');
         /* El HOY va de aca, con getLogicalDate(): el paquete trae el suyo -el del
            robot- y si la corrida fallo, ese "hoy" es de ayer y todo el calendario

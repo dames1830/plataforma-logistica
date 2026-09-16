@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="es" data-tema="pbi">
+<head>
+<meta charset="utf-8">
+<title>Prueba · Archivos Nube</title>
+<!--
+  LA PANTALLA DE ARCHIVOS NUBE, DE VERDAD, SIN INICIAR SESIÓN.
+
+  No es una copia: baja el texto de js/views/dashboard_v28.js y corta de ahí renderArchivosNube,
+  showPremiumAlert, showPremiumConfirm y withLoading, tal cual están. Lo único que cambia es la
+  ruta del import del lector del Power Pivot, porque esta página vive en /scratch y no en
+  /js/views.
+
+  Los archivos se "eligen" con los botones de arriba: bajan de scratch/_libs/ y entran al
+  <input type="file"> como si se hubieran elegido en la ventana de Windows. Todo lo demás
+  —los botones de la pantalla, los carteles, PUBLICAR— se prueba con clics de verdad.
+
+  SOLO CORRE EN BETA. Antes de env.js se pone un guardia: cualquier llamada al servidor que
+  salga sin el sello X-Environment: beta se frena, así que nada de esto puede tocar producción.
+
+      scratch/_libs/pivot_w38.xlsx          el Power Pivot tal como llega por WhatsApp
+      scratch/_libs/marcas.xlsx             la tabla de marcas de Daniel (OneDrive)
+      scratch/_libs/maestro_trabajado.xlsx  el maestro trabajado a mano, para el camino de siempre
+-->
+<script>
+  (function () {
+    var nativo = window.fetch.bind(window);
+    window.__frenadas = [];
+    window.fetch = function (input, init) {
+      var url = (typeof input === 'string') ? input : (input && input.url) || '';
+      if (/onrender\.com|\/api\/logistics/.test(url)) {
+        var h = new Headers((init && init.headers) || undefined);
+        if (h.get('X-Environment') !== 'beta') {
+          window.__frenadas.push(url);
+          return Promise.reject(new Error('PRUEBA: llamada sin sello beta, frenada: ' + url));
+        }
+      }
+      return nativo(input, init);
+    };
+  })();
+</script>
+<script src="../js/env.js?v=29.0815"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="../css/main.css?v=29.0815">
+<link rel="stylesheet" href="../css/temas.css?v=29.0815">
+<link rel="stylesheet" href="../css/componentes.css?v=29.0815">
+<style>
+  body { background: var(--bg); color: var(--text-pale); padding: 16px 24px 80px; margin: 0; }
+  .pr-barra { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 18px; padding:10px 12px;
+              border:1px dashed rgba(var(--ink-rgb),0.25); border-radius:10px; font-size:13px; }
+  .pr-barra button { padding:6px 10px; border-radius:8px; border:1px solid rgba(var(--ink-rgb),0.2);
+              background:rgba(var(--ink-rgb),0.06); color:var(--text-pale); cursor:pointer; font-size:12px; }
+  #pr-estado { font-family:monospace; font-size:12px; color:var(--text-muted); }
+</style>
+</head>
+<body>
+<div class="pr-barra">
+  <b>PRUEBA</b>
+  <button data-tema="pbi">Power BI</button><button data-tema="pbi-classic">PBI Classic</button>
+  <button data-tema="indigo">Índigo</button><button data-tema="negro">Negro</button>
+  <span>·</span>
+  <button id="pr-pivot">Elegir Power Pivot W38</button>
+  <button id="pr-marcas">Elegir Marcas.xlsx</button>
+  <button id="pr-marcas-sin-power">Elegir Marcas.xlsx SIN "Power"</button>
+  <button id="pr-trabajado">Elegir maestro trabajado</button>
+  <span id="pr-estado">cargando…</span>
+</div>
+<div id="configContent"></div>
+
+<script type="module">
+const estado = document.getElementById('pr-estado');
+const decir = (t) => { estado.textContent = t; };
+
+if (!window.PULSE_ES_BETA) {
+  document.body.innerHTML = '<h2 style="color:red;padding:2rem">NO ES BETA: la prueba no corre.</h2>';
+  throw new Error('no es beta');
+}
+
+document.querySelectorAll('[data-tema]').forEach(b => b.onclick = () => {
+  document.documentElement.setAttribute('data-tema', b.dataset.tema);
+});
+
+const hub = await import('../js/services_v245/csvHub_v6.js?v=29.0815');
+const jornada = await import('../js/services_v245/jornadaService.js?v=29.0815');
+
+/* EL CÓDIGO DE VERDAD, cortado del archivo que corre */
+const src = (await (await fetch('../js/views/dashboard_v28.js?t=' + Date.now())).text()).replace(/\r\n/g, '\n');
+const cortar = (inicio, fin) => {
+  const i = src.indexOf(inicio);
+  if (i < 0) throw new Error('no encontré: ' + inicio);
+  const j = src.indexOf(fin, i);
+  if (j < 0) throw new Error('no encontré el final de: ' + inicio);
+  return src.slice(i, j + fin.length);
+};
+const withLoadingSrc = cortar('async function withLoading(', '\n}\n');
+const alertSrc = cortar('export const showPremiumAlert = ', '\n};\n').replace(/^export /, '');
+const confirmSrc = cortar('export const showPremiumConfirm = ', '\n};\n').replace(/^export /, '');
+const iRender = src.indexOf('  const renderArchivosNube = async (caja) => {');
+const iSig = src.indexOf('  /**\n   * Configuración > Jornada de Trabajo.', iRender);
+const renderSrc = src.slice(iRender, src.lastIndexOf('  };', iSig) + 4);
+const RUTA = "'../services_v245/maestroPowerPivot.js?v=";
+if (renderSrc.indexOf(RUTA) < 0) throw new Error('la ruta del lector cambió: revisar la prueba');
+const renderAjustado = renderSrc.split(RUTA).join("'../js/services_v245/maestroPowerPivot.js?v=");
+
+const fabricar = new Function(
+  'dataStore', 'user', 'textoFechaServidor', 'fechaDelServidor', 'getLogicalDate',
+  'infoMaestroPublicado', 'revisarMaestro', 'publicarMaestro',
+  'infoTablaMarcas', 'traerTablaMarcas', 'publicarTablaMarcas',
+  [withLoadingSrc, alertSrc, confirmSrc, renderAjustado,
+   'return { renderArchivosNube, showPremiumAlert, showPremiumConfirm };'].join('\n'));
+
+const P = fabricar(
+  hub.dataStore, { username: 'dames', role: 'admin' }, hub.textoFechaServidor, hub.fechaDelServidor,
+  () => jornada.fechaLogicaDe(),
+  hub.infoMaestroPublicado, hub.revisarMaestro, hub.publicarMaestro,
+  hub.infoTablaMarcas, hub.traerTablaMarcas, hub.publicarTablaMarcas);
+window.__P = P;
+
+/* ELEGIR UN ARCHIVO: lo único que no se puede hacer con un clic (la ventana es de Windows) */
+const elegir = async (idInput, url, nombre, transformar) => {
+  decir('bajando ' + nombre + '…');
+  let blob = await (await fetch(url)).blob();
+  if (transformar) blob = await transformar(blob);
+  const dt = new DataTransfer();
+  dt.items.add(new File([blob], nombre, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+  const input = document.getElementById(idInput);
+  if (!input) { decir('no está el input ' + idInput); return; }
+  input.files = dt.files;
+  decir('elegido ' + nombre + ' (' + (blob.size / 1048576).toFixed(1) + ' MB)');
+  input.dispatchEvent(new Event('change', { bubbles: true }));
+};
+window.__elegir = elegir;
+
+document.getElementById('pr-pivot').onclick = () =>
+  elegir('nube_archivo', '_libs/pivot_w38.xlsx', 'Maestro Datamart W38 (15.09.26).xlsx');
+document.getElementById('pr-marcas').onclick = () =>
+  elegir('marcas_archivo', '_libs/marcas.xlsx', 'Marcas.xlsx');
+document.getElementById('pr-trabajado').onclick = () =>
+  elegir('nube_archivo', '_libs/maestro_trabajado.xlsx', 'Maestro_Articulos.xlsx');
+document.getElementById('pr-marcas-sin-power').onclick = () =>
+  elegir('marcas_archivo', '_libs/marcas.xlsx', 'Marcas sin Power.xlsx', async (blob) => {
+    const libro = XLSX.read(new Uint8Array(await blob.arrayBuffer()), { type: 'array' });
+    const hoja = libro.Sheets[libro.SheetNames[0]];
+    const m = XLSX.utils.sheet_to_json(hoja, { header: 1, defval: '' });
+    const sin = m.filter((r, i) => i === 0 || String(r[m[0].indexOf('MarcaStd')]).trim() !== 'Power');
+    const nuevo = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(nuevo, XLSX.utils.aoa_to_sheet(sin), libro.SheetNames[0]);
+    return new Blob([XLSX.write(nuevo, { type: 'array', bookType: 'xlsx' })]);
+  });
+
+/* Como en la plataforma: el maestro publicado ya está en la PC antes de abrir la pantalla */
+decir('bajando el maestro publicado en beta…');
+const r = await hub.traerMaestroPublicado();
+decir('maestro en esta PC: ' + r.origen + ' · ' + r.filas + ' filas');
+await P.renderArchivosNube(document.getElementById('configContent'));
+window.__listo = true;
+</script>
+</body>
+</html>
