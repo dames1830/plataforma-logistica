@@ -330,13 +330,13 @@ export const agregar = (filas, maestro) => {
             desde: a.horas.length ? new Date(Math.min(...a.horas)).toTimeString().slice(0, 5) : '',
             hasta: a.horas.length ? new Date(Math.max(...a.horas)).toTimeString().slice(0, 5) : '',
             horas: +span.toFixed(1),
-            // La cifra que Daniel quiere ver: esfuerzo por hora, con el prepack
-            // pesando por dentro. Null si no llega al corte — no es cero.
-            ritmo: suficiente ? Math.round(a.esfuerzo / span) : null,
+            // LA CIFRA ES PARES POR HORA. Daniel, 16-sep-2026: *"todo se debe calcular por
+            // pares, nada en líneas"*. Hasta ese día mandaba el "ritmo" en picks con el
+            // prepack pesando su factor. Null si no llega al corte — no es cero.
             pares_hora: suficiente ? Math.round(a.pares / span) : null,
             bajo_corte: !suficiente
         };
-    }).sort((a, b) => (b.ritmo || -1) - (a.ritmo || -1));
+    }).sort((a, b) => (b.pares_hora || -1) - (a.pares_hora || -1));
 
     // De dónde sale la mercadería
     const z = new Map();
@@ -543,7 +543,13 @@ const unir = (listas) => {
 export const juntarDias = (resumenes, segmento) => {
     const dias = (resumenes || []).map(r => r && r.seg && r.seg[segmento]).filter(Boolean);
     if (!dias.length) return null;
-    if (dias.length === 1) return { ...dias[0], jornadas: 1 };
+    // UN SOLO DÍA vuelve tal cual, pero la gente se reordena por pares por hora: los días
+    // guardados antes del 16-sep-2026 vienen ordenados por el "ritmo" en picks.
+    if (dias.length === 1) {
+        const d = dias[0];
+        return { ...d, jornadas: 1,
+                 gente: (d.gente || []).slice().sort((a, b) => (b.pares_hora || -1) - (a.pares_hora || -1)) };
+    }
 
     const o = {
         jornadas: dias.length,
@@ -674,11 +680,10 @@ export const juntarDias = (resumenes, segmento) => {
             ...a,
             esfuerzo: +a.esfuerzo.toFixed(1),
             horas: +a.horas.toFixed(1),
-            ritmo: suficiente ? Math.round(a.esfuerzo / a.horas) : null,
             pares_hora: suficiente ? Math.round(a.pares / a.horas) : null,
             bajo_corte: !suficiente
         };
-    }).sort((a, b) => (b.ritmo || -1) - (a.ritmo || -1));
+    }).sort((a, b) => (b.pares_hora || -1) - (a.pares_hora || -1));
 
     return o;
 };
@@ -851,10 +856,11 @@ export const cronometrarJornada = (filas, totalArchivo) => {
         const span = a.horas.length > 1 ? (Math.max(...a.horas) - Math.min(...a.horas)) / 3600000 : 0;
         return { usuario: a.usuario, picks: a.picks, pares: a.pares, sueltos: a.sueltos,
                  cajas: a.cajas, esfuerzo: +a.esfuerzo.toFixed(1), horas: +span.toFixed(1),
-                 // "Picks por hora" es el ESFUERZO por hora: la caja pesa lo que
-                 // cuesta, no 1. Es la cifra única que Daniel quiere en la portada.
-                 picks_hora: span > 0 ? Math.round(a.esfuerzo / span) : null };
-    }).sort((x, y) => (y.picks_hora || -1) - (x.picks_hora || -1));
+                 // PARES POR HORA, la cifra única de la portada desde el 16-sep-2026 (antes
+                 // "picks por hora", con la caja de prepack pesando su factor): el suelto
+                 // por sus pares, el prepack por los de sus cajas, el no calzado por sus unidades.
+                 pares_hora: span > 0 ? Math.round(a.pares / span) : null };
+    }).sort((x, y) => (y.pares_hora || -1) - (x.pares_hora || -1));
 
     const movPrepack = filas.filter(r => esPrepack(r['Código de artículo']));
     const cajas = movPrepack.reduce((s, r) => s + (parseInt(r['Cantidad empaquetada'], 10) || 0), 0);
@@ -929,13 +935,15 @@ export const juntarCronometros = (cronos) => {
     });
     // El ritmo se recalcula sobre el total de horas de cada persona: promediar
     // los ritmos de días distintos da un número que no es de nadie.
+    // Se rehace con los pares y las horas sumados: así sirve también para los días que se
+    // guardaron cuando la cifra era "picks por hora" y no traen `pares_hora`.
     o.gente = [...o._gente.values()].map(a => ({
         ...a, horas: +a.horas.toFixed(1), esfuerzo: +a.esfuerzo.toFixed(1),
-        picks_hora: a.horas > 0 ? Math.round(a.esfuerzo / a.horas) : null
-    })).sort((x, y) => (y.picks_hora || -1) - (x.picks_hora || -1));
+        pares_hora: a.horas > 0 ? Math.round(a.pares / a.horas) : null
+    })).sort((x, y) => (y.pares_hora || -1) - (x.pares_hora || -1));
     delete o._gente;
     const hs = o.gente.reduce((s, p) => s + p.horas, 0);
-    o.picks_hora = hs > 0 ? Math.round(o.gente.reduce((s, p) => s + p.esfuerzo, 0) / hs) : null;
+    o.pares_hora = hs > 0 ? Math.round(o.gente.reduce((s, p) => s + p.pares, 0) / hs) : null;
 
     return o;
 };

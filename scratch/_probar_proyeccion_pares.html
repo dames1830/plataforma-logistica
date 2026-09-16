@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es" data-tema="pbi">
+<head>
+<meta charset="utf-8">
+<title>Prueba · Producción Picking Embalaje en pares</title>
+<!--
+  PRODUCCIÓN PICKING EMBALAJE con el módulo real y los últimos días de producción (solo lectura).
+  Daniel, 16-sep-2026: el prepack en pares por hora y sin la píldora Equivalente.
+-->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="../css/main.css?v=29.0819">
+<link rel="stylesheet" href="../css/temas.css?v=29.0819">
+<link rel="stylesheet" href="../css/componentes.css?v=29.0819">
+<style>body{background:var(--bg);padding:16px}</style>
+</head>
+<body>
+<div id="caja"></div>
+<script type="module">
+const API = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+const traer = async (area, n) => {
+  const fechas = (await (await fetch(`${API}/${area}/dates?t=${Date.now()}`)).json()).dates.sort().slice(-n);
+  const dias = [];
+  for (let i = 0; i < fechas.length; i += 4) {
+    await Promise.all(fechas.slice(i, i + 4).map(async f => {
+      dias.push({ fecha: f, datos: (await (await fetch(`${API}/${area}?date=${f}&t=${Date.now()}`)).json()).data });
+    }));
+  }
+  return dias.sort((a, b) => a.fecha.localeCompare(b.fecha));
+};
+const { montarProduccionProyeccion } = await import('../js/reportes/produccion_proyeccion.js?t=' + Date.now());
+const [picking, embalaje] = await Promise.all([traer('picking_por_hora', 22), traer('embalaje_por_hora', 22)]);
+montarProduccionProyeccion(document.getElementById('caja'), { picking, embalaje, alCambiarRango: () => {} });
+window.__listo = true;
+</script>
+</body>
+</html>
