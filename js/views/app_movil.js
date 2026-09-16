@@ -25,23 +25,23 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0811';
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0811';
-import * as ORD from '../services_v245/despachoOrden.js?v=29.0811';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0811';
+import * as adminService from '../services_v245/adminService.js?v=29.0812';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0812';
+import * as ORD from '../services_v245/despachoOrden.js?v=29.0812';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0812';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0811';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0811';
-import * as metasService from '../services_v245/metasService.js?v=29.0811';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0812';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0812';
+import * as metasService from '../services_v245/metasService.js?v=29.0812';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0811';
+import * as temaService from '../services_v245/temaService.js?v=29.0812';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0811';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0811';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0812';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0812';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
@@ -50,12 +50,12 @@ import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarCon
          traerAdjunto, pesoLegible, latir,
          /* LA MISMA MARCA QUE LA WEB. El calculo vive en chat.js; aca solo se pinta,
             con la cara de la app. Dos copias del mismo calculo se desincronizan. */
-         marcaDelMensaje } from '../chat.js?v=29.0811';
+         marcaDelMensaje } from '../chat.js?v=29.0812';
 /* LOS AVISOS DEL TELEFONO VIVEN EN UN SERVICIO COMPARTIDO desde el 15-sep-2026: la web
    usa exactamente estas funciones para suscribir la PC. Ver `avisos.js`. */
 import { LLAVE_AVISOS, puedeAvisos, mirarAvisos as mirarSuscripcion,
          prenderAvisos as suscribir, apagarAvisos as desuscribir }
-    from '../services_v245/avisos.js?v=29.0811';
+    from '../services_v245/avisos.js?v=29.0812';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -3883,11 +3883,31 @@ export const prefiereEscritorio = () => {
  * vuelta del latido, asi que no hace falta ningun reloj propio. */
 let salaDelAviso = null;
 
+/* LA CONVERSACION PEDIDA SOBREVIVE A LA RECARGA.
+ *
+ * Daniel, 16-sep-2026: *"cuando me llega el mensaje y lo abro, primero me da la actualizacion
+ * de la version y de ahi recien me manda el chat vacio"*.
+ *
+ * Al tocar el aviso con la app YA ABIERTA, el destino llega por `postMessage` del service
+ * worker: no esta en la direccion, esta en una variable. Si en ese momento la app se recarga
+ * -y se recarga sola cuando hay version nueva, que es lo que le pasaba- esa variable se pierde
+ * y se llega al chat sin saber que conversacion abrir.
+ *
+ * `sessionStorage` sobrevive a la recarga de la misma pestaña; el hash cubre el otro camino,
+ * el de la app cerrada, que abre una pestaña nueva. Hacen falta los dos.
+ */
+const PEDIDO_GUARDADO = 'deam_chat_pedido';
+const recordarPedido = (id) => { try { sessionStorage.setItem(PEDIDO_GUARDADO, String(id || '')); } catch (e) { /* da igual */ } };
+const pedidoGuardado = () => { try { return sessionStorage.getItem(PEDIDO_GUARDADO) || ''; } catch (e) { return ''; } };
+const olvidarPedido = () => { try { sessionStorage.removeItem(PEDIDO_GUARDADO); } catch (e) { /* da igual */ } };
+
+
 const abrirEnCuantoLlegue = () => {
     if (!salaDelAviso) return;
     if (!salaDe(salaDelAviso)) return;      // aun no bajo: se reintenta en el proximo aviso
     const id = salaDelAviso;
     salaDelAviso = null;
+    olvidarPedido();
     abrirConversacion(id);
 };
 
@@ -3897,6 +3917,7 @@ const pedirConversacion = (id) => {
     seccion = 'chat';
     menu = null;
     salaDelAviso = id;
+    recordarPedido(id);                      // que aguante una recarga por version nueva
     prepararChat();                          // si el chat no habia arrancado, que arranque
     if (salaDe(id)) { salaDelAviso = null; abrirConversacion(id); return; }
 
@@ -3954,6 +3975,13 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
            `pantallaConversacion` lo descartaria. */
         if (_sala) salaDelAviso = decodeURIComponent(_sala);
     }
+    /* Y si la app se recargo por la version nueva justo despues de tocar el aviso, el destino
+       no esta en la direccion sino guardado de antes. */
+    if (!salaDelAviso && pedidoGuardado()) {
+        salaDelAviso = pedidoGuardado();
+        seccion = 'chat';
+    }
+    if (salaDelAviso) prepararChat();
 
     /* ══ EL EXCEL QUE LLEGO POR COMPARTIR ══════════════════════════════════
        Cuando se comparte el archivo desde WhatsApp, Android abre la app con el archivo

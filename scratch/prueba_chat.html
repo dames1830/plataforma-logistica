@@ -639,6 +639,52 @@
             + ' (antes: hasta 20 s, o un minuto con la pestaña oculta)');
       }
 
+      /* EL CASO COMPLETO DE DANIEL (16-sep-2026):
+         "cuando me llega el mensaje y lo abro, primero me da la actualizacion de la version y
+         de ahi recien me manda el chat vacio". Al tocar el aviso con la app ya abierta, el
+         destino llega por mensaje del service worker -no esta en la direccion-, y la recarga
+         por version nueva se lo llevaba puesto. Se simula: aviso, recarga, y a ver si
+         todavia sabe a donde iba. */
+      if (oyentes) {
+        const cerrar4 = document.querySelectorAll('.chat-ventana [data-cerrar]');
+        cerrar4.forEach(b => b.click());
+        await esperar(250);
+        try { sessionStorage.removeItem('deam_chat_pedido'); } catch (e) {}
+
+        // 1. llega el aviso, con la app ya abierta (sin hash en la direccion)
+        navigator.serviceWorker.dispatchEvent(new MessageEvent('message',
+          { data: { tipo: 'ir', url: './index.html#chat=' + idSala } }));
+        await esperar(500);
+        let guardadoElPedido = '';
+        try { guardadoElPedido = sessionStorage.getItem('deam_chat_pedido') || ''; } catch (e) {}
+        chk(!!document.querySelector('.chat-ventana[data-sala="' + idSala + '"]') || guardadoElPedido === idSala,
+            'al llegar el aviso, o abre la conversacion o la deja apuntada para despues de recargar');
+
+        // 2. LA RECARGA: se vuelve a montar el chat de cero, como tras el aviso de version
+        mod.desmontarChat();
+        await esperar(300);
+        /* `desmontarChat` es cerrar sesion y limpia todo a proposito. La recarga por version
+           NO es cerrar sesion, asi que el pedido sigue guardado: se repone. */
+        try { sessionStorage.setItem('deam_chat_pedido', idSala); } catch (e) {}
+        const tRecarga = performance.now();
+        await mod.montarChat({ username: 'dames', role: 'admin' });
+        let tardoTrasRecarga = -1;
+        for (let i = 0; i < 80; i++) {
+          if (document.querySelector('.chat-ventana[data-sala="' + idSala + '"]')) {
+            tardoTrasRecarga = performance.now() - tRecarga; break;
+          }
+          await esperar(100);
+        }
+        chk(tardoTrasRecarga >= 0,
+            'DESPUES de recargar por la version nueva, igual abre la conversacion del aviso');
+        chk(tardoTrasRecarga >= 0 && tardoTrasRecarga < 6000,
+            'y la abre en ' + Math.round(tardoTrasRecarga) + ' ms, sin quedarse en blanco');
+        let quedoSuelto = '';
+        try { quedoSuelto = sessionStorage.getItem('deam_chat_pedido') || ''; } catch (e) {}
+        chk(quedoSuelto === '',
+            'y al abrirla se olvida el pedido: no vuelve a abrirse sola la proxima vez');
+      }
+
       // Y que un aviso de robot NO abra el chat
       if (oyentes) {
         const cerrar2 = document.querySelectorAll('.chat-ventana [data-cerrar]');
