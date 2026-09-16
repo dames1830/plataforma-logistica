@@ -1085,7 +1085,6 @@ async def consultar_asn(expediente: Optional[str] = None, asn: Optional[str] = N
         return {"status": "error", "message": str(e), "datos": []}
 
 
-@app.get("/api/health")
 def _estado_push():
     """Si este servidor PUEDE avisar al celular, y si no, que le falta.
 
@@ -1131,6 +1130,7 @@ def _estado_push():
         return {"error": str(e)}
 
 
+@app.get("/api/health")
 def health():
     try:
         db_size = os.path.getsize(db_path()) if os.path.exists(db_path()) else 0
