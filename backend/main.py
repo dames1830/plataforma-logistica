@@ -1102,6 +1102,15 @@ def _estado_push():
         except ImportError:
             hay_libreria = False
         llave = bool(os.environ.get("VAPID_PRIVADA", "").strip())
+        # EN QUE FORMATO ESTA GUARDADA, sin enseñarla. El 16-sep-2026 estaba puesta pero en
+        # PEM, que `py_vapid.from_string()` no acepta: el aviso moria con "Could not
+        # deserialize key data" y desde fuera parecia que todo estaba bien.
+        forma = {}
+        try:
+            import avisos_chat as _ac
+            forma = _ac.forma_de_la_llave()
+        except Exception:
+            pass
         aparatos = 0
         try:
             conn = sqlite3.connect(db_path()); cur = conn.cursor()
@@ -1118,6 +1127,7 @@ def _estado_push():
             pass
         return {
             "llave_puesta": llave,
+            "llave_forma": forma,
             "libreria_instalada": hay_libreria,
             "aparatos_suscritos": aparatos,
             "puede_avisar": bool(llave and hay_libreria and aparatos > 0),

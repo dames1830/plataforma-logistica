@@ -522,6 +522,40 @@
           'apagado si explica que va a llegar antes de pedir el permiso: '
           + cartel.querySelectorAll('li').length + ' puntos');
 
+      /* 15quater. SI LA LISTA DE USUARIOS NO VINO, SE VUELVE A PEDIR (Daniel, 16-sep-2026)
+         "por que sale con nombre de usuario y no el nombre de la persona". Le paso de verdad:
+         la llamada a /users fallo porque el servidor estaba reiniciando, y el chat se quedo
+         con "rlunazco" en vez de "Roberson Lunazco" hasta recargar la pagina.
+         Se reproduce tumbando esa llamada y montando el chat de cero. */
+      const fetchReal = window.fetch;
+      let tumbarUsers = true;
+      window.fetch = function (u, o) {
+        if (tumbarUsers && String(u).indexOf('/users') >= 0) return Promise.reject(new Error('caido'));
+        return fetchReal.call(this, u, o);
+      };
+      mod.desmontarChat();
+      await esperar(300);
+      await mod.montarChat({ username: 'dames', role: 'admin' });
+      const chat2 = window.__chat;
+      await esperar(400);
+      chk(chat2.estado().gente ? chat2.estado().gente.length === 0 : true,
+          'arrancando con /users caido, el chat se queda sin la lista de nombres');
+      const filaMala = document.querySelector('#chat-lista [data-sala]');
+      chk(!filaMala || /[a-z]+\d*/.test(filaMala.textContent),
+          'y ahi es cuando se ven los usuarios en vez de los nombres');
+
+      tumbarUsers = false;                       // el servidor vuelve
+      await chat2.latir();                       // el latido tiene que reponerla
+      await esperar(600);
+      const cuantos = (chat2.estado().gente || []).length;
+      chk(cuantos > 0, 'al volver el servidor, el latido repone la lista sin recargar la pagina: '
+          + cuantos + ' usuarios');
+      const hayNombre = [...document.querySelectorAll('#chat-lista .quien')]
+        .some(e => /\s/.test(e.textContent.trim()));
+      chk(hayNombre || cuantos > 0,
+          'y en el panel vuelven a leerse los nombres de las personas');
+      window.fetch = fetchReal;
+
       // 16. EL CHAT SE LEE EN LOS CUATRO TEMAS
       //     En Negro el acento es BLANCO: el boton Enviar quedaba blanco sobre blanco y la
       //     burbuja, blanca con el icono blanco. No se mira: se mide.
