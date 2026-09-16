@@ -35,7 +35,7 @@
    para que le lleguen una notificacion"*. El mecanismo es el mismo que usa la app del
    celular; lo unico propio de aca es el boton y el cartelito que explica que va a llegar. */
 import { puedeAvisos, mirarAvisos, prenderAvisos, apagarAvisos, queLlega }
-    from './services_v245/avisos.js?v=29.0812';
+    from './services_v245/avisos.js?v=29.0813';
 
 /* `typeof window` y no `window` a secas: `scratch/probar_marcas_chat.mjs` carga este
    archivo desde Node para comprobar el calculo de las marcas sin navegador, y sin la
@@ -93,6 +93,8 @@ let toastReloj = null;
 let toastSala = null;
 let arrancado = false;
 let salaDelClip = null;     // a que conversacion va el archivo que se esta eligiendo
+/* El panel de integrantes de UN grupo: { sala, buscando, filtro }, o null si esta cerrado. */
+let integrantes = null;
 let presencia = {};         // { usuario: cuando dijo "sigo aqui", en hora del servidor }
 let desfaseReloj = 0;       // ms entre el reloj del servidor y el de esta PC
 let ultimoAnuncio = 0;
@@ -252,6 +254,64 @@ const crearGrupo = async (nombre, miembros) => {
     return id;
 };
 
+/* ══ AGREGAR Y SACAR GENTE DE UN GRUPO ══════════════════════════════════════════════════
+ *
+ * Daniel, 16-sep-2026: *"cuando le de al nombre de Slotting, me salgan las personas que estan
+ * en el grupo y me de la opcion de agregar mas"*. Lo que decidio:
+ *   - CUALQUIERA del grupo agrega y saca, no solo el que lo creo;
+ *   - se puede sacar a alguien;
+ *   - queda un renglon gris en la conversacion, que no suena;
+ *   - el que entra ve solo desde que lo agregaron.
+ *
+ * SE RELEE LA SALA ANTES DE TOCARLA. Si dos personas agregan a alguien a la vez y cada una sube
+ * la sala que tiene en memoria, la segunda borra al que agrego la primera. Releyendo justo
+ * antes, cada una agrega sobre lo ultimo. El PATCH del servidor REEMPLAZA la sala con el mismo
+ * id y no toca las demas. */
+const salaFresca = async (idSala) => {
+    try {
+        const todas = await traer(SALAS);
+        const s = todas.filter(x => x && x.id === idSala)[0];
+        if (s) return s;
+    } catch (e) { /* se usa la de memoria */ }
+    return salaDe(idSala);
+};
+
+const reemplazarSala = (sala) => {
+    const i = salas.findIndex(x => x.id === sala.id);
+    if (i >= 0) salas[i] = sala; else salas.push(sala);
+};
+
+const agregarAlGrupo = async (idSala, usuario) => {
+    const s = await salaFresca(idSala);
+    if (!s || s.tipo !== 'grupo' || !usuario) return false;
+    const miembros = (s.miembros || []).slice();
+    if (miembros.indexOf(usuario) >= 0) return true;          // ya estaba
+    miembros.push(usuario);
+    const desde = Object.assign({}, s.desde || {});
+    desde[usuario] = sello();                                  // desde ahora ve la conversacion
+    const nueva = Object.assign({}, s, { miembros, desde });
+    reemplazarSala(nueva);
+    await poner(SALAS, nueva);
+    await mandar(idSala, 'agregó a ' + nombreDe(usuario), 'silencioso');
+    pintar();
+    return true;
+};
+
+const sacarDelGrupo = async (idSala, usuario) => {
+    const s = await salaFresca(idSala);
+    if (!s || s.tipo !== 'grupo' || !usuario) return false;
+    const miembros = (s.miembros || []).filter(u => u !== usuario);
+    if (miembros.length === (s.miembros || []).length) return true;   // ya no estaba
+    const desde = Object.assign({}, s.desde || {});
+    delete desde[usuario];            // si lo vuelven a agregar, ve desde esa vez
+    const nueva = Object.assign({}, s, { miembros, desde });
+    reemplazarSala(nueva);
+    await poner(SALAS, nueva);
+    await mandar(idSala, 'sacó a ' + nombreDe(usuario), 'silencioso');
+    pintar();
+    return true;
+};
+
 /* ── LOS MENSAJES ──────────────────────────────────────────────────────────────────────── */
 
 /** La hora, como en toda la plataforma: local y sin Z. `toISOString()` adelanta el día a las
@@ -271,6 +331,10 @@ const mandar = async (idSala, texto, esAviso = false, adjunto = null) => {
     const msg = { id: `${Date.now().toString(36)}_${YO.username}_${Math.random().toString(36).slice(2, 7)}`,
                   de: YO.username, texto: t, cuando: sello() };
     if (esAviso) msg.aviso = true;
+    /* 'silencioso': el renglon gris de agregar o sacar a alguien. Queda escrito pero no suena
+       ni pone el globo rojo -`sistema` ya lo filtran el latido y el contador-, ni manda aviso
+       al celular -`aviso` ya lo filtra el servidor-. "creo el grupo" sigue como estaba. */
+    if (esAviso === 'silencioso') msg.sistema = true;
     if (adjunto) msg.adjunto = adjunto;
     mensajes[idSala] = (mensajes[idSala] || []).concat(msg);
     leidos[idSala] = msg.cuando;
@@ -585,9 +649,32 @@ const tin = () => {
 /* ── EL LATIDO: qué cambió desde la vuelta anterior ────────────────────────────────────── */
 
 /** Baja la sala y devuelve los mensajes que esta pantalla NO tenia, por id. */
+/* DESDE CUANDO VE UNA PERSONA LA CONVERSACION.
+ *
+ * Daniel, 16-sep-2026, sobre agregar gente a un grupo: *"el que entra va a ver a partir del
+ * dia en que se le agrego, la hora que se le agrego hacia adelante; hacia atras ya no puede
+ * ver, igual que el WhatsApp"*.
+ *
+ * La sala guarda `desde: { usuario: 'cuando lo agregaron' }`. Los que estaban al crearla no
+ * figuran ahi y ven todo.
+ *
+ * EL FILTRO VA ACA Y EN NINGUN OTRO SITIO. Todo lo demas -la ventanita, la vista previa de la
+ * lista, el contador de no leidos, la memoria del aparato, la app del celular- lee de
+ * `mensajes`, asi que filtrando al bajar lo heredan todos sin tocarlos.
+ *
+ * OJO, Y SE LE DIJO: esto lo esconde de la PANTALLA. Los mensajes siguen guardados juntos en
+ * el servidor. Para quien usa la plataforma es invisible; hacerlo imposible de leer incluso
+ * sabiendo programar es trabajo del servidor, no de aca. */
+const vistoDesde = (idSala) => {
+    const s = salaDe(idSala);
+    return (s && s.desde && YO && s.desde[YO.username]) || '';
+};
+
 const bajarSala = async (idSala) => {
     try {
-        const lista = await traer('chat_' + idSala);
+        let lista = await traer('chat_' + idSala);
+        const desde = vistoDesde(idSala);
+        if (desde) lista = lista.filter(m => String(m.cuando || '') >= desde);
         lista.sort((a, b) => String(a.cuando).localeCompare(String(b.cuando)));
         const conocidos = {};
         (mensajes[idSala] || []).forEach(m => { conocidos[m.id] = m; });
@@ -1021,6 +1108,55 @@ const CSS = `
 #chat-grupo .cancelar { background: none; border: 1px solid rgba(var(--ink-rgb), 0.15); color: var(--text-muted); }
 @media (max-width: 900px) { #chat-ventanas, #chat-ventanas.solas { right: 20px; bottom: 130px; } #chat-panel, #chat-grupo { width: 280px; } }
 @media (prefers-reduced-motion: reduce) { #chat-burbuja.late { animation: none; } }
+/* == INTEGRANTES DEL GRUPO (16-sep-2026) ==================================================
+   Copiado de la maqueta aprobada. El panel sale ENCIMA de la conversacion, dentro de la
+   ventanita, y se vuelve con la flecha. NADA DE COMILLAS INVERTIDAS ACA. */
+.chat-ventana { position: relative; }
+.chat-ventana .vcab .n[data-integrantes] { cursor: pointer; border-radius: 6px; padding: 0 0.2rem; }
+.chat-ventana .vcab .n[data-integrantes]:hover { background: rgba(var(--ink-rgb), 0.1); }
+.chat-ventana .vcab .n .cuantos { font-size: 9px; font-weight: 600; color: var(--text-muted); }
+.gente-panel { position: absolute; inset: 0; z-index: 5; background: var(--panel-solid);
+  display: grid; grid-template-rows: auto 1fr auto; grid-template-columns: minmax(0, 1fr);
+  overflow: hidden; border-radius: 14px 14px 0 0; }
+.gente-panel > * { min-width: 0; }
+.gente-cab { display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 0.7rem;
+  background: rgba(var(--primary-rgb), 0.28); border-bottom: 1px solid rgba(var(--ink-rgb), 0.08); }
+.gente-cab .n { font-size: var(--t-xs); font-weight: 800; color: var(--text-strong); overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; }
+.gente-volver { background: none; border: 0; color: var(--text-pale); cursor: pointer;
+  font-size: var(--t-md); line-height: 1; padding: 0.15rem 0.4rem; border-radius: 6px; }
+.gente-volver:hover { background: rgba(var(--ink-rgb), 0.12); }
+.gente-cuerpo { overflow-y: auto; padding: 0.35rem 0; }
+.gente-tit { font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--text-dim); padding: 0.4rem 0.8rem; }
+.gente-fila { display: flex; align-items: center; gap: 0.55rem; padding: 0.4rem 0.8rem; }
+.gente-fila:hover { background: rgba(var(--ink-rgb), 0.04); }
+.gente-ini { width: 28px; height: 28px; border-radius: 50%; flex: none; display: grid; place-items: center;
+  font-size: 10px; font-weight: 800; color: var(--on-primary); background: var(--btn-fill); position: relative; }
+.gente-ini.en-linea::after { content: ''; position: absolute; right: -1px; bottom: -1px; width: 9px; height: 9px;
+  border-radius: 50%; background: rgba(var(--success-rgb), 1); border: 2px solid var(--panel-solid); }
+.gente-txt { min-width: 0; flex: 1; }
+.gente-txt b { display: block; font-size: var(--t-xs); font-weight: 700; color: var(--text-strong);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gente-txt span { font-size: 10px; color: var(--text-muted); }
+.gente-marca { font-size: 9px; font-weight: 800; letter-spacing: 0.4px; text-transform: uppercase;
+  color: var(--brand-pale); background: rgba(var(--brand-rgb), 0.18); border-radius: 50px;
+  padding: 0.1rem 0.45rem; flex: none; }
+.gente-sacar { background: none; border: 1px solid rgba(var(--danger-soft-rgb, 248 113 113), 0.4);
+  color: var(--danger-soft); cursor: pointer; font-size: 10px; font-weight: 800;
+  padding: 0.2rem 0.5rem; border-radius: 7px; flex: none; }
+.gente-sacar:hover { background: rgba(var(--danger-soft-rgb, 248 113 113), 0.15); }
+.gente-mas { background: rgba(var(--success-rgb), 0.16); border: 1px solid rgba(var(--success-rgb), 0.4);
+  color: var(--success); border-radius: 7px; font-size: 10px; font-weight: 800; cursor: pointer;
+  padding: 0.22rem 0.55rem; flex: none; }
+.gente-sacar:disabled, .gente-mas:disabled { opacity: 0.5; cursor: wait; }
+.gente-buscar { padding: 0.45rem 0.7rem 0; }
+.gente-buscar input { width: 100%; box-sizing: border-box; }
+.gente-vacio { font-size: 10px; color: var(--text-muted); padding: 0.4rem 0.8rem; }
+.gente-pie { padding: 0.55rem 0.7rem; border-top: 1px solid rgba(var(--ink-rgb), 0.07); }
+.gente-agregar { width: 100%; border-radius: 9px; padding: 0.5rem; font-size: var(--t-xs); font-weight: 800;
+  cursor: pointer; background: var(--btn-fill); color: var(--on-primary); border: 0; }
+
 `;
 
 let raiz = null;     // el nodo que cuelga del body con todo adentro
@@ -1149,6 +1285,56 @@ const pintarLista = () => {
    cada 4 segundos- rehacia la ventanita entera: el navegador tira la caja vieja y crea otra, sin
    foco y sin lo que hubiera adentro. Ahora: si el dibujo quedo igual no se toca nada, y si
    cambio se repone el texto de cada caja, el foco y la posicion del cursor. */
+/* EL PANEL DE INTEGRANTES, copiado de la maqueta aprobada (16-sep-2026). Sale ENCIMA de la
+   conversacion y se vuelve con la flecha. Cualquiera del grupo agrega y saca. */
+const filaIntegrante = (s, u) => {
+    const yo = YO && u === YO.username;
+    const p = gente.filter(x => x.username === u)[0] || {};
+    return `<div class="gente-fila">
+        <span class="gente-ini ${enLinea(u) ? 'en-linea' : ''}">${esc(iniciales(nombreDe(u)))}</span>
+        <span class="gente-txt"><b>${esc(nombreDe(u))}${yo ? ' (tú)' : ''}</b>
+            <span>${esc(u)}${p.role ? ' · ' + esc(p.role) : ''}</span></span>
+        ${u === s.creador ? '<span class="gente-marca">creó</span>' : ''}
+        ${yo ? '' : `<button type="button" class="gente-sacar" data-sacar="${esc(u)}" data-sala-gente="${esc(s.id)}">Sacar</button>`}
+    </div>`;
+};
+
+/* Los que se pueden agregar: activos y que no esten ya. Va aparte porque el buscador repinta
+   SOLO esto: si repintara el panel entero, la caja perderia el foco a cada letra. */
+const candidatosHTML = (s) => {
+    const q = String((integrantes && integrantes.filtro) || '').trim().toLowerCase();
+    const libres = activos().filter(p => (s.miembros || []).indexOf(p.username) < 0
+        && (!q || String(p.name || '').toLowerCase().indexOf(q) >= 0
+               || p.username.toLowerCase().indexOf(q) >= 0));
+    if (!libres.length) return '<div class="gente-vacio">Nadie más con ese nombre.</div>';
+    return libres.map(p => `<div class="gente-fila">
+        <span class="gente-ini ${enLinea(p.username) ? 'en-linea' : ''}">${esc(iniciales(nombreDe(p.username)))}</span>
+        <span class="gente-txt"><b>${esc(nombreDe(p.username))}</b>
+            <span>${esc(p.username)}${p.role ? ' · ' + esc(p.role) : ''}</span></span>
+        <button type="button" class="gente-mas" data-agregar-a="${esc(p.username)}" data-sala-gente="${esc(s.id)}">Agregar</button>
+    </div>`).join('');
+};
+
+const panelIntegrantes = (s) => {
+    const buscando = !!(integrantes && integrantes.buscando);
+    return `<div class="gente-panel">
+        <div class="gente-cab">
+            <button type="button" class="gente-volver" data-cerrar-integrantes title="Volver a la conversación">←</button>
+            <span class="n">${esc(nombreDeSala(s))}</span>
+        </div>
+        <div class="gente-cuerpo">
+            ${buscando ? `<div class="gente-buscar"><input type="text" data-buscar-gente="${esc(s.id)}"
+                placeholder="Buscar a cualquier persona…" value="${esc((integrantes && integrantes.filtro) || '')}"></div>` : ''}
+            <div class="gente-tit">${(s.miembros || []).length} personas</div>
+            ${(s.miembros || []).map(u => filaIntegrante(s, u)).join('')}
+            ${buscando ? `<div class="gente-tit">Agregar a</div><div data-candidatos="${esc(s.id)}">${candidatosHTML(s)}</div>` : ''}
+        </div>
+        <div class="gente-pie">
+            <button type="button" class="gente-agregar" data-buscar-toggle="${esc(s.id)}">${buscando ? 'Listo' : '+ Agregar personas'}</button>
+        </div>
+    </div>`;
+};
+
 const pintarVentanas = () => {
     const caja = nodo('chat-ventanas');
     if (!caja) return;
@@ -1183,7 +1369,7 @@ const pintarVentanas = () => {
         return `<section class="chat-ventana ${v.plegada ? 'plegada' : 'abierta'} ${n ? 'con-nuevos' : ''}" data-sala="${esc(s.id)}">
             <header class="vcab" data-plegar="${esc(s.id)}">
                 ${s.tipo === 'grupo' ? '' : `<span class="luz ${enLinea((s.miembros || []).filter(u => u !== YO.username)[0]) ? 'si' : ''}" title="${enLinea((s.miembros || []).filter(u => u !== YO.username)[0]) ? 'En línea' : 'Sin conexión'}"></span>`}
-                <span class="n">${esc(nombreDeSala(s))}</span>
+                <span class="n" ${s.tipo === 'grupo' ? `data-integrantes="${esc(s.id)}" title="Ver quién está en el grupo"` : ''}>${esc(nombreDeSala(s))}${s.tipo === 'grupo' ? `<span class="cuantos"> · ${(s.miembros || []).length} personas</span>` : ''}</span>
                 ${v.plegada && n ? `<span class="cuenta">${n}</span>` : ''}
                 <span class="acciones">
                     <button type="button" data-plegar="${esc(s.id)}" title="Plegar">–</button>
@@ -1191,6 +1377,7 @@ const pintarVentanas = () => {
                 </span>
             </header>
             <div class="cuerpo" data-cuerpo="${esc(s.id)}">${cuerpo || '<div class="chat-dia">Sin mensajes</div>'}</div>
+            ${integrantes && integrantes.sala === s.id && !v.plegada ? panelIntegrantes(s) : ''}
             <div class="pie">
                 <div class="caja">
                     <button type="button" class="clip" data-clip="${esc(s.id)}" title="Mandar una foto o un archivo">📎</button>
@@ -1666,12 +1853,56 @@ const enganchar = () => {
     });
 
     const ventanas = nodo('chat-ventanas');
+    ventanas.addEventListener('input', (e) => {
+        const caja = e.target.closest && e.target.closest('[data-buscar-gente]');
+        if (!caja || !integrantes) return;
+        integrantes.filtro = caja.value;
+        const s = salaDe(caja.getAttribute('data-buscar-gente'));
+        const lista = ventanas.querySelector('[data-candidatos]');
+        if (s && lista) lista.innerHTML = candidatosHTML(s);
+    });
     ventanas.addEventListener('click', (e) => {
         const cerrar = e.target.closest('[data-cerrar]');
         if (cerrar) {
             abiertas = abiertas.filter(v => v.id !== cerrar.getAttribute('data-cerrar'));
             pintarVentanas(); acomodarReloj(); return;
         }
+        /* EL NOMBRE DEL GRUPO VA ANTES QUE PLEGAR: esta dentro de la cabecera, y la cabecera
+           entera pliega. Tocar el nombre abre quien esta; tocar el resto sigue plegando. */
+        const verGente = e.target.closest('[data-integrantes]');
+        if (verGente) {
+            const id = verGente.getAttribute('data-integrantes');
+            integrantes = (integrantes && integrantes.sala === id) ? null
+                        : { sala: id, buscando: false, filtro: '' };
+            pintarVentanas(); return;
+        }
+        if (e.target.closest('[data-cerrar-integrantes]')) { integrantes = null; pintarVentanas(); return; }
+        const toggle = e.target.closest('[data-buscar-toggle]');
+        if (toggle && integrantes) {
+            integrantes.buscando = !integrantes.buscando; integrantes.filtro = '';
+            pintarVentanas();
+            const caja = ventanas.querySelector('[data-buscar-gente]');
+            if (caja) caja.focus();
+            return;
+        }
+        const agregarA = e.target.closest('[data-agregar-a]');
+        if (agregarA) {
+            agregarA.disabled = true;
+            agregarAlGrupo(agregarA.getAttribute('data-sala-gente'), agregarA.getAttribute('data-agregar-a'))
+                .catch(() => alert('No se pudo agregar. Revisa la conexión.'))
+                .finally(() => pintarVentanas());
+            return;
+        }
+        const sacarA = e.target.closest('[data-sacar]');
+        if (sacarA) {
+            sacarA.disabled = true;
+            sacarDelGrupo(sacarA.getAttribute('data-sala-gente'), sacarA.getAttribute('data-sacar'))
+                .catch(() => alert('No se pudo sacar. Revisa la conexión.'))
+                .finally(() => pintarVentanas());
+            return;
+        }
+        if (e.target.closest('.gente-panel')) return;      // un clic dentro del panel no pliega nada
+
         const plegar = e.target.closest('[data-plegar]');
         if (plegar) {
             const id = plegar.getAttribute('data-plegar');
@@ -1870,6 +2101,7 @@ export const estadoDelChat = () => ({
     sinLeerTotal: sinLeerTotal()
 });
 export { mandar, mandarConAdjunto, borrar, crearDirecta, crearGrupo, bajarSala, latir,
+         agregarAlGrupo, sacarDelGrupo,
          marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, nombreBonito, iniciales,
          nombreDeSala, idDirecta, salaDe, activos, horaCorta, diaDe, traerAdjunto,
          pesoLegible, tipoDeArchivo };
@@ -1901,6 +2133,7 @@ export const desmontarChat = () => {
 /* Para la prueba del navegador: deja a mano lo que hace falta empujar sin tocar la pantalla.
    La guarda es para que `probar_marcas_chat.mjs` pueda cargar este archivo desde Node. */
 if (typeof window !== 'undefined') window.__chat = { latir, mandar, crearDirecta, crearGrupo, borrar, bajarSala, marcasDelServidor,
+                  agregarAlGrupo, sacarDelGrupo,
                   mandarConAdjunto, subirAdjunto, achicarFoto,
                   anunciarme, mirarQuienEsta, enLinea, nombreBonito, sincronizarReloj,
                   /* Para probar el cartel de avisos sin que el navegador conceda el
