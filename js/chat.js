@@ -35,7 +35,7 @@
    para que le lleguen una notificacion"*. El mecanismo es el mismo que usa la app del
    celular; lo unico propio de aca es el boton y el cartelito que explica que va a llegar. */
 import { puedeAvisos, mirarAvisos, prenderAvisos, apagarAvisos, queLlega }
-    from './services_v245/avisos.js?v=29.0811';
+    from './services_v245/avisos.js?v=29.0812';
 
 /* `typeof window` y no `window` a secas: `scratch/probar_marcas_chat.mjs` carga este
    archivo desde Node para comprobar el calculo de las marcas sin navegador, y sin la
@@ -1513,6 +1513,19 @@ const avisar = (sala, msg) => {
  * Se guarda y se abre en cuanto la sala aparece, en la siguiente vuelta del latido. */
 let salaPendiente = null;
 
+/* LA CONVERSACION PEDIDA SOBREVIVE A LA RECARGA.
+ *
+ * Al tocar el aviso con la web YA ABIERTA, el destino llega por `postMessage` del service
+ * worker: no esta en la direccion, esta en una variable. Si la pagina se recarga justo
+ * entonces -y se recarga sola cuando hay version nueva, que es lo que le pasaba a Daniel- esa
+ * variable se pierde y se llega al chat sin saber que conversacion abrir.
+ *
+ * `sessionStorage` aguanta la recarga de la misma pestaña; el hash cubre el otro camino. */
+const PEDIDO_GUARDADO = 'deam_chat_pedido';
+const recordarPedido = (id) => { try { sessionStorage.setItem(PEDIDO_GUARDADO, String(id || '')); } catch (e) { /* da igual */ } };
+const pedidoGuardado = () => { try { return sessionStorage.getItem(PEDIDO_GUARDADO) || ''; } catch (e) { return ''; } };
+const olvidarPedido = () => { try { sessionStorage.removeItem(PEDIDO_GUARDADO); } catch (e) { /* da igual */ } };
+
 const abrirEnCuantoLlegue = () => {
     if (!salaPendiente) return;
     if (!salaDe(salaPendiente)) return;
@@ -1535,11 +1548,13 @@ const abrirSala = async (id) => {
          *
          * Se pide la lista AHORA MISMO. Es un solo viaje y es el que hace falta. */
         salaPendiente = id;
+        recordarPedido(id);             // que aguante una recarga por version nueva
         try { salas = (await traer(SALAS)).filter(esMiSala); } catch (e) { /* queda pendiente */ }
         s = salaDe(id);
         if (!s) return;                 // de verdad no existe todavia: lo reintenta el latido
         salaPendiente = null;
     }
+    olvidarPedido();
     const ya = abiertas.filter(v => v.id === id)[0];
     if (ya) ya.plegada = false;
     else {
@@ -1814,14 +1829,15 @@ export const arrancarDatosDelChat = async (session) => {
         }
     } catch (e) { /* sin service worker, el aviso igual abre la web */ }
 
-    /* Y con la pestaña cerrada, el destino llega por la direccion. */
+    /* Y con la pestaña cerrada, el destino llega por la direccion; si la pagina se recargo
+       por la version nueva justo despues de tocar el aviso, por lo guardado antes. */
     try {
         const h = String(location.hash || '');
         const i = h.indexOf('#chat');
-        if (i >= 0) {
-            const sala = h.slice(i + '#chat'.length).replace(/^=/, '');
-            if (sala) setTimeout(() => abrirSala(decodeURIComponent(sala)), 0);
-        }
+        let quiere = '';
+        if (i >= 0) quiere = decodeURIComponent(h.slice(i + '#chat'.length).replace(/^=/, ''));
+        if (!quiere) quiere = pedidoGuardado();
+        if (quiere) setTimeout(() => abrirSala(quiere), 0);
     } catch (e) { /* da igual */ }
 
     /* `pintarGlobo()` va PRIMERO y aparte del latido: al volver a la pestaña, el nombre tiene
