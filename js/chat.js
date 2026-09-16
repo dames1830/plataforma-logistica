@@ -35,7 +35,7 @@
    para que le lleguen una notificacion"*. El mecanismo es el mismo que usa la app del
    celular; lo unico propio de aca es el boton y el cartelito que explica que va a llegar. */
 import { puedeAvisos, mirarAvisos, prenderAvisos, apagarAvisos, queLlega }
-    from './services_v245/avisos.js?v=29.0805';
+    from './services_v245/avisos.js?v=29.0806';
 
 /* `typeof window` y no `window` a secas: `scratch/probar_marcas_chat.mjs` carga este
    archivo desde Node para comprobar el calculo de las marcas sin navegador, y sin la
@@ -545,6 +545,33 @@ const bajarSala = async (idSala) => {
     } catch (e) { return []; }
 };
 
+/* LA LISTA DE USUARIOS SE VUELVE A PEDIR SI NO VINO.
+ *
+ * Daniel, 16-sep-2026, con una captura del panel: *"por que sale con nombre de usuario y no
+ * el nombre de la persona"*. Porque esto se pedia UNA SOLA VEZ al abrir el chat, y esa vez
+ * habia fallado -el servidor estaba reiniciando-. Sin la lista, `nombreDe()` no tiene con que
+ * traducir y cae al usuario: "rlunazco" en vez de "Roberson Lunazco". Y se quedaba asi hasta
+ * recargar la pagina entera.
+ *
+ * NO SE PISA LO QUE YA SE SABE: una respuesta vacia no borra la lista buena. Y vacia no es un
+ * estado normal -siempre hay usuarios-, asi que vacia significa que fallo. */
+const cargarGente = async () => {
+    try {
+        const r = await fetch(`${API}/users?t=${Date.now()}`);
+        const c = await r.json();
+        const d = (c && c.data) || c || [];
+        /* El directorio guarda a TODOS, tambien a los dados de baja: sus mensajes viejos
+           tienen que seguir mostrando su nombre y no su usuario. A quien se le puede escribir
+           hoy lo decide `activos()`. */
+        const lista = (Array.isArray(d) ? d : []).filter(u => u && u.username);
+        if (lista.length) gente = lista;
+        return lista.length > 0;
+    } catch (e) { return false; }
+};
+
+let ultimoIntentoGente = 0;
+const REINTENTO_GENTE = 30000;
+
 const latir = async () => {
     /* SE LATE TAMBIEN CON LA PESTANA EN SEGUNDO PLANO. El contador del titulo y el tono son
        justamente para cuando la persona esta mirando otra cosa; si el latido se apagara al
@@ -554,6 +581,12 @@ const latir = async () => {
        el latido se acelera a 4 s con una ventana abierta, y no hace falta anunciarse
        quince veces por minuto. */
     const ahoraAqui = Date.now();
+    /* Sin la lista de usuarios los nombres se ven como usuarios. Se reintenta, pero no en
+       cada vuelta: como mucho una vez cada 30 s, y solo si de verdad falta. */
+    if (!gente.length && (ahoraAqui - ultimoIntentoGente) > REINTENTO_GENTE) {
+        ultimoIntentoGente = ahoraAqui;
+        if (await cargarGente()) pintar();
+    }
     if (ahoraAqui - ultimoAnuncio > ANUNCIO_CADA) { ultimoAnuncio = ahoraAqui; anunciarme(); }
     if (ahoraAqui - ultimaMirada > MIRAR_QUIEN_CADA) { ultimaMirada = ahoraAqui; await mirarQuienEsta(); }
 
@@ -1640,15 +1673,7 @@ export const arrancarDatosDelChat = async (session) => {
     if (!YO) return false;
     try { sonando = localStorage.getItem('chat_tono') !== '0'; } catch (e) { /* da igual */ }
 
-    try {
-        const r = await fetch(`${API}/users?t=${Date.now()}`);
-        const c = await r.json();
-        const d = (c && c.data) || c || [];
-        /* El directorio guarda a TODOS, tambien a los dados de baja: sus mensajes viejos
-           tienen que seguir mostrando su nombre y no su usuario. A quien se le puede escribir
-           hoy lo decide `activos()`. */
-        gente = (Array.isArray(d) ? d : []).filter(u => u && u.username);
-    } catch (e) { gente = []; }
+    await cargarGente();
 
     try { salas = (await traer(SALAS)).filter(esMiSala); } catch (e) { salas = []; }
     try {
@@ -1717,7 +1742,11 @@ export const desmontarChat = () => {
     if (raiz && raiz.parentNode) raiz.parentNode.removeChild(raiz);
     const est = document.getElementById('chat-estilos');
     if (est && est.parentNode) est.parentNode.removeChild(est);
+    /* `gente` tambien se va: al cerrar sesion no tiene por que quedar en memoria el
+       directorio de la empresa, y dejarlo ahi hacia que el chat siguiente arrancara con
+       la lista del anterior sin haberla pedido. */
     raiz = null; arrancado = false; salas = []; mensajes = {}; abiertas = []; panelAbierto = false;
+    gente = []; ultimoIntentoGente = 0;
     presencia = {}; ultimoAnuncio = 0; ultimaMirada = 0;
 };
 
@@ -1729,5 +1758,5 @@ if (typeof window !== 'undefined') window.__chat = { latir, mandar, crearDirecta
                   /* Para probar el cartel de avisos sin que el navegador conceda el
                      permiso de verdad, que en una prueba automatica no se puede. */
                   fingirEstadoAvisos: (e) => { avisosEstado = e; avisosAbierto = true; pintarAvisos(); },
-                  estado: () => ({ salas, mensajes, leidos, noLeidos, abiertas, versionesVistas,
+                  estado: () => ({ salas, mensajes, leidos, noLeidos, abiertas, versionesVistas, gente,
                                    sinLeer: sinLeerTotal() }) };
