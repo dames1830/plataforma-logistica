@@ -33,16 +33,16 @@
  * 102 reales, y de 753 destinos, 580.
  */
 
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0803';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0804';
 /* EL RANGO DE FECHAS ES EL DE TODA LA PLATAFORMA, no uno propio. Acá había dos
    <input type="date"> sueltos, que es justo lo que `selectorRango` vino a terminar: 21
    pantallas armaban el suyo, unas con "DE:/HASTA:", otras con "DE/A", la mayoría sin
    decir qué era el primer campo. Daniel lo cantó apenas lo vio al lado del Tracking:
    *"la fecha la puedes poner en una fila"*. Una sola caja que se lee como una frase. */
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0803';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0804';
 /* La lectura del Excel es LA MISMA que usa el celular. Dos formas de leer el mismo
    archivo es el camino mas corto a que dos pantallas digan numeros distintos. */
-import * as ORD from '../services_v245/despachoOrden.js?v=29.0803';
+import * as ORD from '../services_v245/despachoOrden.js?v=29.0804';
 
 /* ── DE DÓNDE SALEN LOS DATOS ─────────────────────────────────────────────────
    De `despachoCatalogo.js`, que los baja POR SEMANAS. Acá había una copia de todo
