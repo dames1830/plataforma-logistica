@@ -196,7 +196,10 @@ def sentencias_de_poda(mod):
 
 
 antes = sentencias_de_poda(viejo)
-chk(any(s.strip().upper().startswith('VACUUM') for s in antes), 'la versión de antes SÍ hacía VACUUM al podar (la prueba lo ve)')
+if 'cursor.execute("VACUUM")' in open(viejo_ruta, encoding='utf-8').read():
+    chk(any(s.strip().upper().startswith('VACUUM') for s in antes), 'la versión de antes SÍ hacía VACUUM al podar (la prueba lo ve)')
+else:
+    print('(la versión con la que se compara ya no hace VACUUM: para verlo, VIEJO= con la de git 09c4c3c6~1)')
 for f in ('2026-09-10', '2026-09-11'):
     guardar('prueba_poda', f, [f])
 ahora = sentencias_de_poda(nuevo)
@@ -205,6 +208,30 @@ conn = sqlite3.connect(os.environ['DB_PATH'])
 quedan = [r[0] for r in conn.execute("SELECT snapshot_date FROM logistics_snapshots WHERE area_id='prueba_poda' ORDER BY snapshot_date")]
 conn.close()
 chk(quedan == ['2026-09-12', '2026-09-13'], f'y sigue podando: quedan las 2 más nuevas {quedan}')
+
+print('\n── Cuántos días guarda cada área (16-sep-2026) ──')
+conn = sqlite3.connect(os.environ['DB_PATH'])
+conn.execute("DELETE FROM logistics_snapshots WHERE area_id IN ('turno_actividades','reserva_arranque','prueba_dos')")
+conn.commit()
+conn.close()
+guardar('turno_actividades', '2099-01-01', {'ini': '19:00', 'fin': '06:30', 'procs': []})
+for d in range(1, 16):
+    guardar('turno_actividades', f'2026-09-{d:02d}', {'dia': f'2026-09-{d:02d}', 'procs': [{'n': 'Almacenamiento'}]})
+for d in range(1, 36):
+    guardar('reserva_arranque', f'2026-08-{d:02d}' if d <= 31 else f'2026-09-{d - 31:02d}', [d])
+for d in range(1, 5):
+    guardar('prueba_dos', f'2026-09-{d:02d}', [d])
+nuevo.prune_old_snapshots(os.environ['DB_PATH'])
+conn = sqlite3.connect(os.environ['DB_PATH'])
+fechas = lambda a: [r[0] for r in conn.execute("SELECT snapshot_date FROM logistics_snapshots WHERE area_id=? ORDER BY snapshot_date", (a,))]
+turno = fechas('turno_actividades')
+chk('2026-09-14' in turno and '2026-09-15' in turno and len(turno) == 16,
+    f'turno_actividades guarda todas sus jornadas, aunque esté la de prueba 2099 ({len(turno)} fechas)')
+reserva = fechas('reserva_arranque')
+chk(len(reserva) == 31 and reserva[-1] == '2026-09-04', f'reserva_arranque guarda un mes: las 31 más nuevas ({len(reserva)})')
+dos = fechas('prueba_dos')
+chk(dos == ['2026-09-03', '2026-09-04'], f'un área sin regla sigue guardando 2 ({dos})')
+conn.close()
 
 print('\n' + (f'FALLARON {fallos} de {total}' if fallos else f'TODO BIEN ({total} de {total})'))
 sys.exit(1 if fallos else 0)

@@ -697,6 +697,22 @@ RETENCION_SNAPSHOTS = {
     # No cuesta nada: un dia son unos 6 KB -catorce citas-, o sea 190 KB el mes
     # entero, contra el disco de 1 GB. Es la mitad de lo que pesa un dia de picking.
     'citas_recepcion': 31,
+    # EL CUMPLIMIENTO DEL TURNO, un año. Cada noche queda con su fecha para poder mirar
+    # las anteriores, pero con el tope de 2 no se veía ninguna: el 16-sep-2026 Daniel
+    # abrió el 14 y salió "sin meta" en todo. Había DOS fechas guardadas y una era
+    # `2099-01-01`, un registro de prueba vacío del 26-ago que por ordenarse primero
+    # ocupaba un lugar para siempre: sobrevivía UNA sola jornada, y guardar la del 15
+    # borró la del 14. Una jornada son ~1 KB: el año entero no llega a medio MB.
+    'turno_actividades': 400,
+    # Y LAS FOTOS CON LAS QUE SE CALCULA UNA JORNADA CERRADA, un mes. Sin ellas una noche
+    # que nadie guardó no se puede rehacer: las metas y los avances salen de acá. Juntas
+    # pesan ~480 KB por día (la reserva del arranque y la del cierre ~195 KB cada una, el
+    # plan 84 KB), o sea unos 15 MB el mes.
+    'plan_buffer': 31,
+    'reserva_arranque': 31,
+    'buffer_c_arranque': 31,
+    'reserva_cierre': 31,
+    'buffer_c_cierre': 31,
 }
 RETENCION_POR_DEFECTO = 2
 
