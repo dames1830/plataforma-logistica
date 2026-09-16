@@ -38,7 +38,9 @@ import { montarCorreoHoy } from '../js/reportes/correo_hoy.js';
 const cual = new URLSearchParams(location.search);
 const DIA = cual.get('f') || '2026-09-15';
 const API = 'https://logistics-backend-wv0x.onrender.com/api/logistics/correo_hoy?date=' + DIA;
-const r = await fetch(API, { headers: { 'X-Environment': 'beta' } });
+/* ?prod=1 lee PRODUCCION; por defecto lee beta. */
+const r = await fetch(API, cual.get('prod')
+    ? {} : { headers: { 'X-Environment': 'beta' } });
 const j = await r.json();
 window.__d = j.data;
 const montar = cual.get('correo') ? montarCorreoHoy : montarPedidosWms;

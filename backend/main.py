@@ -1,11 +1,18 @@
 # LOGISTICS BACKEND v26.5.208 - buffer_history + buffer_kpi_results + range endpoint + layout global
-from fastapi import FastAPI, Request
+from fastapi import BackgroundTasks, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from starlette.middleware.gzip import GZipMiddleware
 import sqlite3
 import json
 import os
+
+# EL AVISO DEL CHAT AL CELULAR. Va aparte para no engordar este archivo, y el
+# import va envuelto: si algun dia falta, el servidor tiene que arrancar igual.
+try:
+    import avisos_chat
+except Exception:
+    avisos_chat = None
 import re
 import shutil
 import hashlib
@@ -1784,7 +1791,8 @@ async def restore_performance(request: Request):
     except Exception as e: return {"status": "error", "message": str(e)}
 
 @app.patch("/api/logistics/{area}")
-async def patch_area_data(area: str, request: Request, date: Optional[str] = None):
+async def patch_area_data(area: str, request: Request, tareas: BackgroundTasks,
+                          date: Optional[str] = None):
     try:
         if area != 'users':
             _bloqueo = _control_escritura(request, area)
@@ -1829,7 +1837,18 @@ async def patch_area_data(area: str, request: Request, date: Optional[str] = Non
             ON CONFLICT(area_id, snapshot_date) DO UPDATE SET data_json=excluded.data_json, updated_at=excluded.updated_at
         """, (area, target_date, json_string, ahora().strftime("%Y-%m-%d %H:%M:%S")))
         conn.commit(); conn.close()
-        
+
+        # ── EL AVISO DEL CHAT, EN EL MISMO INSTANTE ────────────────────────
+        # Daniel, 15-sep-2026: *"al momento que me envian un chat deberia
+        # llegarme una notificacion... lo que quiero es que llegue al celular"*.
+        #
+        # Va DESPUES del commit y en una tarea de FONDO: el que escribe no
+        # espera a que Google conteste, y si el aviso falla el mensaje ya esta
+        # guardado. Nunca puede tumbar el chat.
+        if avisos_chat is not None and avisos_chat.es_sala(area):
+            tareas.add_task(avisos_chat.avisar_del_mensaje,
+                            db_path(), area, partial_data, print)
+
         return {"status": "success", "area": area, "date": target_date, "message": "Parcialmente actualizado"}
     except Exception as e: return {"status": "error", "message": str(e)}
 

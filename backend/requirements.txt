@@ -1,3 +1,5 @@
 fastapi==0.115.0
 uvicorn==0.31.0
 pydantic==2.9.2
+# Manda los avisos del chat al celular (Web Push). Ver backend/avisos_chat.py
+pywebpush==2.0.0
