@@ -114,7 +114,9 @@ const MENSAJES = {
   titulo('La barra de abajo');
   const tabs = $$('#app-movil .am-barra button').map(b => b.dataset.seccion);
   ok(tabs.includes('chat'), 'Chat está abajo', tabs.join(' · '));
-  ok(tabs.length === 4, 'cuatro módulos', tabs.length + '');
+  /* CINCO desde el 15-sep-2026, cuando entro Despacho. Esta prueba se quedo en cuatro y
+     marcaba un fallo que no era del codigo. */
+  ok(tabs.length === 5, 'cinco módulos: Inicio, Chat, Tareas, Asistencia y Despacho', tabs.join(' · '));
   ok(tabs.indexOf('chat') === 1, 'Chat va segundo, después de Inicio');
 
   /* Se entra al chat y se siembra el estado. */
@@ -238,6 +240,137 @@ const MENSAJES = {
   }
 
   temaService.aplicarTema('indigo');
+
+  /* ══ EL TECLADO QUE NO SE DEJABA CERRAR (Daniel, 16-sep-2026) ════════════════════════
+     "escribo algo, le doy para atras ocultando el teclado, lo oculta y a los dos segundos
+     vuelve a aparecer". En Android cerrar el teclado NO le quita el foco a la caja, y el
+     latido repintaba y se lo devolvia. Se simula lo que hace el telefono: la parte visible
+     de la pantalla crece de golpe cuando el teclado se esconde. */
+  titulo('El teclado se deja cerrar');
+  $('#app-movil [data-sala="du_dames__msosa"]').click();
+  await esperar(600);
+  const cajaT = $('#app-movil [data-chat-texto]');
+  const vv = window.visualViewport;
+  if (cajaT && vv) {
+    let alto = 400;                                   // con el teclado abierto
+    Object.defineProperty(vv, 'height', { configurable: true, get: () => alto });
+    cajaT.focus();
+    vv.dispatchEvent(new Event('resize'));            // queda anotado el alto con teclado
+    ok(document.activeElement === cajaT, 'escribiendo, la caja tiene el foco');
+    alto = 780;                                       // el teclado se esconde: la pantalla crece
+    vv.dispatchEvent(new Event('resize'));
+    await esperar(50);
+    ok(document.activeElement !== $('#app-movil [data-chat-texto]'),
+       'al cerrar el teclado, la caja suelta el foco');
+    pintarDeNuevo();                                   // lo que hace el latido cada 4 segundos
+    await esperar(150);
+    ok(document.activeElement !== $('#app-movil [data-chat-texto]'),
+       'y el repintado del latido YA NO se lo devuelve: el teclado no vuelve a salir');
+    /* Y la barra del navegador que se esconde al hacer scroll -crece poco- no suelta nada. */
+    const c2 = $('#app-movil [data-chat-texto]');
+    c2.focus(); alto = 780; vv.dispatchEvent(new Event('resize'));
+    alto = 840; vv.dispatchEvent(new Event('resize'));   // 60 px: la barra, no el teclado
+    await esperar(50);
+    ok(document.activeElement === $('#app-movil [data-chat-texto]'),
+       'si la pantalla crece poco -la barra del navegador- la caja NO suelta el foco');
+    delete vv.height;
+  } else {
+    ok(true, '(este navegador no tiene visualViewport: no se puede simular)');
+  }
+  $('[data-chat-volver]').click();
+  await esperar(300);
+
+  /* ══ QUIEN ESTA EN EL GRUPO (Daniel, 16-sep-2026) ════════════════════════════════════
+     Se interceptan tambien las ESCRITURAS del grupo: la prueba no puede ensuciar la base, y
+     asi ademas se ve exactamente lo que se le habria mandado al servidor. */
+  titulo('Quién está en el grupo');
+  const escrito = { salas: [], mensajes: [] };
+  const fetchAntes = window.fetch;
+  window.fetch = async (url, ...r) => {
+    const u = String(url && url.url ? url.url : url);
+    const metodo = (r[0] && r[0].method) || 'GET';
+    if (metodo === 'PATCH' && /\/chat_salas/.test(u)) {
+      const cuerpo = JSON.parse(r[0].body);
+      escrito.salas.push(cuerpo);
+      const i = SALAS.findIndex(x => x.id === cuerpo.id); if (i >= 0) SALAS[i] = cuerpo;
+      return new Response('{"status":"success"}', { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+    if (metodo === 'PATCH' && /\/chat_gr_prueba/.test(u)) {
+      escrito.mensajes.push(JSON.parse(r[0].body));
+      return new Response('{"status":"success"}', { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+    return fetchAntes(url, ...r);
+  };
+
+  $('#app-movil [data-sala="gr_prueba"]').click();
+  await esperar(700);
+  const cabG = $('#app-movil .am-cab-conv');
+  ok(!!cabG && cabG.hasAttribute('data-ver-gente'), 'en un grupo, la cabecera se puede tocar');
+  ok(/4 personas/.test((cabG || {}).textContent || ''), 'y dice cuántas personas hay',
+     ((cabG && cabG.querySelector('.quien span')) || {}).textContent);
+
+  // Tocar la cabecera, pero NO la flecha
+  cabG.querySelector('.quien').click();
+  await esperar(300);
+  const filasG = $$('#app-movil .am-gente .am-gente-fila');
+  ok(filasG.length === 4, 'al tocarla se ven las 4 personas del grupo', filasG.length + '');
+  ok(filasG.some(f => /\(tú\)/.test(f.textContent)), 'marca cuál soy yo');
+  ok(!!$('#app-movil .am-gente-marca'), 'y quién lo creó');
+  ok($$('#app-movil [data-sacar]').length === 3, 'los otros tres tienen su botón Sacar',
+     $$('#app-movil [data-sacar]').length + '');
+  ok(!$('#app-movil [data-sacar="dames"]'), 'y yo no me puedo sacar');
+
+  // La flecha de los integrantes vuelve a la charla, no a la lista
+  $('#app-movil [data-gente-volver]').click();
+  await esperar(300);
+  ok(!!$('#app-movil [data-chat-texto]') && !$('#app-movil .am-gente'),
+     'la flecha vuelve a la conversación, no a la lista');
+
+  // La flecha de la conversacion esta DENTRO de la cabecera tocable: tiene que salir, no abrir
+  $('#app-movil [data-chat-volver]').click();
+  await esperar(300);
+  ok(!!$('#app-movil .am-conv') && !$('#app-movil .am-gente'),
+     'la flecha de la conversación sale a la lista, sin abrir los integrantes');
+
+  // Agregar
+  $('#app-movil [data-sala="gr_prueba"]').click();
+  await esperar(600);
+  $('#app-movil .am-cab-conv .quien').click();
+  await esperar(300);
+  $('#app-movil [data-buscar-toggle]').click();
+  await esperar(300);
+  const bus = $('#app-movil [data-buscar-gente]');
+  ok(!!bus && document.activeElement === bus, 'al tocar "+ Agregar personas" sale el buscador con el cursor');
+  const hayCandidatos = $$('#app-movil [data-agregar-a]').length;
+  ok(hayCandidatos > 0, 'y la gente que se puede agregar', hayCandidatos + ' persona(s)');
+  const primero = $('#app-movil [data-agregar-a]');
+  const quien = primero && primero.getAttribute('data-agregar-a');
+  bus.value = String(quien || '').slice(0, 3);
+  bus.dispatchEvent(new Event('input', { bubbles: true }));
+  await esperar(150);
+  ok(document.activeElement === $('#app-movil [data-buscar-gente]'),
+     'escribiendo en el buscador, la caja no pierde el foco');
+  pintarDeNuevo();                                   // el latido, a mitad de la busqueda
+  await esperar(150);
+  ok(document.activeElement === $('#app-movil [data-buscar-gente]'),
+     'y tampoco lo pierde cuando el latido repinta');
+  const btn = $('#app-movil [data-agregar-a="' + quien + '"]');
+  if (btn) btn.click();
+  await esperar(900);
+  const subida = escrito.salas.filter(x => x.id === 'gr_prueba').slice(-1)[0];
+  ok(!!subida && (subida.miembros || []).indexOf(quien) >= 0,
+     'al agregar se guarda la sala con la persona nueva', quien);
+  ok(!!subida && !!(subida.desde || {})[quien], 'con la fecha desde la que ve la conversación',
+     subida ? (subida.desde || {})[quien] : '—');
+  const aviso = escrito.mensajes.filter(m => /agregó a/.test(m.texto || ''))[0];
+  ok(!!aviso && aviso.aviso === true && aviso.sistema === true,
+     'y el renglón gris, que no suena', aviso ? aviso.texto : '—');
+
+  window.fetch = fetchAntes;
+  $('#app-movil [data-gente-volver]').click();
+  await esperar(250);
+  $('#app-movil [data-chat-volver]').click();
+  await esperar(250);
 
   /* ── Y QUE EL CHAT DE ESCRITORIO SIGA ENTERO ──────────────────────────────
      Se le separaron los datos de la pantalla para que lo use el celular; eso no

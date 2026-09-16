@@ -25,37 +25,37 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0812';
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0812';
-import * as ORD from '../services_v245/despachoOrden.js?v=29.0812';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0812';
+import * as adminService from '../services_v245/adminService.js?v=29.0813';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0813';
+import * as ORD from '../services_v245/despachoOrden.js?v=29.0813';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0813';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0812';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0812';
-import * as metasService from '../services_v245/metasService.js?v=29.0812';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0813';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0813';
+import * as metasService from '../services_v245/metasService.js?v=29.0813';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0812';
+import * as temaService from '../services_v245/temaService.js?v=29.0813';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0812';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0812';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0813';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0813';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible, latir,
+         traerAdjunto, pesoLegible, latir, agregarAlGrupo, sacarDelGrupo,
          /* LA MISMA MARCA QUE LA WEB. El calculo vive en chat.js; aca solo se pinta,
             con la cara de la app. Dos copias del mismo calculo se desincronizan. */
-         marcaDelMensaje } from '../chat.js?v=29.0812';
+         marcaDelMensaje } from '../chat.js?v=29.0813';
 /* LOS AVISOS DEL TELEFONO VIVEN EN UN SERVICIO COMPARTIDO desde el 15-sep-2026: la web
    usa exactamente estas funciones para suscribir la PC. Ver `avisos.js`. */
 import { LLAVE_AVISOS, puedeAvisos, mirarAvisos as mirarSuscripcion,
          prenderAvisos as suscribir, apagarAvisos as desuscribir }
-    from '../services_v245/avisos.js?v=29.0812';
+    from '../services_v245/avisos.js?v=29.0813';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -495,6 +495,28 @@ const CSS = `
 #app-movil .am-cab-conv .quien span { display: block; font-family: var(--am-num);
   font-size: .62rem; color: var(--am-va); }
 #app-movil .am-cab-conv .quien span.off { color: var(--am-tenue); }
+
+/* -- QUIEN ESTA EN EL GRUPO (16-sep-2026) ------------------------------------------------
+   Maqueta aprobada. Reutiliza la fila de persona y el buscador de la lista del chat. */
+#app-movil .am-cab-conv.tocable { cursor: pointer; }
+#app-movil .am-gente { flex: 1; overflow-y: auto; padding: .7rem .65rem; display: flex;
+  flex-direction: column; gap: .4rem; }
+#app-movil .am-gente-fila { cursor: default; }
+#app-movil .am-gente-marca { font-family: var(--am-num); font-size: .58rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .05em; color: var(--am-curso);
+  background: var(--am-curso-agua); border-radius: 10px; padding: .15rem .45rem; }
+#app-movil .am-gente-sacar { background: none; border: 1px solid var(--am-linea);
+  color: #C0392B; border-radius: 8px; font-family: var(--am-ui); font-size: .72rem;
+  font-weight: 700; padding: .3rem .6rem; cursor: pointer; }
+#app-movil .am-gente-mas { background: var(--am-va-agua); border: 1px solid var(--am-linea);
+  color: var(--am-va); border-radius: 8px; font-family: var(--am-ui); font-size: .72rem;
+  font-weight: 700; padding: .3rem .6rem; cursor: pointer; }
+#app-movil .am-gente-sacar:disabled, #app-movil .am-gente-mas:disabled { opacity: .5; }
+#app-movil .am-gente-pie { padding: .55rem .65rem; border-top: 1px solid var(--am-linea);
+  background: var(--am-papel); flex: none; }
+#app-movil .am-gente-agregar { width: 100%; border: 0; border-radius: 10px; padding: .7rem;
+  background: var(--am-relleno); color: var(--am-sobre); font-family: var(--am-ui);
+  font-size: .9rem; font-weight: 700; cursor: pointer; }
 
 #app-movil .am-charla { flex: 1; overflow-y: auto; padding: .7rem .65rem; display: flex;
   flex-direction: column; gap: .3rem; }
@@ -1548,6 +1570,8 @@ const eliminarTarea = async () => {
 
 let chatListo = false;        // ya se trajeron los datos en esta sesion
 let chatSala = null;          // la conversacion abierta, o null en la lista
+/* Viendo quien esta en el grupo abierto: { buscando, filtro }, o null en la charla. */
+let gentePantalla = null;
 let chatBuscar = '';
 let chatMandando = false;
 
@@ -1633,11 +1657,65 @@ const pantallaChat = () => {
     `;
 };
 
+/* ── QUIEN ESTA EN EL GRUPO ─────────────────────────────────────────────────────────────
+   Maqueta aprobada el 16-sep-2026. Reemplaza la charla y se vuelve con la flecha. Usa la
+   misma fila de persona y el mismo buscador que la lista del chat: nada inventado. */
+const candidatosGrupo = (s) => {
+    const q = String((gentePantalla && gentePantalla.filtro) || '').trim().toLowerCase();
+    const libres = activos().filter(p => (s.miembros || []).indexOf(p.username) < 0
+        && (!q || String(p.name || '').toLowerCase().indexOf(q) >= 0
+               || p.username.toLowerCase().indexOf(q) >= 0));
+    if (!libres.length) return '<div class="am-vacio">Nadie más con ese nombre</div>';
+    return libres.map(p => `
+        <div class="am-persona-chat am-gente-fila">
+            <span class="am-ini ${enLinea(p.username) ? 'en-linea' : ''}">${esc(inicialesChat(nombreDe(p.username)))}</span>
+            <span><span class="nm">${esc(nombreDe(p.username))}</span>
+                <span class="rol">${esc(p.role || '')}</span></span>
+            <button type="button" class="am-gente-mas" data-agregar-a="${esc(p.username)}">Agregar</button>
+        </div>`).join('');
+};
+
+const pantallaIntegrantes = (s) => {
+    const buscando = !!(gentePantalla && gentePantalla.buscando);
+    const filas = (s.miembros || []).map(u => {
+        const yo = YO && u === YO.username;
+        const p = activos().concat([]).filter(x => x.username === u)[0] || {};
+        return `
+        <div class="am-persona-chat am-gente-fila">
+            <span class="am-ini ${enLinea(u) ? 'en-linea' : ''}">${esc(inicialesChat(nombreDe(u)))}</span>
+            <span><span class="nm">${esc(nombreDe(u))}${yo ? ' (tú)' : ''}</span>
+                <span class="rol">${esc(p.role || u)}</span></span>
+            ${u === s.creador ? '<span class="am-gente-marca">creó</span>'
+              : (yo ? '' : `<button type="button" class="am-gente-sacar" data-sacar="${esc(u)}">Sacar</button>`)}
+        </div>`;
+    }).join('');
+    return `
+        <div class="am-cab-conv">
+            <button type="button" class="am-volver" data-gente-volver aria-label="Volver">${ICO_VOLVER}</button>
+            <span class="am-ini grupo">${esc(inicialesChat(nombreDeSala(s)))}</span>
+            <span class="quien"><b>${esc(nombreDeSala(s))}</b>
+                <span>${(s.miembros || []).length} personas</span></span>
+        </div>
+        <div class="am-gente">
+            ${buscando ? `<div class="am-buscar">${ICO_LUPA}
+                <input type="search" data-buscar-gente value="${esc((gentePantalla && gentePantalla.filtro) || '')}"
+                    placeholder="Buscar a cualquier persona…"></div>` : ''}
+            <div class="am-seccion">${(s.miembros || []).length} personas</div>
+            ${filas}
+            ${buscando ? `<div class="am-seccion" style="margin-top:.5rem">Agregar a</div>
+                <div data-candidatos-gente>${candidatosGrupo(s)}</div>` : ''}
+        </div>
+        <div class="am-gente-pie">
+            <button type="button" class="am-gente-agregar" data-buscar-toggle>${buscando ? 'Listo' : '+ Agregar personas'}</button>
+        </div>`;
+};
+
 /* ── ADENTRO DE UNA CONVERSACION ─────────────────────────────────────────────────────── */
 const pantallaConversacion = () => {
     const E = estadoDelChat();
     const s = salaDe(chatSala);
     if (!s) { chatSala = null; return pantallaChat(); }
+    if (gentePantalla && s.tipo === 'grupo') return pantallaIntegrantes(s);
     const otro = s.tipo === 'grupo' ? null : (s.miembros || []).filter(u => u !== YO.username)[0];
     const msgs = E.mensajes[s.id] || [];
 
@@ -1662,11 +1740,11 @@ const pantallaConversacion = () => {
     }).join('');
 
     const estado = s.tipo === 'grupo'
-        ? `${(s.miembros || []).length} personas`
+        ? `${(s.miembros || []).length} personas · toca para ver`
         : (otro && enLinea(otro) ? 'en línea' : 'desconectado');
 
     return `
-        <div class="am-cab-conv">
+        <div class="am-cab-conv ${s.tipo === 'grupo' ? 'tocable' : ''}" ${s.tipo === 'grupo' ? 'data-ver-gente' : ''}>
             <button type="button" class="am-volver" data-chat-volver aria-label="Volver">${ICO_VOLVER}</button>
             <span class="am-ini ${s.tipo === 'grupo' ? 'grupo' : ''} ${otro && enLinea(otro) ? 'en-linea' : ''}">${esc(inicialesChat(nombreDeSala(s)))}</span>
             <span class="quien"><b>${esc(nombreDeSala(s))}</b>
@@ -3769,6 +3847,10 @@ const pintar = () => {
     const escribiendo = document.activeElement
         && document.activeElement.hasAttribute
         && document.activeElement.hasAttribute('data-chat-texto');
+    /* Lo mismo para el buscador de integrantes: el latido reemplaza la caja cada 4 segundos. */
+    const buscandoGente = document.activeElement
+        && document.activeElement.hasAttribute
+        && document.activeElement.hasAttribute('data-buscar-gente');
     const dondeIbaElCursor = escribiendo ? document.activeElement.selectionStart : 0;
     const loQueLlevaba = escribiendo ? document.activeElement.value : '';
 
@@ -3845,6 +3927,11 @@ const pintar = () => {
     }).join('');
 
     if (seccion === 'chat' && chatSala) { pintarFotosDelChat(); alFinalDeLaCharla(); }
+
+    if (buscandoGente) {
+        const b = raiz.querySelector('[data-buscar-gente]');
+        if (b) { b.focus(); try { b.setSelectionRange(b.value.length, b.value.length); } catch (e) { /* da igual */ } }
+    }
 
     /* Y se le devuelve el cursor donde estaba, con lo que llevara escrito. */
     if (escribiendo) {
@@ -3996,6 +4083,39 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         ORD.archivoCompartido().then((arch) => { if (arch) leerLaOrden(arch); }).catch(() => {});
     }
 
+    /* EL TECLADO QUE NO SE DEJABA CERRAR.
+     *
+     * Daniel, 16-sep-2026: *"escribo algo, le doy para atras ocultando el teclado, lo oculta y
+     * al segundo, a los dos segundos, vuelve a aparecer"*.
+     *
+     * En Android, cerrar el teclado con el boton atras NO le quita el foco a la caja de texto:
+     * sigue siendo `document.activeElement`. Y `pintar()` -que el latido del chat dispara cada
+     * 4 segundos con una conversacion abierta- ve una caja "con foco", se lo devuelve para no
+     * perder el cursor, y ENFOCAR ES LO QUE ABRE EL TECLADO. Sus dos segundos.
+     *
+     * Se suelta el foco en el momento en que el teclado se cierra. El teclado se ve en
+     * `visualViewport`: la parte visible de la pantalla crece de golpe cuando se esconde. Sin
+     * foco, el repintado ya no tiene nada que devolver. Y quien vuelva a tocar la caja, abre
+     * el teclado como siempre. */
+    try {
+        const vv = window.visualViewport;
+        if (vv && !window._amSueltaElTeclado) {
+            window._amSueltaElTeclado = true;
+            let altoAntes = vv.height;
+            vv.addEventListener('resize', () => {
+                const alto = vv.height;
+                const crecio = alto - altoAntes;
+                altoAntes = alto;
+                /* 120 px: un teclado mide 250 o mas; menos que eso es la barra del navegador
+                   que se esconde al hacer scroll, y ahi no hay que soltar nada. */
+                if (crecio < 120) return;
+                const a = document.activeElement;
+                if (a && a.hasAttribute
+                    && (a.hasAttribute('data-chat-texto') || a.hasAttribute('data-buscar-gente'))) a.blur();
+            });
+        }
+    } catch (e) { /* sin visualViewport, queda como estaba */ }
+
     try {
         if (navigator.serviceWorker && !window._amEscuchaAvisos) {
             window._amEscuchaAvisos = true;
@@ -4068,6 +4188,17 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         mirarDespachos().then(pintar);
     });
 
+    /* EL BUSCADOR DE INTEGRANTES repinta solo la lista de candidatos. Si repintara la pantalla
+       entera, la caja se reemplazaria por otra nueva a cada letra: perderia el foco, y
+       devolverselo es lo que reabre el teclado. */
+    raiz.addEventListener('input', (e) => {
+        const caja = e.target.closest && e.target.closest('[data-buscar-gente]');
+        if (!caja || !gentePantalla) return;
+        gentePantalla.filtro = caja.value;
+        const s = salaDe(chatSala);
+        const lista = raiz.querySelector('[data-candidatos-gente]');
+        if (s && lista) lista.innerHTML = candidatosGrupo(s);
+    });
     raiz.addEventListener('input', (e) => {
         if (!e.target.closest('#des_busca')) return;
         clearTimeout(desReloj);
@@ -4248,7 +4379,36 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
         /* ── EL CHAT ─────────────────────────────────────────────────────────────── */
         const laSala = e.target.closest('[data-sala]');
         if (laSala) { abrirConversacion(laSala.getAttribute('data-sala')); return; }
-        if (e.target.closest('[data-chat-volver]')) { chatSala = null; pintar(); return; }
+        if (e.target.closest('[data-chat-volver]')) { chatSala = null; gentePantalla = null; pintar(); return; }
+        /* QUIEN ESTA EN EL GRUPO. La flecha de volver esta DENTRO de la cabecera tocable, por
+           eso va primero: tocar la flecha sale de la conversacion, tocar el resto abre la lista. */
+        if (e.target.closest('[data-gente-volver]')) { gentePantalla = null; pintar(); return; }
+        if (e.target.closest('[data-ver-gente]')) {
+            gentePantalla = { buscando: false, filtro: '' }; pintar(); return;
+        }
+        if (e.target.closest('[data-buscar-toggle]') && gentePantalla) {
+            gentePantalla.buscando = !gentePantalla.buscando; gentePantalla.filtro = '';
+            pintar();
+            const caja = raiz.querySelector('[data-buscar-gente]');
+            if (caja) caja.focus();
+            return;
+        }
+        const agregarA = e.target.closest('[data-agregar-a]');
+        if (agregarA && chatSala) {
+            agregarA.disabled = true;
+            agregarAlGrupo(chatSala, agregarA.getAttribute('data-agregar-a'))
+                .catch(() => alert('No se pudo agregar. Revisa la conexión.'))
+                .finally(() => pintar());
+            return;
+        }
+        const sacarA = e.target.closest('[data-sacar]');
+        if (sacarA && chatSala) {
+            sacarA.disabled = true;
+            sacarDelGrupo(chatSala, sacarA.getAttribute('data-sacar'))
+                .catch(() => alert('No se pudo sacar. Revisa la conexión.'))
+                .finally(() => pintar());
+            return;
+        }
         const conQuien = e.target.closest('[data-nueva-con]');
         if (conQuien) {
             crearDirecta(conQuien.getAttribute('data-nueva-con'))

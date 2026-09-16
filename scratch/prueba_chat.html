@@ -736,6 +736,131 @@
           + ' conversacion(es) en pantalla: no abre vacio');
       await promesa;
 
+      /* 15septies. QUIEN ESTA EN EL GRUPO, Y AGREGAR Y SACAR (Daniel, 16-sep-2026)
+         "cuando le de al nombre de Slotting, me salgan las personas que estan en el grupo y me
+         de la opcion de agregar mas". Se prueba con clics sobre la pantalla y leyendo lo que
+         quedo en el servidor, no llamando a las funciones por dentro. */
+      fingirPestana('visible');
+      const idG = await window.__chat.crearGrupo('Prueba integrantes', [OTRO]);
+      creadoPorLaPrueba.push(idG);
+      await esperar(500);
+      const abrirG = document.querySelector('#chat-lista [data-sala="' + idG + '"]');
+      if (!abrirG) { document.getElementById('chat-burbuja').click(); await esperar(300); }
+      const filaG = document.querySelector('#chat-lista [data-sala="' + idG + '"]');
+      if (filaG) filaG.click();
+      await esperar(700);
+      const ventG = () => document.querySelector('.chat-ventana[data-sala="' + idG + '"]');
+      chk(!!ventG(), 'se abre la ventanita del grupo de prueba');
+
+      // (a) tocar el NOMBRE abre el panel
+      const nombreG = ventG() && ventG().querySelector('[data-integrantes]');
+      chk(!!nombreG, 'en un grupo, el nombre de la cabecera se puede tocar');
+      chk(nombreG && /2 personas/.test(nombreG.textContent),
+          'y ya dice cuantas personas hay: "' + (nombreG ? nombreG.textContent.trim() : '') + '"');
+      if (nombreG) nombreG.click();
+      await esperar(300);
+      const panelG = () => ventG() && ventG().querySelector('.gente-panel');
+      chk(!!panelG(), 'al tocar el nombre se abre el panel de integrantes');
+      const enPanel = panelG() ? [...panelG().querySelectorAll('.gente-fila')].map(f => f.textContent) : [];
+      chk(enPanel.length === 2, 'el panel muestra a los 2 del grupo: ' + enPanel.length);
+      chk(enPanel.some(t => /\(tú\)/.test(t)), 'y marca cual soy yo');
+      chk(!!(panelG() && panelG().querySelector('.gente-marca')), 'y quien lo creo');
+
+      // (b) el panel ocupa la ventanita entera
+      if (panelG() && ventG()) {
+        const rp = panelG().getBoundingClientRect(), rv = ventG().getBoundingClientRect();
+        chk(Math.abs(rp.height - rv.height) < 3 && Math.abs(rp.width - rv.width) < 3,
+            'el panel tapa la conversacion entera: ' + Math.round(rp.width) + 'x' + Math.round(rp.height));
+        const cortado = [...panelG().querySelectorAll('*')].filter(e => e.scrollWidth > e.clientWidth + 1
+          && getComputedStyle(e).overflowX !== 'auto' && !e.matches('.gente-cuerpo'));
+        chk(cortado.length === 0, 'y no corta nada por la derecha (' + cortado.length + ')');
+      }
+
+      // (c) la flecha vuelve a la conversacion
+      const volverG = panelG() && panelG().querySelector('[data-cerrar-integrantes]');
+      if (volverG) volverG.click();
+      await esperar(250);
+      chk(!panelG() && !!ventG() && !ventG().classList.contains('plegada'),
+          'la flecha vuelve a la conversacion, sin plegarla');
+
+      // (d) tocar la cabecera FUERA del nombre sigue plegando, como siempre
+      const cabG = ventG() && ventG().querySelector('.vcab');
+      if (cabG) cabG.click();
+      await esperar(250);
+      chk(ventG() && ventG().classList.contains('plegada'),
+          'tocar la cabecera fuera del nombre sigue plegando la ventanita, como antes');
+      if (ventG() && ventG().classList.contains('plegada')) { ventG().querySelector('.vcab').click(); await esperar(250); }
+
+      // (e) AGREGAR: buscador, candidato, y queda en el servidor
+      ventG().querySelector('[data-integrantes]').click();
+      await esperar(250);
+      panelG().querySelector('[data-buscar-toggle]').click();
+      await esperar(250);
+      const cajaB = panelG().querySelector('[data-buscar-gente]');
+      chk(!!cajaB && document.activeElement === cajaB, 'al tocar "+ Agregar personas" sale el buscador con el cursor puesto');
+      cajaB.value = 'manuel';
+      cajaB.dispatchEvent(new Event('input', { bubbles: true }));
+      await esperar(200);
+      chk(document.activeElement === panelG().querySelector('[data-buscar-gente]'),
+          'escribiendo en el buscador, la caja NO pierde el foco');
+      const btnMas = panelG().querySelector('[data-agregar-a="msosa"]');
+      chk(!!btnMas, 'buscando "manuel" aparece Manuel Sosa para agregar');
+      if (btnMas) btnMas.click();
+      await esperar(1800);
+      const salasSrv = await (await fetch(API + '/chat_salas?date=MASTER&t=' + Date.now())).json();
+      const gSrv = ((salasSrv && salasSrv.data) || []).filter(x => x.id === idG)[0] || {};
+      chk((gSrv.miembros || []).indexOf('msosa') >= 0,
+          'Manuel Sosa quedo en el grupo EN EL SERVIDOR: ' + (gSrv.miembros || []).join(', '));
+      chk(!!(gSrv.desde && gSrv.desde.msosa),
+          'y quedo anotado desde cuando: ' + ((gSrv.desde || {}).msosa || 'nada'));
+      chk(!(gSrv.desde || {}).dames && !(gSrv.desde || {})[OTRO],
+          'los que ya estaban no tienen fecha: ven todo');
+
+      // (f) el renglon gris: escrito, pero sin sonar ni poner globo
+      const msgsG = await (await fetch(API + '/chat_' + idG + '?date=MASTER&t=' + Date.now())).json();
+      const renglon = ((msgsG && msgsG.data) || []).filter(m => /agregó a/.test(m.texto || ''))[0];
+      chk(!!renglon && renglon.aviso === true, 'queda el renglon gris "agregó a Manuel Sosa" en la conversacion');
+      chk(!!renglon && renglon.sistema === true, 'marcado para que NO suene ni ponga el globo rojo');
+      await esperar(300);
+      chk(!!(ventG() && [...ventG().querySelectorAll('.chat-msg.aviso')].some(e => /agregó a/.test(e.textContent))),
+          'y se ve en gris dentro de la ventanita');
+      chk(/3 personas/.test((ventG().querySelector('[data-integrantes]') || {}).textContent || ''),
+          'el contador de la cabecera sube a 3 personas');
+
+      // (g) SACAR
+      const sacarBtn = panelG() && panelG().querySelector('[data-sacar="msosa"]');
+      chk(!!sacarBtn, 'Manuel Sosa tiene su boton Sacar');
+      chk(!(panelG() && panelG().querySelector('[data-sacar="dames"]')), 'y yo no: no me puedo sacar a mi mismo');
+      if (sacarBtn) sacarBtn.click();
+      await esperar(1800);
+      const salasSrv2 = await (await fetch(API + '/chat_salas?date=MASTER&t=' + Date.now())).json();
+      const gSrv2 = ((salasSrv2 && salasSrv2.data) || []).filter(x => x.id === idG)[0] || {};
+      chk((gSrv2.miembros || []).indexOf('msosa') < 0,
+          'al sacarlo ya no esta en el servidor: ' + (gSrv2.miembros || []).join(', '));
+      chk(!(gSrv2.desde || {}).msosa, 'y se le borra la fecha: si lo vuelven a agregar, ve desde esa vez');
+
+      /* (h) EL QUE ENTRA VE SOLO DESDE QUE LO AGREGARON. La prueba corre como dames, asi que se
+         pone a dames como si lo hubieran agregado AHORA y se comprueba que los mensajes de antes
+         desaparecen de su pantalla. */
+      const antesDeEntrar = ((await (await fetch(API + '/chat_' + idG + '?date=MASTER&t=' + Date.now())).json()).data || []).length;
+      const hace = new Date(Date.now() + 1500).toLocaleString('sv').replace(' ', 'T');
+      await fetch(API + '/chat_salas?date=MASTER', { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(Object.assign({}, gSrv2, { desde: { dames: hace } })) });
+      await esperar(2500);
+      await fetch(API + '/chat_' + idG + '?date=MASTER', { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: 'desp_' + Date.now().toString(36), de: OTRO,
+          cuando: new Date().toLocaleString('sv').replace(' ', 'T'), texto: 'este es DESPUES de que entrara' }) });
+      await esperar(400);
+      mod.desmontarChat(); await esperar(300);
+      try { localStorage.removeItem('deam_chat_memoria_dames'); } catch (e) {}
+      await mod.montarChat({ username: 'dames', role: 'admin' });
+      await esperar(1500);
+      const loQueVe = (window.__chat.estado().mensajes || {})[idG] || [];
+      chk(antesDeEntrar >= 3 && loQueVe.length === 1,
+          'el que entra ve SOLO lo de despues: habia ' + antesDeEntrar + ' mensajes y ve ' + loQueVe.length);
+      chk(loQueVe.length === 1 && /DESPUES/.test(loQueVe[0].texto),
+          'y el que ve es el de despues de entrar');
+
       // 16. EL CHAT SE LEE EN LOS CUATRO TEMAS
       //     En Negro el acento es BLANCO: el boton Enviar quedaba blanco sobre blanco y la
       //     burbuja, blanca con el icono blanco. No se mira: se mide.
