@@ -35,7 +35,7 @@
    para que le lleguen una notificacion"*. El mecanismo es el mismo que usa la app del
    celular; lo unico propio de aca es el boton y el cartelito que explica que va a llegar. */
 import { puedeAvisos, mirarAvisos, prenderAvisos, apagarAvisos, queLlega }
-    from './services_v245/avisos.js?v=29.0809';
+    from './services_v245/avisos.js?v=29.0810';
 
 /* `typeof window` y no `window` a secas: `scratch/probar_marcas_chat.mjs` carga este
    archivo desde Node para comprobar el calculo de las marcas sin navegador, y sin la
@@ -337,6 +337,58 @@ const marcarLeida = (idSala) => {
     }
 };
 
+/* ══ LO ULTIMO QUE SE VIO, GUARDADO EN EL APARATO ═══════════════════════════════════════
+ *
+ * Daniel, 16-sep-2026: *"le das clic y te manda un chat vacio porque todavia no carga nada, y
+ * despues de diez, once, doce segundos recien te abre el chat... ¿no hay alguna posibilidad de
+ * que cargue mas rapido, o se quede en memoria algo?"*.
+ *
+ * Se guarda la ultima foto de las conversaciones EN EL APARATO y se pinta AL INSTANTE, antes
+ * de preguntarle nada al servidor. Lo fresco entra un segundo despues y repinta encima. Es lo
+ * que hace WhatsApp Web: primero lo que ya sabias, y encima lo nuevo.
+ *
+ * SOLO LOS ULTIMOS 40 DE CADA SALA: es lo que entra en una pantalla y lo que se mira al abrir.
+ * El resto baja igual enseguida. Los adjuntos NO se guardan -viven en su propia area-, asi que
+ * esto pesa unas decenas de KB y no un megabyte.
+ *
+ * LLEVA EL USUARIO EN LA CLAVE: si entra otra persona en la misma PC no ve nada de la anterior.
+ */
+const MEMORIA_TOPE = 40;
+const claveMemoria = () => 'deam_chat_memoria_' + ((YO && YO.username) || '');
+
+const guardarEnElAparato = () => {
+    if (!YO) return;
+    try {
+        const m = {};
+        Object.keys(mensajes).forEach(id => {
+            m[id] = (mensajes[id] || []).slice(-MEMORIA_TOPE);
+        });
+        localStorage.setItem(claveMemoria(), JSON.stringify({
+            v: 1, salas, mensajes: m, gente, leidos, leidosMs, cuando: Date.now()
+        }));
+    } catch (e) { /* sin sitio en el disco: se vive sin memoria, solo tarda mas */ }
+};
+
+/** Devuelve true si habia algo que pintar. */
+const leerDelAparato = () => {
+    if (!YO) return false;
+    try {
+        const c = JSON.parse(localStorage.getItem(claveMemoria()) || 'null');
+        if (!c || c.v !== 1 || !Array.isArray(c.salas)) return false;
+        salas = c.salas.filter(esMiSala);
+        mensajes = c.mensajes || {};
+        if (Array.isArray(c.gente) && c.gente.length) gente = c.gente;
+        leidos = c.leidos || {};
+        leidosMs = c.leidosMs || {};
+        salas.forEach(x => reponerContador(x.id));
+        return salas.length > 0;
+    } catch (e) { return false; }
+};
+
+const olvidarElAparato = () => {
+    try { localStorage.removeItem(claveMemoria()); } catch (e) { /* da igual */ }
+};
+
 const reponerContador = (idSala) => {
     const desde = leidos[idSala] || '';
     noLeidos[idSala] = (mensajes[idSala] || [])
@@ -635,6 +687,7 @@ const latir = async () => {
         }
     }
     abrirEnCuantoLlegue();      // la que pidio el aviso, si ya bajo
+    guardarEnElAparato();       // que la proxima vez abra con lo ultimo que se vio
 
     if (llego) {
         /* LA CONVERSACION SE ABRE SOLA, PERO SOLO CON LA WEB A LA VISTA.
@@ -1691,25 +1744,39 @@ export const arrancarDatosDelChat = async (session) => {
     if (!YO) return false;
     try { sonando = localStorage.getItem('chat_tono') !== '0'; } catch (e) { /* da igual */ }
 
-    await cargarGente();
+    /* PRIMERO LO QUE YA SE SABIA. Se pinta sin pedir nada, asi el chat nunca sale vacio. */
+    if (leerDelAparato() && avisarCambio) { try { avisarCambio(); } catch (e) { /* da igual */ } }
 
-    try { salas = (await traer(SALAS)).filter(esMiSala); } catch (e) { salas = []; }
-    try {
-        const filas = await traer(LEIDOS);
+    /* Y AHORA TODO A LA VEZ, no uno detras de otro.
+       Esto iba en fila india -gente, salas, leidos, reloj, presencia- y cada uno esperaba a
+       que el anterior contestara. Son cinco viajes al servidor que no dependen entre si. */
+    const traerSalas = traer(SALAS).then(d => { salas = d.filter(esMiSala); }).catch(() => {});
+    const traerLeidos = traer(LEIDOS).then(filas => {
         leidosDeTodos = {};
         filas.forEach(f => { if (f && f.id) leidosDeTodos[f.id] = f; });
         const mio = leidosDeTodos[YO.username];
         leidos = (mio && mio.salas) || {};
         leidosMs = (mio && mio.salasMs) || {};
-    } catch (e) { leidos = {}; leidosMs = {}; leidosDeTodos = {}; }
+    }).catch(() => { leidos = {}; leidosMs = {}; leidosDeTodos = {}; });
 
-    await sincronizarReloj();
-    await mirarQuienEsta();
+    await Promise.all([
+        cargarGente().catch(() => false),
+        traerSalas,
+        traerLeidos,
+        sincronizarReloj().catch(() => {}),
+        mirarQuienEsta().catch(() => {}),
+    ]);
     ultimaMirada = Date.now();
     anunciarme();
     ultimoAnuncio = Date.now();
 
-    for (const s of salas) { await bajarSala(s.id); reponerContador(s.id); }
+    /* LAS CONVERSACIONES, TODAS A LA VEZ.
+       Estaban en un `for` con `await` adentro: siete conversaciones eran siete viajes uno
+       detras de otro. Medido por Daniel: "diez, once, doce segundos" hasta que abria.
+       Juntas tardan lo que la mas lenta. */
+    await Promise.all(salas.map(x =>
+        bajarSala(x.id).then(() => reponerContador(x.id)).catch(() => {})));
+    guardarEnElAparato();
     acomodarReloj();
     /* AL TOCAR EL AVISO DE WINDOWS, ABRIR ESA CONVERSACION.
        El `sw.js` avisa con `{tipo:'ir', url:'...#chat=<sala>'}`. Lo escuchaba SOLO la app del
@@ -1794,6 +1861,7 @@ export const desmontarChat = () => {
        directorio de la empresa, y dejarlo ahi hacia que el chat siguiente arrancara con
        la lista del anterior sin haberla pedido. */
     raiz = null; arrancado = false; salas = []; mensajes = {}; abiertas = []; panelAbierto = false;
+    olvidarElAparato();      // el chat guardado es de quien cerro sesion, no del siguiente
     gente = []; ultimoIntentoGente = 0;
     presencia = {}; ultimoAnuncio = 0; ultimaMirada = 0;
 };

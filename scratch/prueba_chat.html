@@ -642,6 +642,45 @@
             'y el aviso de un robot no abre ninguna conversacion');
       }
 
+      /* 15sexies. CUANTO TARDA EN ABRIR, Y QUE NO ABRA VACIO (Daniel, 16-sep-2026)
+         "le das clic y te manda un chat vacio porque todavia no carga nada, y despues de
+         diez, once, doce segundos recien te abre". Se mide de verdad: se apaga el chat y se
+         cronometra el arranque, dos veces -la primera sin memoria, la segunda con ella-. */
+      mod.desmontarChat();
+      await esperar(400);
+      try { localStorage.removeItem('deam_chat_memoria_dames'); } catch (e) {}
+
+      const t1 = performance.now();
+      await mod.montarChat({ username: 'dames', role: 'admin' });
+      const sinMemoria = Math.round(performance.now() - t1);
+      const salasQueHay2 = (window.__chat.estado().salas || []).length;
+      chk(sinMemoria < 9000,
+          'de cero, el chat arranca en ' + sinMemoria + ' ms con ' + salasQueHay2
+          + ' conversacion(es)  [antes era una llamada por conversacion, en fila]');
+
+      let guardado = null;
+      try { guardado = JSON.parse(localStorage.getItem('deam_chat_memoria_dames') || 'null'); } catch (e) {}
+      chk(!!guardado && Array.isArray(guardado.salas) && guardado.salas.length > 0,
+          'y deja guardada la ultima foto en el aparato: '
+          + (guardado ? guardado.salas.length + ' conversacion(es)' : 'nada'));
+      const pesoKB = Math.round((localStorage.getItem('deam_chat_memoria_dames') || '').length / 1024);
+      chk(pesoKB < 900, 'lo guardado pesa ' + pesoKB + ' KB (tope sano para el disco del navegador)');
+
+      /* LA SEGUNDA VEZ NO PUEDE SALIR VACIO: la lista tiene que estar ANTES de que el
+         servidor conteste. Se mide sin esperar al montaje. */
+      mod.desmontarChat();
+      await esperar(300);
+      // `desmontarChat` borra la memoria a proposito (es cerrar sesion). Se repone para
+      // simular el caso real: la app se cierra y se vuelve a abrir con la misma sesion.
+      try { localStorage.setItem('deam_chat_memoria_dames', JSON.stringify(guardado)); } catch (e) {}
+      const promesa = mod.montarChat({ username: 'dames', role: 'admin' });
+      await esperar(250);                       // un cuarto de segundo, nada mas
+      const alCuartoDeSegundo = (window.__chat && window.__chat.estado().salas || []).length;
+      chk(alCuartoDeSegundo > 0,
+          'al cuarto de segundo ya hay ' + alCuartoDeSegundo
+          + ' conversacion(es) en pantalla: no abre vacio');
+      await promesa;
+
       // 16. EL CHAT SE LEE EN LOS CUATRO TEMAS
       //     En Negro el acento es BLANCO: el boton Enviar quedaba blanco sobre blanco y la
       //     burbuja, blanca con el icono blanco. No se mira: se mide.
