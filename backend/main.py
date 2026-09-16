@@ -728,14 +728,16 @@ def prune_old_snapshots(ruta: Optional[str] = None):
                 cursor.execute(f"DELETE FROM logistics_snapshots WHERE area_id = ? AND snapshot_date IN ({placeholders})", [area] + to_delete)
                 print(f"[PULSE] Borrados {len(to_delete)} snapshots antiguos del área {area}")
         conn.commit()
-        # Intentar ejecutar VACUUM para liberar espacio. Si falla por falta de espacio temporal, se ignora
-        # pero SQLite de todas formas reutilizará las páginas liberadas para futuras inserciones.
-        try:
-            cursor.execute("VACUUM")
-            conn.commit()
-            print("[PULSE] Base de datos optimizada (VACUUM completado).")
-        except sqlite3.Error as ve:
-            print(f"[PULSE] Omitido VACUUM (espacio insuficiente en disco), pero páginas liberadas: {ve}")
+        # SIN VACUUM. Acá corría uno después de CADA guardado de un área con fecha —el stock
+        # de cada hora, el picking, el correo—, y un VACUUM no compacta un poco: rehace la
+        # base ENTERA, 419 MB al 16-sep-2026, con otra copia igual de grande al lado.
+        #
+        # No devolvía nada. Medido el 26-ago-2026: las páginas libres de la base eran CERO,
+        # así que no había un solo MB que recuperar. Lo que se borra arriba queda libre y
+        # SQLite lo vuelve a usar en el próximo guardado: la base no crece por no compactar.
+        #
+        # Y costaba caro: el 16-sep-2026 a las 07:09 Render reinició el servidor por falta
+        # de memoria (plan starter, 512 MB) justo cuando el robot publicaba el stock.
         conn.close()
     except Exception as e:
         print(f"[PULSE] Error al podar snapshots antiguos: {e}")
@@ -1622,6 +1624,30 @@ def get_area_data(area: str, date: Optional[str] = None):
         
         row = cursor.fetchone(); conn.close()
         if row:
+            # SE ENTREGA EL TEXTO TAL COMO ESTÁ GUARDADO, sin desarmarlo.
+            #
+            # Antes se hacía `json.loads` del área entera y se devolvía el objeto: FastAPI lo
+            # recorre de nuevo (`jsonable_encoder`) y lo vuelve a escribir como texto. Medido
+            # con los datos reales el 16-sep-2026: el Stock Activo, 7,85 MB de texto, llegaba
+            # a 47 MB de memoria y 2,2 s de CPU en una laptop; el maestro, 5,4 MB, a 45 MB.
+            # Con medio CPU y 512 MB en Render, unas pocas descargas así seguidas más el
+            # stock del robot tumbaron el servidor ese día a las 07:09.
+            #
+            # En la base el dato ya es JSON válido —lo escribe siempre `json.dumps`—, así que
+            # alcanza con envolverlo. La respuesta es la MISMA para quien la lee.
+            #
+            # Quedan por el camino de antes:
+            #   no_retail_cache  le cambia las fotos por 'present' antes de mandarlo
+            #   NaN / Infinity   Python los guarda así pero no son JSON: por el camino de
+            #                    antes fallan igual que siempre, en vez de llegar rotos
+            texto = row[0]
+            if (area != 'no_retail_cache' and isinstance(texto, str)
+                    and 'NaN' not in texto and 'Infinity' not in texto):
+                cuerpo = ('{"area":' + json.dumps(area) + ',"data":' + texto
+                          + ',"updated_at":' + json.dumps(row[1]) + '}')
+                return Response(content=cuerpo.encode('utf-8'), media_type="application/json",
+                                headers={"X-Entrega": "texto-guardado"})
+
             data = json.loads(row[0])
             if area == 'no_retail_cache' and isinstance(data, dict):
                 for key, val in data.items():
