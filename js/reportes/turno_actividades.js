@@ -32,7 +32,7 @@ const CSS = "#ta {\n  color-scheme: var(--scheme);\n    --bg: var(--panel-deeper
 const HTML = "<div class=\"page\">\n\n\n  <section class=\"panel\">\n    <div>\n      <div class=\"slots\">\n        <div class=\"slot\">\n          <span class=\"slab\">Stock <b>activo</b> de ahora</span>\n          <input type=\"file\" data-slot=\"now-activo\" accept=\".csv,text/csv\">\n          <div class=\"sinfo\" data-info=\"now-activo\"></div>\n        </div>\n        <div class=\"slot\">\n          <span class=\"slab\">Stock <b>reserva</b> de ahora</span>\n          <input type=\"file\" data-slot=\"now-reserva\" accept=\".xlsx,.csv\">\n          <div class=\"sinfo\" data-info=\"now-reserva\"></div>\n        </div>\n      </div>\n    </div>\n  </section>\n\n  <section class=\"panel neon\">\n    <!-- El cuadro va en su propio marco, del título a la leyenda. La tabla de\n         abajo queda fuera: es para escribir, no para mirar. -->\n    <div class=\"marco neon\">\n      <div class=\"phead\"><h2>Gantt de actividades</h2><input type=\"date\" class=\"cal\" id=\"ta_g_dia\" title=\"Ver otra jornada\"><span class=\"fh\" id=\"ta_g_fh\"></span></div>\n      <div class=\"gwrap\"><div class=\"gg\" id=\"ta_gg\"></div></div>\n      <div class=\"leg\">\n        <span><span class=\"sw\" style=\"border:1px dashed var(--plan-line); height:8px\"></span>Lo que debía hacerse</span>\n        <span><span class=\"sw\" style=\"background:var(--ok)\"></span>Hecho</span>\n        <span><span class=\"sw\" style=\"background:var(--warn)\"></span>Se pasó del plan</span>\n        <span><span class=\"sw\" style=\"background:var(--accent)\"></span>En curso</span>\n        <span><span style=\"display:inline-block;width:0;border-left:1px dashed var(--now);height:12px;vertical-align:-2px;margin-right:8px\"></span>Ahora</span>\n      </div>\n    </div>\n\n    <div class=\"twrap\" style=\"margin-top:22px\">\n      <table id=\"ta_t_hor\">\n        <thead><tr>\n          <th class=\"l\">Actividad</th><th>Plan · empieza</th><th>Plan · termina</th>\n          <th>Real · empezó</th><th>Real · terminó</th><th>Desvío</th>\n          <th title=\"Marcada, la actividad entra al Cumplimiento del turno\">¿Tiene meta?</th><th></th>\n        </tr></thead>\n        <tbody></tbody>\n      </table>\n    </div>\n    <div style=\"margin-top:12px\"><button class=\"btn-a\" id=\"ta_b_add\">+ Agregar actividad</button></div>\n  </section>\n\n  <section class=\"panel neon\">\n    <div class=\"phead\"><h2>Cumplimiento del turno</h2><input type=\"date\" class=\"cal\" id=\"ta_c_dia\" title=\"Ver otra jornada\"><span class=\"fh\" id=\"ta_c_fh\"></span><button class=\"cand\" id=\"ta_cand\"></button></div>\n    <div class=\"rings\" id=\"ta_rings\"></div>\n    <div class=\"twrap\">\n      <table id=\"ta_t_cum\">\n        <thead><tr>\n          <th class=\"l\">Actividad</th><th>Unidad</th><th>Meta</th><th>Avance</th>\n          <th>Falta</th><th>A esta hora</th><th>%</th><th>Estado</th><th></th>\n        </tr></thead>\n        <tbody></tbody>\n      </table>\n    </div>\n    <div style=\"margin-top:12px\"><button class=\"btn-a\" id=\"ta_b_add2\">+ Agregar actividad</button></div>\n  </section>\n\n</div>";
 
 /** Dibuja el reporte dentro de `raiz` y avisa por `OPC.alGuardar` cuando algo cambia. */
-import { icono } from '../services_v245/iconos.js?v=29.0815';
+import { icono } from '../services_v245/iconos.js?v=29.0816';
 
 export const montarTurno = function (RAIZ, OPC) {
   OPC = OPC || {};
@@ -63,6 +63,28 @@ export const montarTurno = function (RAIZ, OPC) {
   var escuchar = function (tipo, fn) {
     RAIZ.addEventListener(tipo, fn);
     RAIZ.__taEscuchas.push([tipo, fn]);
+  };
+
+  /* ── Y EL RELOJ DEL MONTAJE ANTERIOR TAMBIÉN SE APAGA ────────────────────
+   *
+   * Lo mismo que con los escuchadores, pero con el reloj de la hora —el `latido`
+   * de abajo— y el `resize` de la ventana. Solo se apagaban cuando RAIZ salía de la
+   * pantalla, y RAIZ no sale nunca: es el contenedor de Administración, y
+   * `renderAdminTab()` vuelve a montar este módulo cada vez que el radar trae datos.
+   * Cada montaje dejaba un reloj más corriendo, cada uno con SU estado de entonces.
+   *
+   * Dos daños. Mientras se vuelve a traer el turno, RAIZ muestra "Trayendo el
+   * turno..." y no hay tablas: un reloj viejo buscaba `#ta_t_cum`, no la encontraba
+   * y saltaba el aviso rojo *"Cannot read properties of null (reading 'tBodies')"*.
+   * Daniel lo vio el 16-sep-2026. Y cuando las tablas sí estaban, los relojes viejos
+   * repintaban los anillos, el Gantt y las celdas calculadas con los números de otro
+   * montaje —otra fecha, otra corrida— una vez por minuto cada uno.
+   *
+   * Ahora cada montaje lleva su número y solo dibuja el que está a la vista. */
+  if (typeof RAIZ.__taApagar === 'function') RAIZ.__taApagar();
+  var miMontaje = RAIZ.__taMontaje = (RAIZ.__taMontaje || 0) + 1;
+  var sigoMontado = function () {
+    return RAIZ.isConnected && RAIZ.__taMontaje === miMontaje && !!RAIZ.querySelector('#ta_t_cum');
   };
   if (!document.getElementById('ta_estilos')) {
     var hoja = document.createElement('style');
@@ -265,6 +287,7 @@ export const montarTurno = function (RAIZ, OPC) {
 
   /* ── El Gantt ─────────────────────────────────────────────────────────── */
   function pintarGantt() {
+    if (!$('#ta_gg')) return;
     var lane = RAIZ.querySelector('.gg .axis');
     var ancho = lane ? lane.getBoundingClientRect().width : 900;
     if (!ancho) ancho = 900;
@@ -357,6 +380,7 @@ export const montarTurno = function (RAIZ, OPC) {
   }
 
   function pintarAnillos() {
+    if (!$('#ta_rings')) return;
     var anillos = '';
     conMeta().forEach(function (x) {
       var p = x.p;
@@ -392,7 +416,9 @@ export const montarTurno = function (RAIZ, OPC) {
   }
 
   function pintarTablaCum() {
-    var cuerpo = $('#ta_t_cum').tBodies[0];
+    var tabla = $('#ta_t_cum');
+    if (!tabla) return;
+    var cuerpo = tabla.tBodies[0];
     cuerpo.innerHTML = conMeta().map(function (x) {
       var p = x.p, i = x.i, c = calcular(p);
       return '<tr data-i="' + i + '">' +
@@ -421,7 +447,9 @@ export const montarTurno = function (RAIZ, OPC) {
      por otro nuevo y el cursor se va al principio: tecleando 2496 salía 6942.
      Acá solo se reescriben las celdas calculadas, que no son campos. */
   function refrescarCalculadas() {
-    var f = $('#ta_t_cum').tBodies[0].rows, r, i, cc, k, td;
+    var tCum = $('#ta_t_cum'), tHor = $('#ta_t_hor');
+    if (!tCum || !tHor) return;
+    var f = tCum.tBodies[0].rows, r, i, cc, k, td;
     for (r = 0; r < f.length; r++) {
       i = Number(f[r].getAttribute('data-i'));
       if (!S.procs[i]) continue;
@@ -433,7 +461,7 @@ export const montarTurno = function (RAIZ, OPC) {
     }
     pintarFechaHora();
 
-    f = $('#ta_t_hor').tBodies[0].rows;
+    f = tHor.tBodies[0].rows;
     for (r = 0; r < f.length; r++) {
       i = Number(f[r].getAttribute('data-i'));
       if (!S.procs[i]) continue;
@@ -455,7 +483,9 @@ export const montarTurno = function (RAIZ, OPC) {
       return '<input type="time" data-t="h" data-k="' + k + '" data-i="' + i + '" value="' + esc(v) + '">';
     };
 
-    var cuerpo = $('#ta_t_hor').tBodies[0];
+    var tabla = $('#ta_t_hor');
+    if (!tabla) return;
+    var cuerpo = tabla.tBodies[0];
     cuerpo.innerHTML = S.procs.map(function (p, i) {
       var c = calcular(p);
       var col = c.desvio === null ? 'var(--text-3)' : (c.desvio > 0 ? 'var(--warn)' : 'var(--ok)');
@@ -953,6 +983,10 @@ export const montarTurno = function (RAIZ, OPC) {
   /* Se vuelven a dibujar los tres bloques. Las tablas se rehacen enteras, así
      que el foco se devuelve al campo que se estaba escribiendo. */
   function pintar(foco) {
+    /* Un montaje que ya no está a la vista no dibuja: puede llegar hasta acá tarde,
+       al terminar de leer un archivo o al contestar una pregunta. Lo que se haya
+       escrito se guarda igual (`pintarYGuardar`). */
+    if (!sigoMontado()) return;
     recalcularTurno();
     aplicarFuentes();
     aplicarStock();
@@ -1057,7 +1091,7 @@ export const montarTurno = function (RAIZ, OPC) {
     }
   });
 
-  var alRedimensionar = function () { if (RAIZ.isConnected) pintarGantt(); };
+  var alRedimensionar = function () { if (sigoMontado()) pintarGantt(); };
   window.addEventListener('resize', alRedimensionar);
 
   /* Mientras no se cargue una foto de stock, la hora del reporte es la del
@@ -1073,11 +1107,11 @@ export const montarTurno = function (RAIZ, OPC) {
      turno. NO se rehacen las tablas: si alguien está escribiendo un número, no
      se entera de nada. */
   var latido = setInterval(function () {
-    /* Si la pestaña ya no está en pantalla, el módulo se apaga solo: si no,
-       cada visita dejaría otro reloj corriendo sobre una pantalla que ya no existe. */
-    if (!RAIZ.isConnected) {
-      clearInterval(latido);
-      window.removeEventListener('resize', alRedimensionar);
+    /* Si este montaje ya no es el que está en pantalla —la pestaña cambió, se está
+       trayendo el turno de nuevo o ya hay otro montaje—, el reloj se apaga solo: si
+       no, cada visita dejaría otro corriendo sobre una pantalla que ya no es suya. */
+    if (!sigoMontado()) {
+      apagar();
       return;
     }
     if (mandaLaFoto) return;
@@ -1089,6 +1123,13 @@ export const montarTurno = function (RAIZ, OPC) {
     pintarAnillos();
     pintarGantt();
   }, 30000);
+
+  function apagar() {
+    clearInterval(latido);
+    window.removeEventListener('resize', alRedimensionar);
+    if (RAIZ.__taApagar === apagar) RAIZ.__taApagar = null;
+  }
+  RAIZ.__taApagar = apagar;
 
   function arrancar() {
     /* La hora actual es la del reloj, no un campo que alguien tenga que llenar.
