@@ -35,7 +35,7 @@
    para que le lleguen una notificacion"*. El mecanismo es el mismo que usa la app del
    celular; lo unico propio de aca es el boton y el cartelito que explica que va a llegar. */
 import { puedeAvisos, mirarAvisos, prenderAvisos, apagarAvisos, queLlega }
-    from './services_v245/avisos.js?v=29.0808';
+    from './services_v245/avisos.js?v=29.0809';
 
 /* `typeof window` y no `window` a secas: `scratch/probar_marcas_chat.mjs` carga este
    archivo desde Node para comprobar el calculo de las marcas sin navegador, y sin la
@@ -634,6 +634,8 @@ const latir = async () => {
             if (!llego) llego = { sala: s, msg: nuevos[nuevos.length - 1] };
         }
     }
+    abrirEnCuantoLlegue();      // la que pidio el aviso, si ya bajo
+
     if (llego) {
         /* LA CONVERSACION SE ABRE SOLA, PERO SOLO CON LA WEB A LA VISTA.
          *
@@ -1450,9 +1452,25 @@ const avisar = (sala, msg) => {
 
 /* ── LO QUE HACE EL USUARIO ────────────────────────────────────────────────────────────── */
 
+/* LA CONVERSACION QUE PIDIO EL AVISO, mientras la lista no haya llegado.
+ *
+ * Mismo agujero que en la app del celular (Daniel, 16-sep-2026: *"me lleva al chat, no me
+ * lleva a la conversacion"*): al tocar el aviso se pide una sala que TODAVIA NO ESTA en
+ * memoria, `salaDe()` no la encuentra y `abrirSala` se rendia en la primera linea.
+ * Se guarda y se abre en cuanto la sala aparece, en la siguiente vuelta del latido. */
+let salaPendiente = null;
+
+const abrirEnCuantoLlegue = () => {
+    if (!salaPendiente) return;
+    if (!salaDe(salaPendiente)) return;
+    const id = salaPendiente;
+    salaPendiente = null;
+    abrirSala(id);
+};
+
 const abrirSala = async (id) => {
     const s = salaDe(id);
-    if (!s) return;
+    if (!s) { salaPendiente = id; return; }
     const ya = abiertas.filter(v => v.id === id)[0];
     if (ya) ya.plegada = false;
     else {

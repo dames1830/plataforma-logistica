@@ -25,23 +25,23 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0808';
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0808';
-import * as ORD from '../services_v245/despachoOrden.js?v=29.0808';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0808';
+import * as adminService from '../services_v245/adminService.js?v=29.0809';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0809';
+import * as ORD from '../services_v245/despachoOrden.js?v=29.0809';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0809';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0808';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0808';
-import * as metasService from '../services_v245/metasService.js?v=29.0808';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0809';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0809';
+import * as metasService from '../services_v245/metasService.js?v=29.0809';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0808';
+import * as temaService from '../services_v245/temaService.js?v=29.0809';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0808';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0808';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0809';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0809';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
@@ -50,12 +50,12 @@ import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarCon
          traerAdjunto, pesoLegible,
          /* LA MISMA MARCA QUE LA WEB. El calculo vive en chat.js; aca solo se pinta,
             con la cara de la app. Dos copias del mismo calculo se desincronizan. */
-         marcaDelMensaje } from '../chat.js?v=29.0808';
+         marcaDelMensaje } from '../chat.js?v=29.0809';
 /* LOS AVISOS DEL TELEFONO VIVEN EN UN SERVICIO COMPARTIDO desde el 15-sep-2026: la web
    usa exactamente estas funciones para suscribir la PC. Ver `avisos.js`. */
 import { LLAVE_AVISOS, puedeAvisos, mirarAvisos as mirarSuscripcion,
          prenderAvisos as suscribir, apagarAvisos as desuscribir }
-    from '../services_v245/avisos.js?v=29.0808';
+    from '../services_v245/avisos.js?v=29.0809';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -1556,8 +1556,9 @@ let chatMandando = false;
 const prepararChat = async () => {
     if (chatListo || !YO) return;
     chatListo = true;
-    alCambiarElChat(() => { if (seccion === 'chat' || raiz) pintar(); });
+    alCambiarElChat(() => { abrirEnCuantoLlegue(); if (seccion === 'chat' || raiz) pintar(); });
     try { await arrancarDatosDelChat(YO); } catch (e) { console.warn('[APP] chat:', e && e.message); }
+    abrirEnCuantoLlegue();
     pintar();
 };
 
@@ -3871,6 +3872,36 @@ export const prefiereEscritorio = () => {
    con la app cerrada llega por el hash de la direccion, y con la app ya abierta llega como
    mensaje del service worker -ahi la direccion no cambia-. Sin el segundo, tocar el aviso
    con la app abierta dejaba a Daniel en la pantalla donde estuviera. */
+/* LA CONVERSACION QUE PIDIO EL AVISO, mientras la lista no haya llegado.
+ *
+ * Daniel, 16-sep-2026: *"le doy clic a la notificacion y me lleva al chat, no me lleva a la
+ * conversacion"*. El aviso abre la app y pide una sala que TODAVIA NO ESTA EN MEMORIA -el
+ * chat tarda un momento en bajar la lista-; `salaDe()` no la encontraba y `pantallaConversacion`
+ * hacia `chatSala = null` y caia a la lista, perdiendo la intencion para siempre.
+ *
+ * Se guarda aparte y se abre EN CUANTO la sala aparece. `alCambiarElChat` avisa en cada
+ * vuelta del latido, asi que no hace falta ningun reloj propio. */
+let salaDelAviso = null;
+
+const abrirEnCuantoLlegue = () => {
+    if (!salaDelAviso) return;
+    if (!salaDe(salaDelAviso)) return;      // aun no bajo: se reintenta en el proximo aviso
+    const id = salaDelAviso;
+    salaDelAviso = null;
+    abrirConversacion(id);
+};
+
+/* Lo que hay que hacer para llevar a alguien a una conversacion, venga del aviso o del hash. */
+const pedirConversacion = (id) => {
+    if (!id) return;
+    seccion = 'chat';
+    menu = null;
+    salaDelAviso = id;
+    prepararChat();                          // si el chat no habia arrancado, que arranque
+    if (salaDe(id)) { salaDelAviso = null; abrirConversacion(id); }
+    else if (raiz) pintar();                 // se ve la lista hasta que llegue
+};
+
 const irDesdeElAviso = (destino) => {
     const d = String(destino || '');
     if (!d) return;
@@ -3885,7 +3916,7 @@ const irDesdeElAviso = (destino) => {
         seccion = 'chat';
         menu = null;
         const sala = d.slice(chat + '#chat'.length).replace(/^=/, '');
-        if (sala) abrirConversacion(decodeURIComponent(sala));
+        if (sala) pedirConversacion(decodeURIComponent(sala));
         else { chatSala = null; if (raiz) pintar(); prepararChat(); }
         return;
     }
@@ -3910,7 +3941,9 @@ export const renderAppMovil = async (contenedor, user, onLogout) => {
     if (seccion === 'chat') {
         const _i = _hash.indexOf('#chat');
         const _sala = _hash.slice(_i + '#chat'.length).replace(/^=/, '');
-        if (_sala) chatSala = decodeURIComponent(_sala);
+        /* PENDIENTE, no `chatSala`: la lista de conversaciones todavia no bajo y
+           `pantallaConversacion` lo descartaria. */
+        if (_sala) salaDelAviso = decodeURIComponent(_sala);
     }
 
     /* ══ EL EXCEL QUE LLEGO POR COMPARTIR ══════════════════════════════════

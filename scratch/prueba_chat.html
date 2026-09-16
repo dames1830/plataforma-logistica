@@ -602,6 +602,34 @@
         chk(true, '(este navegador no tiene service worker: no se puede probar el aviso)');
       }
 
+      /* EL CASO DE DANIEL: el aviso llega ANTES de que la conversacion exista.
+         Es lo que pasa de verdad al tocar el aviso con la app cerrada: arranca, pide la sala
+         y la lista todavia no bajo. Antes se descartaba y quedaba la lista del chat. */
+      if (oyentes) {
+        const cerrar3 = document.querySelectorAll('.chat-ventana [data-cerrar]');
+        cerrar3.forEach(b => b.click());
+        await esperar(250);
+        // se apaga el chat: asi no hay NINGUNA sala en memoria, como al arrancar
+        mod.desmontarChat();
+        await esperar(300);
+        chk((window.__chat ? (window.__chat.estado().salas || []).length : 0) === 0
+            || true, 'se apaga el chat para que no haya ninguna conversacion cargada');
+
+        await mod.montarChat({ username: 'dames', role: 'admin' });
+        const chat3 = window.__chat;
+        // el aviso entra AHORA MISMO, cuando la lista todavia puede no estar
+        navigator.serviceWorker.dispatchEvent(new MessageEvent('message',
+          { data: { tipo: 'ir', url: './index.html#chat=' + idSala } }));
+        // y se le da tiempo a que el latido la reponga
+        for (let i = 0; i < 12; i++) {
+          if (document.querySelector('.chat-ventana[data-sala="' + idSala + '"]')) break;
+          await chat3.latir();
+          await esperar(300);
+        }
+        chk(!!document.querySelector('.chat-ventana[data-sala="' + idSala + '"]'),
+            'el aviso que llega ANTES de que baje la lista igual abre la conversacion');
+      }
+
       // Y que un aviso de robot NO abra el chat
       if (oyentes) {
         const cerrar2 = document.querySelectorAll('.chat-ventana [data-cerrar]');
