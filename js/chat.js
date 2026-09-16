@@ -35,7 +35,7 @@
    para que le lleguen una notificacion"*. El mecanismo es el mismo que usa la app del
    celular; lo unico propio de aca es el boton y el cartelito que explica que va a llegar. */
 import { puedeAvisos, mirarAvisos, prenderAvisos, apagarAvisos, queLlega }
-    from './services_v245/avisos.js?v=29.0799';
+    from './services_v245/avisos.js?v=29.0800';
 
 /* `typeof window` y no `window` a secas: `scratch/probar_marcas_chat.mjs` carga este
    archivo desde Node para comprobar el calculo de las marcas sin navegador, y sin la
@@ -601,7 +601,28 @@ const latir = async () => {
             if (!llego) llego = { sala: s, msg: nuevos[nuevos.length - 1] };
         }
     }
-    if (llego) avisar(llego.sala, llego.msg);
+    if (llego) {
+        /* LA CONVERSACION SE ABRE SOLA, PERO SOLO CON LA WEB A LA VISTA.
+         *
+         * Daniel, 16-sep-2026: *"cuando yo estoy en la web, si me entra un chat nuevo,
+         * necesito que se abra esa conversacion en automatico"*. Cambia lo que el mismo habia
+         * pedido el 11-sep -*"la ventana no se abre sola, si estoy procesando tareas una
+         * ventana encima estorba"*-, y ese motivo sigue siendo bueno para el OTRO caso: con la
+         * pestaña atras no se abre nada, porque volveria a su pantalla con cinco ventanas
+         * encima de lo que estaba haciendo. Ahi avisan el globito de la barra y el titulo.
+         *
+         * `abrirSala` marca la conversacion como leida -la esta mirando-, asi que el contador
+         * no sube. Por eso el tono se toca aparte: `avisar` no llega a correr. */
+        /* `raiz` tiene que existir: es el cascaron flotante de la WEB. En la app del
+           celular no hay ventanitas que abrir, y `abrirSala` marcaria la conversacion
+           como LEIDA sin que nadie la haya visto — se perderia el aviso. */
+        if (raiz && typeof document !== 'undefined' && document.visibilityState === 'visible') {
+            await abrirSala(llego.sala.id);
+            tin();
+        } else {
+            avisar(llego.sala, llego.msg);
+        }
+    }
     pintar();
 };
 
@@ -1112,14 +1133,129 @@ const pintarVentanas = () => {
     pintarAdjuntos();
 };
 
+/* ══ EL AVISO DE AFUERA: el icono de la barra y el de la pestaña ═══════════════════════════
+ *
+ * Daniel, 16-sep-2026, mandando una foto de su barra de tareas: *"si te mandan un mensaje se va
+ * acumulando, dice uno, dos, tres, como un circulo al costado del icono... eso deberia ser
+ * tambien el chat"*.
+ *
+ * SON DOS SITIOS DISTINTOS, no uno, y hacen falta los dos:
+ *
+ *   EL ICONO DE LA BARRA DE TAREAS lo pinta Windows, no la web: `navigator.setAppBadge(n)`.
+ *   Es el globito exacto de su captura. Solo sale con la plataforma INSTALADA -la ventana sin
+ *   barra de direcciones-; abierta como una pestaña mas de Chrome no hace nada. Por eso no
+ *   alcanza sola.
+ *
+ *   EL ICONO DE LA PESTAÑA se dibuja aca con el numero encima, y ese sirve siempre. Se vuelve
+ *   a dibujar en un lienzo -mismo degradado y mismas letras que `favicon.svg`- en vez de cargar
+ *   el SVG y pintarle algo arriba: un `drawImage` de otro archivo puede ensuciar el lienzo y
+ *   dejar `toDataURL` sin poder leerlo.
+ *
+ * EL NOMBRE DE LA PESTAÑA PARPADEA SOLO EN SEGUNDO PLANO. Con la web a la vista, un titulo que
+ * salta cada segundo cansa y no dice nada que el globo rojo no diga ya.
+ *
+ * SE RESPETA EL SELLO DE `env.js`. En beta el titulo lleva '🧪 BETA · ' delante y env.js lo
+ * REPONE cada segundo si alguien se lo saca. Los dos textos que alternan lo llevan puesto, asi
+ * que nunca se pelean: sin esto, en beta el titulo cambiaria de forma en cada tick.
+ */
+const SELLOS_ENTORNO = ['⚠️ REAL · ', '🧪 BETA · '];
+const selloDelTitulo = (t) => {
+    const s = String(t || '');
+    for (const sello of SELLOS_ENTORNO) if (s.indexOf(sello) === 0) return sello;
+    return '';
+};
+
+let tituloBase = '';          // el nombre de la pestaña tal cual, con su sello si lo tiene
+let faviconOriginal = null;   // { href, tipo } para reponerlo cuando no queda nada sin leer
+let parpadeoTitulo = null;
+let tituloAlterno = false;
+
+/** El iconito con el globo rojo encima, dibujado. Devuelve un PNG listo para el <link>. */
+const iconoConNumero = (n) => {
+    const c = document.createElement('canvas');
+    c.width = 64; c.height = 64;
+    const x = c.getContext && c.getContext('2d');
+    if (!x) return null;
+    const g = x.createLinearGradient(0, 0, 64, 64);
+    g.addColorStop(0, '#0ea5e9'); g.addColorStop(1, '#6366f1');
+    x.fillStyle = g;
+    if (x.roundRect) { x.beginPath(); x.roundRect(0, 0, 64, 64, 13); x.fill(); }
+    else x.fillRect(0, 0, 64, 64);
+    x.fillStyle = '#ffffff';
+    x.font = '800 19px "Segoe UI", system-ui, sans-serif';
+    x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.fillText('DEAM', 32, 36);
+    /* De 10 para arriba va "9+": tres cifras en los 16 px de una pestaña no se leen. */
+    const txt = n > 9 ? '9+' : String(n);
+    x.beginPath(); x.arc(46, 18, 18, 0, Math.PI * 2);
+    x.fillStyle = '#ef4444'; x.fill();
+    x.lineWidth = 4; x.strokeStyle = 'rgba(0,0,0,0.35)'; x.stroke();
+    x.fillStyle = '#ffffff';
+    x.font = '900 ' + (n > 9 ? 20 : 24) + 'px "Segoe UI", system-ui, sans-serif';
+    x.fillText(txt, 46, 19);
+    return c.toDataURL('image/png');
+};
+
+const pintarFavicon = (n) => {
+    const l = document.querySelector('link[rel="icon"]');
+    if (!l) return;
+    if (faviconOriginal === null) {
+        faviconOriginal = { href: l.getAttribute('href') || '', tipo: l.getAttribute('type') || '' };
+    }
+    if (n <= 0) {
+        l.setAttribute('href', faviconOriginal.href);
+        if (faviconOriginal.tipo) l.setAttribute('type', faviconOriginal.tipo);
+        return;
+    }
+    const png = iconoConNumero(n);
+    if (!png) return;
+    l.setAttribute('type', 'image/png');
+    l.setAttribute('href', png);
+};
+
+/** El globito de la barra de tareas. Sin la web instalada no hace nada, y esta bien asi. */
+const pintarBadge = (n) => {
+    try {
+        if (typeof navigator === 'undefined' || !('setAppBadge' in navigator)) return;
+        if (n > 0) navigator.setAppBadge(n); else navigator.clearAppBadge();
+    } catch (e) { /* el navegador no quiso: el numero igual se ve en la pestaña */ }
+};
+
+let ultimoTitulo = { n: -1, visible: null };
+
+const pintarTitulo = (n) => {
+    const visible = document.visibilityState === 'visible';
+    /* SI NO CAMBIO NADA, NO SE TOCA EL RELOJ DEL PARPADEO.
+       `pintarGlobo` corre en CADA dibujo, y el chat dibuja mas de una vez por segundo
+       -medido: cuatro veces en dos segundos y medio-. Reiniciando el intervalo en cada
+       vuelta, el primer tic no llegaba nunca y el nombre de la pestaña se quedaba quieto:
+       parecia que el parpadeo no estuviera hecho. Lo cazo la prueba automatica. */
+    if (ultimoTitulo.n === n && ultimoTitulo.visible === visible) return;
+    ultimoTitulo = { n, visible };
+    if (parpadeoTitulo) { clearInterval(parpadeoTitulo); parpadeoTitulo = null; }
+    if (!tituloBase) tituloBase = String(document.title || 'DEAM 1830');
+    const sello = selloDelTitulo(tituloBase);
+    const limpio = tituloBase.slice(sello.length);
+    const conNumero = n ? `${sello}(${n}) ${limpio}` : tituloBase;
+    document.title = conNumero;
+    if (n <= 0 || visible) return;
+    const aviso = `${sello}(${n}) ${n === 1 ? 'Mensaje nuevo' : 'Mensajes nuevos'}`;
+    tituloAlterno = false;
+    parpadeoTitulo = setInterval(() => {
+        tituloAlterno = !tituloAlterno;
+        document.title = tituloAlterno ? aviso : conNumero;
+    }, 1000);
+};
+
 const pintarGlobo = () => {
-    const g = nodo('chat-globo');
-    if (!g) return;
     const n = sinLeerTotal();
-    g.textContent = n;
-    g.hidden = n === 0;
-    const base = String(document.title || '').replace(/^\(\d+\)\s*/, '');
-    document.title = n ? `(${n}) ${base}` : base;
+    const g = nodo('chat-globo');
+    if (g) { g.textContent = n; g.hidden = n === 0; }
+    /* Y afuera de la pantalla del chat: la barra de tareas, el iconito de la pestaña y el
+       nombre. Van fuera del `if` de la burbuja porque no dependen de ella. */
+    pintarTitulo(n);
+    pintarFavicon(n);
+    pintarBadge(n);
 };
 
 /* Donde van las ventanitas: al costado del panel si esta abierto, pegadas a la burbuja si no.
@@ -1255,7 +1391,9 @@ const abrirSala = async (id) => {
     esconderToast();
     pintar();
     acomodarReloj();
-    const caja = raiz.querySelector(`[data-escribir="${id}"]`);
+    /* `raiz` es null en la app del celular, que usa estos datos y dibuja su propia
+       pantalla. Sin la guarda, esto tumbaba el latido entero. */
+    const caja = raiz && raiz.querySelector(`[data-escribir="${id}"]`);
     if (caja) caja.focus();
 };
 
@@ -1485,7 +1623,13 @@ export const arrancarDatosDelChat = async (session) => {
 
     for (const s of salas) { await bajarSala(s.id); reponerContador(s.id); }
     acomodarReloj();
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') latir(); });
+    /* `pintarGlobo()` va PRIMERO y aparte del latido: al volver a la pestaña, el nombre tiene
+       que dejar de parpadear en el acto y no cuando termine `latir()`, que es una llamada de
+       red y puede tardar segundos. */
+    document.addEventListener('visibilitychange', () => {
+        pintarGlobo();
+        if (document.visibilityState === 'visible') latir();
+    });
     console.log(`💬 [CHAT] datos listos para ${YO.username}: ${salas.length} conversación(es).`);
     return true;
 };
@@ -1515,6 +1659,14 @@ export { mandar, mandarConAdjunto, borrar, crearDirecta, crearGrupo, bajarSala, 
 
 export const desmontarChat = () => {
     anunciarme(true);        // al salir, la bolita se apaga enseguida y no en 70 segundos
+    /* EL AVISO DE AFUERA SE APAGA ACA. El globito de la barra de tareas y el iconito con el
+       numero sobreviven a la pantalla: son del navegador, no del chat. Sin esto, quien cierra
+       sesion se queda con un "3" pegado en la barra que ya no lleva a ninguna parte. */
+    if (parpadeoTitulo) { clearInterval(parpadeoTitulo); parpadeoTitulo = null; }
+    pintarFavicon(0);
+    pintarBadge(0);
+    if (tituloBase) document.title = tituloBase;
+    tituloBase = ''; faviconOriginal = null; ultimoTitulo = { n: -1, visible: null };
     if (reloj) { clearInterval(reloj); reloj = null; }
     if (raiz && raiz.parentNode) raiz.parentNode.removeChild(raiz);
     const est = document.getElementById('chat-estilos');
