@@ -31,7 +31,17 @@
  * hace que una conversación se sienta viva; con todo cerrado, cada 20 s alcanza para el globo.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-const BASE = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com');
+/* LOS AVISOS DE ESTA PC. Daniel, 15-sep-2026: *"tambien hay que hacer lo mismo para la web,
+   para que le lleguen una notificacion"*. El mecanismo es el mismo que usa la app del
+   celular; lo unico propio de aca es el boton y el cartelito que explica que va a llegar. */
+import { puedeAvisos, mirarAvisos, prenderAvisos, apagarAvisos, queLlega }
+    from './services_v245/avisos.js?v=29.0799';
+
+/* `typeof window` y no `window` a secas: `scratch/probar_marcas_chat.mjs` carga este
+   archivo desde Node para comprobar el calculo de las marcas sin navegador, y sin la
+   guarda la prueba revienta en esta linea antes de empezar. */
+const BASE = (typeof window !== 'undefined' && window.API_BASE_URL)
+    || 'https://logistics-backend-wv0x.onrender.com';
 const API = BASE + '/api/logistics';
 const SALAS = 'chat_salas';
 
@@ -63,6 +73,11 @@ let YO = null;              // { username, role, token }
 let salas = [];             // [{ id, nombre, tipo, miembros, creador, creada }]
 let mensajes = {};          // { idSala: [ {id, de, texto, cuando, borrado} ] }
 let leidos = {};            // { idSala: 'cuando' del ultimo mensaje leido } — se guarda en el servidor
+/* LO QUE LEYERON LOS DEMAS. Hasta hoy solo se guardaba lo mio, que es lo que hace falta para
+   el contador. Para las marcas de entregado/leido hace falta el area entera: quien leyo que.
+   Es un area chica -una fila por persona- y viaja en la misma bajada. */
+let leidosDeTodos = {};     // { usuario: { salas: {idSala:'cuando'}, salasMs: {idSala: ms} } }
+let leidosMs = {};          // lo mismo que `leidos`, pero en hora del SERVIDOR
 let noLeidos = {};          // { idSala: cuantos } — el contador vivo de esta pantalla
 let versionesVistas = {};   // { area: marca } para no bajar lo que no cambió
 let abiertas = [];          // [{ id, plegada }]
@@ -71,6 +86,8 @@ let vistaGrupo = false;
 let gente = [];             // usuarios de la plataforma
 let reloj = null;
 let sonando = true;
+let avisosEstado = 'mirando';   // mirando | apagados | prendidos | sin-soporte | bloqueados
+let avisosAbierto = false;      // el cartelito que explica antes de pedir el permiso
 let audio = null;
 let toastReloj = null;
 let toastSala = null;
@@ -284,9 +301,20 @@ const borrar = async (idSala, idMensaje) => {
     catch (e) { console.warn('[CHAT] no se pudo borrar:', e && e.message); }
 };
 
+/* SE GUARDA DOS VECES LA MISMA MARCA, y hace falta.
+ *
+ *   `salas`    la hora local de esta PC. Es la de siempre y la que usa el contador.
+ *   `salasMs`  la misma marca en HORA DEL SERVIDOR.
+ *
+ * Las marcas de leido comparan la marca de OTRA persona contra la hora de MI mensaje, y dos
+ * relojes distintos no se pueden comparar: una PC dos minutos atrasada dejaria mis mensajes
+ * como no leidos para siempre. Es la misma lección de la presencia -ver `ahoraDelServidor`-.
+ * `salas` se sigue escribiendo para no romper a quien todavia tenga la version vieja. */
 const guardarLeidos = async () => {
-    try { await poner(LEIDOS, { id: YO.username, salas: leidos }); }
-    catch (e) { /* el contador se corrige en la próxima vuelta */ }
+    try {
+        await poner(LEIDOS, { id: YO.username, salas: leidos, salasMs: leidosMs });
+        leidosDeTodos[YO.username] = { salas: { ...leidos }, salasMs: { ...leidosMs } };
+    } catch (e) { /* el contador se corrige en la próxima vuelta */ }
 };
 
 /* CUANTOS SIN LEER. Se cuenta lo que DE VERDAD llego a esta pantalla, no la posicion de una
@@ -302,7 +330,11 @@ const marcarLeida = (idSala) => {
     const lista = mensajes[idSala] || [];
     const ultimo = lista.slice(-1)[0];
     noLeidos[idSala] = 0;
-    if (ultimo) { leidos[idSala] = ultimo.cuando; guardarLeidos(); }
+    if (ultimo) {
+        leidos[idSala] = ultimo.cuando;
+        leidosMs[idSala] = ahoraDelServidor();
+        guardarLeidos();
+    }
 };
 
 const reponerContador = (idSala) => {
@@ -541,6 +573,18 @@ const latir = async () => {
         try { salas = (await traer(SALAS)).filter(esMiSala); } catch (e) { /* se reintenta */ }
     }
 
+    /* QUIEN LEYO QUE. Va por la misma puerta de versiones que todo lo demas: si nadie abrio
+       una conversacion desde la ultima vuelta, el area no cambio y no se baja nada. Asi las
+       marcas de leido se actualizan solas sin agregar una llamada por latido. */
+    if (cambio(LEIDOS)) {
+        try {
+            const filas = await traer(LEIDOS);
+            const nuevo = {};
+            filas.forEach(f => { if (f && f.id) nuevo[f.id] = f; });
+            leidosDeTodos = nuevo;
+        } catch (e) { /* vale lo ultimo que se supo */ }
+    }
+
     let llego = null;
     for (const s of salas) {
         const abiertaViva = abiertas.some(v => v.id === s.id && !v.plegada);
@@ -567,6 +611,98 @@ const acomodarReloj = () => {
        ritmo lento alcanza y no se gasta bateria ni datos. */
     const vivo = document.visibilityState === 'visible' && (abiertas.some(v => !v.plegada) || panelAbierto);
     reloj = setInterval(latir, vivo ? CADA_VIVO : CADA_LENTO);
+};
+
+/* ══ ENTREGADO Y LEIDO ════════════════════════════════════════════════════════════════════
+ *
+ * Daniel, 15-sep-2026: *"al yo escribirle a alguien, que me muestre en el mismo mensaje, en la
+ * misma ventanita, si lo leyo o no lo leyo... mensaje entregado, mensaje leido"*. Y al elegir
+ * como: *"como WhatsApp, azul cuando todos lo leyeron"*, con *"leido por tres de cinco"* en
+ * los grupos.
+ *
+ * ESTA FUNCION VIVE ACA Y NO EN CADA PANTALLA. La web dibuja burbujas flotantes y la app del
+ * celular su propia pantalla, pero el CALCULO es el mismo. Dos copias del mismo calculo se
+ * desincronizan, y en este proyecto ya paso.
+ *
+ * LOS TRES ESTADOS, y de donde sale cada uno:
+ *
+ *   enviado     se guardo en el servidor. Es lo minimo que se sabe.
+ *   entregado   el otro se anuncio DESPUES de mi mensaje -`chat_presencia`-, o sea que su
+ *               pantalla ya lo bajo. No es una promesa de que lo vio; es que le llego.
+ *   leido       abrio la conversacion -`chat_leidos`-.
+ *
+ * NO SE INVENTA UN "ENTREGADO" QUE NO SE PUEDA COMPROBAR: si el otro no se ha conectado desde
+ * que escribi, se queda en enviado y ya. Un cuadro que miente es peor que uno que no sabe.
+ *
+ * TODO SE COMPARA EN HORA DEL SERVIDOR. `m.cuando` lo escribio MI reloj, asi que se le suma mi
+ * propio desfase para llevarlo a la del servidor; la presencia ya viene en esa hora y los
+ * leidos traen `salasMs` justamente para esto. Mezclar dos relojes locales dejaba mensajes
+ * como no leidos para siempre en cuanto una PC anduviera atrasada.
+ *
+ * SOLO PARA MIS MENSAJES. En los del otro la marca no significa nada y no se dibuja.
+ */
+/* EL CALCULO VA APARTE Y NO TOCA NADA DE AFUERA: se le pasa todo lo que necesita. Asi se
+ * puede probar solo, sin navegador y sin servidor, que es la unica forma de comprobar los
+ * seis casos sin montar media plataforma. `estadoDelMensaje` es la misma cuenta con el
+ * estado de este archivo ya puesto.
+ *
+ *   yo          quien soy
+ *   leidosDe    { usuario: { salas: {sala:'cuando'}, salasMs: {sala: ms} } }
+ *   presenciaDe { usuario: ms de su ultimo "sigo aqui" }
+ *   desfase     ms entre el reloj del servidor y el de esta pantalla
+ */
+export const calcularEstado = (sala, m, o) => {
+    const yo = (o && o.yo) || '';
+    const leidosDe = (o && o.leidosDe) || {};
+    const presenciaDe = (o && o.presenciaDe) || {};
+    const desfase = (o && o.desfase) || 0;
+
+    if (!sala || !m || !yo || m.de !== yo || m.aviso || m.borrado) return null;
+    if (m.sinEnviar) return { estado: 'sinenviar', leyeron: 0, total: 0 };
+
+    const otros = (sala.miembros || []).filter(u => u && u !== yo);
+    if (!otros.length) return { estado: 'enviado', leyeron: 0, total: 0 };
+
+    const cuando = new Date(m.cuando).getTime() + desfase;
+    let leyeron = 0;
+    let entregado = false;
+    otros.forEach(u => {
+        const f = leidosDe[u] || {};
+        const ms = (f.salasMs || {})[sala.id];
+        /* SIN salasMs SE CAE AL TEXTO. Es quien todavia no recargo la pagina: su marca vieja
+           es la hora de SU reloj, y comparada con la mia puede fallar por minutos. Vale mas una
+           marca casi buena que ninguna, y se corrige sola en cuanto recargue. */
+        const leyo = (ms !== undefined && !isNaN(cuando))
+            ? ms >= cuando
+            : String((f.salas || {})[sala.id] || '') >= String(m.cuando || '');
+        if (leyo) { leyeron++; entregado = true; return; }
+        if ((presenciaDe[u] || 0) >= cuando) entregado = true;
+    });
+
+    const total = otros.length;
+    /* AZUL SOLO CUANDO LO LEYERON TODOS, como en WhatsApp. Lo eligio Daniel. */
+    if (leyeron >= total) return { estado: 'leido', leyeron, total };
+    return { estado: entregado ? 'entregado' : 'enviado', leyeron, total };
+};
+
+export const estadoDelMensaje = (sala, m) => calcularEstado(sala, m, {
+    yo: YO && YO.username, leidosDe: leidosDeTodos,
+    presenciaDe: presencia, desfase: desfaseReloj
+});
+
+/** El pie de la burbuja: la hora, la marca y -en grupo- cuantos lo leyeron. */
+export const marcaDelMensaje = (sala, m) => {
+    const v = estadoDelMensaje(sala, m);
+    if (!v) return '';
+    if (v.estado === 'sinenviar') return ' · sin enviar';
+    const dobles = v.estado === 'entregado' || v.estado === 'leido';
+    const rotulo = v.estado === 'leido' ? 'Leído'
+        : (v.estado === 'entregado' ? 'Entregado' : 'Enviado');
+    /* EL CONTEO SOLO EN GRUPO. En una conversacion de dos, "1 de 1" no dice nada. */
+    const cuantos = (sala.tipo === 'grupo' && v.total > 1 && v.estado !== 'enviado')
+        ? `<span class="cuantos">${v.leyeron} de ${v.total}</span>` : '';
+    return `<span class="visto ${v.estado === 'leido' ? 'leido' : ''}" title="${rotulo}">`
+        + (dobles ? '✓✓' : '✓') + '</span>' + cuantos;
 };
 
 /* ── LA PANTALLA ───────────────────────────────────────────────────────────────────────── */
@@ -613,6 +749,22 @@ const CSS = `
   font-weight: 700; cursor: pointer; }
 #chat-panel .icono:hover { background: rgba(var(--primary-rgb), 0.3); }
 #chat-panel .buscar { padding: 0.55rem 0.9rem; border-bottom: 1px solid rgba(var(--ink-rgb), 0.07); }
+/* EL CARTEL DE LOS AVISOS. Cuelga de la cabecera del panel y empuja la lista hacia abajo:
+   asi se lee entero antes de decidir, que es justo lo que se busca. */
+#chat-avisos-cartel { padding: 0.7rem 0.8rem; border-bottom: 1px solid rgba(var(--ink-rgb), 0.08);
+  font-size: var(--t-xs); color: var(--text-soft); line-height: 1.5; }
+#chat-avisos-cartel p { margin: 0 0 0.4rem; }
+#chat-avisos-cartel b { color: var(--text-strong); }
+#chat-avisos-cartel ul { margin: 0 0 0.6rem; padding-left: 1.1rem; }
+#chat-avisos-cartel li { margin-bottom: 0.15rem; }
+#chat-avisos-cartel button { border-radius: 8px; padding: 0.4rem 0.8rem; font-size: var(--t-xs);
+  font-weight: 700; cursor: pointer; font-family: inherit; }
+#chat-avisos-cartel .prender { background: var(--btn-fill); border: 1px solid var(--btn-fill);
+  color: var(--on-primary); }
+#chat-avisos-cartel .apagar { background: none; border: 1px solid rgba(var(--ink-rgb), 0.15);
+  color: var(--text-muted); }
+#chat-avisos-cartel .nota { display: block; margin-top: 0.5rem; color: var(--text-dim); }
+#chat-panel .cab .icono.prendido { color: var(--success); }
 #chat-panel .buscar input { width: 100%; background: var(--panel-deep, #0b1120); color: var(--text-main);
   border: 1px solid rgba(var(--ink-rgb), 0.1); border-radius: 8px; padding: 0.4rem 0.7rem; font-size: var(--t-xs); }
 #chat-lista { overflow-y: auto; }
@@ -677,6 +829,19 @@ const CSS = `
   min-width: 0; overflow-wrap: anywhere; }
 .chat-msg .de { font-size: 10px; font-weight: 700; color: var(--brand-pale); margin-bottom: 0.15rem; }
 .chat-msg .pie { margin-top: 0.25rem; font-size: 10px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+/* ── LAS MARCAS DE ENTREGADO Y LEIDO ── OJO: NADA DE COMILLAS INVERTIDAS ACA ADENTRO,
+   esto vive dentro de una plantilla de texto y una sola la corta. Ya paso al escribir
+   este mismo comentario: el CSS entero se leyo como codigo. ──────────────────────────────────────────────────────
+   Van pegadas a la hora, como en WhatsApp. El azul del leido NO se pone aca: sale de
+   la variable --chat-leido, que cambia por tema. Sobre la burbuja clara un cian vivo da 1,1 de
+   contraste -invisible- y sobre la oscura 8,2; es la misma regla del sello de los reportes.
+   Medido sobre la burbuja de verdad, que es translucida y aclara lo que tiene debajo:
+       indigo 8,20 · negro 9,08 · pbi 5,53 · pbi-classic 6,00   (el minimo legible es 4,5) */
+.chat-msg .visto { margin-left: 3px; letter-spacing: -2px; font-weight: 900; }
+.chat-msg .visto.leido { color: var(--chat-leido); }
+/* El "3 de 5" del grupo: pegado a la marca y mas apagado. El dato es la marca; el numero
+   es el detalle de quien quiera mirarlo. */
+.chat-msg .cuantos { margin-left: 5px; opacity: .8; letter-spacing: 0; }
 .chat-msg.mio { align-self: flex-end; background: rgba(var(--brand-rgb), 0.22); border-color: rgba(var(--brand-rgb), 0.35);
   color: var(--text-strong); }
 .chat-msg.mio .pie { text-align: right; color: var(--brand-pale); }
@@ -763,9 +928,11 @@ const dibujarCascaron = () => {
         <div id="chat-panel" hidden>
             <div class="cab">
                 <h3>Chat</h3>
+                <button class="icono" id="chat-avisos" type="button" title="Avisos en esta PC">📳</button>
                 <button class="icono" id="chat-tono" type="button" title="Tono activado">🔔</button>
                 <button class="icono" id="chat-nuevo-grupo" type="button">+ Grupo</button>
             </div>
+            <div id="chat-avisos-cartel" hidden></div>
             <div class="buscar"><input id="chat-buscar" type="search" placeholder="Buscar a cualquier persona…" aria-label="Buscar a cualquier persona"></div>
             <div id="chat-lista"></div>
         </div>
@@ -876,7 +1043,7 @@ const pintarVentanas = () => {
             if (m.borrado) return html + `<div class="chat-msg borrado">mensaje borrado</div>`;
             const mio = m.de === YO.username;
             const de = (!mio && s.tipo === 'grupo') ? `<div class="de">${esc(nombreDe(m.de))}</div>` : '';
-            const estado = mio ? (m.sinEnviar ? ' · sin enviar' : '') : '';
+            const estado = mio ? marcaDelMensaje(s, m) : '';
             const quitar = YO.username === SUPERUSUARIO
                 ? `<button class="quitar" type="button" title="Borrar (solo el administrador)" data-borrar="${esc(m.id)}" data-sala="${esc(s.id)}">×</button>` : '';
             const adj = !m.adjunto ? ''
@@ -965,6 +1132,60 @@ const acomodarVentanas = () => {
     caja.classList.toggle('solas', !panelALaVista);
 };
 
+/* == LOS AVISOS DE ESTA PC ================================================================
+ *
+ * EL PERMISO SE PIDE DESPUES DE DECIR QUE VA A LLEGAR. Un "¿permitir notificaciones?" al
+ * abrir se contesta que no sin leerlo, y volver atras obliga a entrar a los ajustes del
+ * navegador: una sola negativa distraida deja a esa PC sin avisos para siempre. Es la misma
+ * decision que ya se tomo en la app del celular.
+ */
+const pintarAvisos = () => {
+    const boton = nodo('chat-avisos');
+    const cartel = nodo('chat-avisos-cartel');
+    if (!boton || !cartel) return;
+
+    const rotulo = { prendidos: 'Avisos activados en esta PC',
+                     bloqueados: 'Avisos bloqueados por el navegador',
+                     'sin-soporte': 'Este navegador no puede avisar' };
+    boton.textContent = avisosEstado === 'prendidos' ? '📳' : '📴';
+    boton.title = rotulo[avisosEstado] || 'Activar los avisos en esta PC';
+    boton.classList.toggle('prendido', avisosEstado === 'prendidos');
+
+    cartel.hidden = !avisosAbierto;
+    if (!avisosAbierto) return;
+
+    if (avisosEstado === 'sin-soporte') {
+        cartel.innerHTML = '<p>Este navegador no sabe mandar avisos. En una PC funciona con '
+            + 'Chrome, Edge o Firefox.</p>';
+        return;
+    }
+    if (avisosEstado === 'bloqueados') {
+        cartel.innerHTML = '<p><b>El navegador los tiene bloqueados.</b> Toca el candado de la '
+            + 'barra de direcciones, busca <b>Notificaciones</b> y ponlo en <b>Permitir</b>. '
+            + 'Despu\u00e9s vuelve a entrar aqu\u00ed.</p>';
+        return;
+    }
+    const lista = queLlega(YO && YO.role).map(x => `<li>${esc(x)}</li>`).join('');
+    cartel.innerHTML = avisosEstado === 'prendidos'
+        ? `<p><b>Esta PC ya te avisa.</b> Te llega aunque el navegador est\u00e9 cerrado:</p>
+           <ul>${lista}</ul>
+           <button type="button" class="apagar" id="chat-avisos-apagar">Apagar en esta PC</button>`
+        : `<p><b>Que esta PC te avise</b>, aunque el navegador est\u00e9 cerrado:</p>
+           <ul>${lista}</ul>
+           <button type="button" class="prender" id="chat-avisos-prender">Activar los avisos</button>
+           <span class="nota">Tu celular se activa aparte, desde la app.</span>`;
+};
+
+const cambiarAvisos = async (prender) => {
+    try {
+        avisosEstado = prender ? await prenderAvisos(YO) : await apagarAvisos(YO);
+    } catch (e) {
+        console.warn('[CHAT] avisos:', e && e.message);
+        avisosEstado = await mirarAvisos();
+    }
+    pintarAvisos();
+};
+
 const pintar = () => {
     /* SIN CASCARON NO HAY NADA QUE PINTAR, pero el que escucha si tiene que enterarse: es
        el caso del celular, que usa estos datos y dibuja lo suyo. */
@@ -981,7 +1202,7 @@ const pintar = () => {
     const cursor = escribiendo ? a.selectionStart : 0;
     const llevaba = escribiendo ? a.value : '';
 
-    pintarLista(); pintarVentanas(); pintarGlobo(); acomodarVentanas();
+    pintarLista(); pintarVentanas(); pintarGlobo(); acomodarVentanas(); pintarAvisos();
 
     if (escribiendo) {
         const otra = raiz.querySelector(`[data-escribir="${escribiendo}"]`);
@@ -1080,6 +1301,19 @@ const enganchar = () => {
     });
 
     nodo('chat-toast').addEventListener('click', () => { if (toastSala) abrirSala(toastSala); });
+
+    nodo('chat-avisos').addEventListener('click', async () => {
+        avisosAbierto = !avisosAbierto;
+        if (avisosAbierto && avisosEstado === 'mirando') avisosEstado = await mirarAvisos();
+        pintarAvisos();
+    });
+
+    /* El boton de adentro del cartel se redibuja cada vez, asi que se escucha desde el
+       cartel y no desde el boton: uno enganchado al boton se perderia al repintar. */
+    nodo('chat-avisos-cartel').addEventListener('click', (e) => {
+        if (e.target.id === 'chat-avisos-prender') cambiarAvisos(true);
+        if (e.target.id === 'chat-avisos-apagar') cambiarAvisos(false);
+    });
 
     nodo('chat-tono').addEventListener('click', (e) => {
         sonando = !sonando;
@@ -1236,9 +1470,12 @@ export const arrancarDatosDelChat = async (session) => {
     try { salas = (await traer(SALAS)).filter(esMiSala); } catch (e) { salas = []; }
     try {
         const filas = await traer(LEIDOS);
-        const mio = filas.filter(f => f.id === YO.username)[0];
+        leidosDeTodos = {};
+        filas.forEach(f => { if (f && f.id) leidosDeTodos[f.id] = f; });
+        const mio = leidosDeTodos[YO.username];
         leidos = (mio && mio.salas) || {};
-    } catch (e) { leidos = {}; }
+        leidosMs = (mio && mio.salasMs) || {};
+    } catch (e) { leidos = {}; leidosMs = {}; leidosDeTodos = {}; }
 
     await sincronizarReloj();
     await mirarQuienEsta();
@@ -1286,8 +1523,9 @@ export const desmontarChat = () => {
     presencia = {}; ultimoAnuncio = 0; ultimaMirada = 0;
 };
 
-/* Para la prueba del navegador: deja a mano lo que hace falta empujar sin tocar la pantalla. */
-window.__chat = { latir, mandar, crearDirecta, crearGrupo, borrar, bajarSala, marcasDelServidor,
+/* Para la prueba del navegador: deja a mano lo que hace falta empujar sin tocar la pantalla.
+   La guarda es para que `probar_marcas_chat.mjs` pueda cargar este archivo desde Node. */
+if (typeof window !== 'undefined') window.__chat = { latir, mandar, crearDirecta, crearGrupo, borrar, bajarSala, marcasDelServidor,
                   mandarConAdjunto, subirAdjunto, achicarFoto,
                   anunciarme, mirarQuienEsta, enLinea, nombreBonito, sincronizarReloj,
                   estado: () => ({ salas, mensajes, leidos, noLeidos, abiertas, versionesVistas,

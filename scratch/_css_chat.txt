@@ -1,0 +1,168 @@
+
+/* LA BURBUJA SE QUEDO SOLA EN LA ESQUINA: el foquito del servidor subio a la barra de
+   arriba, al costado del nombre, asi que este rincon es todo del chat. */
+#chat-burbuja {
+  position: fixed; bottom: 20px; right: 20px; z-index: 9999; width: 40px; height: 40px;
+  border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer;
+  /* --btn-fill y no --primary: en el tema Negro el acento es BLANCO y la burbuja
+     quedaba blanca con el icono blanco adentro. Es la misma regla de los botones. */
+  background: var(--btn-fill); border: 1.5px solid rgba(var(--brand-rgb), 0.6);
+  box-shadow: 0 0 15px rgba(var(--brand-rgb), 0.35), 0 4px 20px rgba(var(--shadow-rgb), 0.4);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+#chat-burbuja:hover { transform: scale(1.1); }
+#chat-burbuja svg { width: 21px; height: 21px; fill: var(--on-primary); }
+#chat-burbuja.late { animation: chat-latido 1s ease-in-out 3; border-color: var(--warning-soft); }
+@keyframes chat-latido { 0%,100% { transform: scale(1); } 50% { transform: scale(1.18); } }
+#chat-globo {
+  position: absolute; top: -4px; right: -4px; min-width: 19px; height: 19px; padding: 0 5px;
+  border-radius: 50px; background: var(--danger-soft); color: #1a1a1a; font-size: 11px;
+  font-weight: 800; display: grid; place-items: center; border: 2px solid var(--bg-dark);
+  font-variant-numeric: tabular-nums;
+}
+#chat-panel {
+  position: fixed; right: 20px; bottom: 72px; z-index: 9998; width: 310px; max-height: 430px;
+  background: var(--panel-solid); border: 1px solid rgba(var(--ink-rgb), 0.1); border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(var(--shadow-rgb), 0.55); display: grid;
+  grid-template-rows: auto auto 1fr; overflow: hidden; font-size: var(--t-xs);
+}
+#chat-panel .cab { display: flex; align-items: center; gap: 0.4rem; padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.07); }
+#chat-panel .cab h3 { margin: 0 auto 0 0; font-size: var(--t-sm); font-weight: 800;
+  letter-spacing: 1px; text-transform: uppercase; color: var(--text-strong); }
+#chat-panel .icono { background: rgba(var(--ink-rgb), 0.05); border: 1px solid rgba(var(--ink-rgb), 0.1);
+  color: var(--text-pale); border-radius: 8px; padding: 0.3rem 0.6rem; font-size: var(--t-xs);
+  font-weight: 700; cursor: pointer; }
+#chat-panel .icono:hover { background: rgba(var(--primary-rgb), 0.3); }
+#chat-panel .buscar { padding: 0.55rem 0.9rem; border-bottom: 1px solid rgba(var(--ink-rgb), 0.07); }
+#chat-panel .buscar input { width: 100%; background: var(--panel-deep, #0b1120); color: var(--text-main);
+  border: 1px solid rgba(var(--ink-rgb), 0.1); border-radius: 8px; padding: 0.4rem 0.7rem; font-size: var(--t-xs); }
+#chat-lista { overflow-y: auto; }
+#chat-lista .sec { padding: 0.5rem 0.9rem 0.25rem; font-size: 10px; font-weight: 800; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--text-dim); }
+#chat-lista .vacio { padding: 0.8rem 0.9rem; color: var(--text-dim); }
+.chat-fila { width: 100%; text-align: left; background: none; border: 0; color: inherit; cursor: pointer;
+  border-bottom: 1px solid rgba(var(--ink-rgb), 0.05); padding: 0.55rem 0.9rem; display: grid;
+  grid-template-columns: 32px 1fr auto; gap: 0.05rem 0.6rem; align-items: center; font-family: inherit; }
+.chat-fila:hover { background: rgba(var(--ink-rgb), 0.04); }
+.chat-ini { position: relative; grid-row: span 2; width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center;
+  font-size: 11px; font-weight: 800; color: var(--brand-pale); background: rgba(var(--brand-rgb), 0.16);
+  border: 1px solid rgba(var(--brand-rgb), 0.3); }
+/* La bolita verde: quien esta con la web abierta ahora mismo. */
+.chat-ini.en-linea::after { content: ''; position: absolute; right: -3px; bottom: -3px;
+  width: 11px; height: 11px; border-radius: 50%; background: rgba(var(--success-rgb), 1);
+  border: 2px solid var(--panel-solid); box-shadow: 0 0 6px rgba(var(--success-rgb), 0.7); }
+.chat-ventana .vcab .luz { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto;
+  background: rgba(var(--ink-rgb), 0.28); }
+.chat-ventana .vcab .luz.si { background: rgba(var(--success-rgb), 1);
+  box-shadow: 0 0 6px rgba(var(--success-rgb), 0.7); }
+.chat-ini.grupo { color: var(--text-pale); background: rgba(var(--ink-rgb), 0.06); border-color: rgba(var(--ink-rgb), 0.12); }
+.chat-fila .quien { font-weight: 700; color: var(--text-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-fila .hora { font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.chat-fila .ultimo { font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-fila .nuevos { font-size: 11px; font-weight: 800; min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: 50px; background: var(--btn-fill); color: var(--on-primary); display: grid; place-items: center; }
+.chat-fila .marca { font-size: 10px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; color: var(--brand-pale); }
+/* LAS VENTANITAS VIVEN AL COSTADO DEL PANEL. Con el panel cerrado se corren a la derecha,
+   hasta quedar pegadas a la burbuja: si no, dejaban un hueco del ancho del panel.
+   SIN TRANSICION: con transition en right el navegador se quedaba en el valor viejo -medido,
+   no supuesto- y la ventanita no se movia nunca. El salto es instantaneo y basta. */
+#chat-ventanas { position: fixed; right: 348px; bottom: 20px; z-index: 9998; display: flex;
+  flex-direction: row-reverse; align-items: flex-end; gap: 10px; }
+#chat-ventanas.solas { right: 72px; }
+.chat-ventana { width: 288px; background: var(--panel-solid); border: 1px solid rgba(var(--ink-rgb), 0.1);
+  border-radius: 14px 14px 0 0; box-shadow: 0 18px 40px rgba(var(--shadow-rgb), 0.55);
+  display: grid; grid-template-rows: auto 1fr auto; overflow: hidden;
+  /* minmax(0, ...): sin esto la columna se estira a lo que pida la pieza mas ancha
+     -la fila de escribir- y la ventana corta por la derecha lo que le sobra. */
+  grid-template-columns: minmax(0, 1fr); }
+.chat-ventana > * { min-width: 0; }
+.chat-ventana.abierta { height: 372px; }
+.chat-ventana.plegada .cuerpo, .chat-ventana.plegada .pie { display: none; }
+.chat-ventana .vcab { display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 0.7rem;
+  background: rgba(var(--primary-rgb), 0.28); border-bottom: 1px solid rgba(var(--ink-rgb), 0.08); cursor: pointer; }
+.chat-ventana.plegada.con-nuevos .vcab { background: rgba(var(--warning-soft-rgb), 0.22); }
+.chat-ventana .vcab .n { font-size: var(--t-xs); font-weight: 800; color: var(--text-strong); overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; }
+.chat-ventana .vcab .cuenta { font-size: 10px; font-weight: 800; background: var(--danger-soft); color: #1a1a1a;
+  border-radius: 50px; padding: 0 6px; }
+.chat-ventana .vcab .acciones { margin-left: auto; display: flex; gap: 0.15rem; }
+.chat-ventana .vcab button { background: none; border: 0; color: var(--text-pale); cursor: pointer;
+  font-size: var(--t-sm); line-height: 1; padding: 0.2rem 0.35rem; border-radius: 6px; }
+.chat-ventana .vcab button:hover { background: rgba(var(--ink-rgb), 0.12); }
+.chat-ventana .cuerpo { padding: 0.7rem; display: flex; flex-direction: column; gap: 0.4rem; overflow-y: auto; }
+.chat-dia { align-self: center; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--text-dim); padding: 0.15rem 0.6rem; border-radius: 50px; background: rgba(var(--ink-rgb), 0.05); }
+.chat-msg { position: relative; max-width: 82%; padding: 0.45rem 0.6rem; border-radius: 10px; font-size: var(--t-xs);
+  line-height: 1.5; color: var(--text-pale); background: var(--panel-alt, #1c2b3a); border: 1px solid rgba(var(--ink-rgb), 0.06);
+  /* Un link largo o un codigo sin espacios se parte antes que empujar la ventana. */
+  min-width: 0; overflow-wrap: anywhere; }
+.chat-msg .de { font-size: 10px; font-weight: 700; color: var(--brand-pale); margin-bottom: 0.15rem; }
+.chat-msg .pie { margin-top: 0.25rem; font-size: 10px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.chat-msg.mio { align-self: flex-end; background: rgba(var(--brand-rgb), 0.22); border-color: rgba(var(--brand-rgb), 0.35);
+  color: var(--text-strong); }
+.chat-msg.mio .pie { text-align: right; color: var(--brand-pale); }
+.chat-msg.aviso { align-self: center; max-width: 95%; text-align: center; font-size: 10px; color: var(--warning-soft);
+  background: rgba(var(--warning-soft-rgb), 0.08); border-color: rgba(var(--warning-soft-rgb), 0.3); }
+/* --text-muted y no --text-dim: medido, el gris mas apagado daba 3,03 a 1 contra el fondo
+   del globo -por debajo de lo que se lee comodo- y encima en italica y chiquito. */
+.chat-msg.borrado { font-style: italic; color: var(--text-muted); }
+.chat-msg .quitar { position: absolute; top: -8px; right: -8px; width: 20px; height: 20px; border-radius: 50%;
+  border: 1px solid rgba(var(--danger-rgb), 0.5); background: var(--panel-deep, #0b1120); color: var(--danger-soft);
+  font-size: 11px; line-height: 1; cursor: pointer; display: none; place-items: center; }
+.chat-msg:hover .quitar { display: grid; }
+.chat-ventana .pie { border-top: 1px solid rgba(var(--ink-rgb), 0.07); }
+.chat-ventana .caja { display: flex; gap: 0.4rem; padding: 0.55rem 0.6rem; }
+.chat-ventana .caja { min-width: 0; }
+.chat-ventana .caja input { flex: 1; min-width: 0; background: var(--panel-deep, #0b1120); color: var(--text-main);
+  border: 1px solid rgba(var(--ink-rgb), 0.1); border-radius: 8px; padding: 0.45rem 0.6rem; font-size: var(--t-xs); }
+/* :not(.clip) porque .caja button le ganaba en peso a la regla del clip y se lo pintaba
+   igual que Enviar: dos botones llenos uno al lado del otro, y el clip no es una accion
+   principal. */
+.chat-ventana .caja button:not(.clip) { background: var(--btn-fill); border: 0; color: var(--on-primary); border-radius: 8px;
+  padding: 0.45rem 0.7rem; font-size: var(--t-xs); font-weight: 700; cursor: pointer; }
+.chat-msg .adj-img { display: block; max-width: 100%; border-radius: 8px; margin-top: 0.2rem; cursor: zoom-in; background: rgba(var(--ink-rgb), 0.06); min-height: 40px; }
+.chat-msg .adj-file { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.2rem; padding: 0.4rem 0.5rem;
+  border-radius: 8px; background: rgba(var(--ink-rgb), 0.06); border: 1px solid rgba(var(--ink-rgb), 0.1);
+  cursor: pointer; color: var(--text-pale); min-width: 0; max-width: 100%; }
+.chat-msg .adj-file .nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-msg .adj-file:hover { background: rgba(var(--primary-rgb), 0.25); }
+.chat-msg .adj-file .ico { font-size: var(--t-lg); }
+.chat-msg .adj-file .peso { margin-left: auto; font-size: 10px; color: var(--text-dim); white-space: nowrap; }
+.chat-ventana .clip { background: rgba(var(--ink-rgb), 0.06); border: 1px solid rgba(var(--ink-rgb), 0.1);
+  color: var(--text-pale); border-radius: 8px; padding: 0.45rem 0.5rem; font-size: var(--t-sm); cursor: pointer;
+  flex: 0 0 auto; line-height: 1; }
+.chat-ventana .clip:hover { background: rgba(var(--primary-rgb), 0.3); }
+.chat-ventana.soltando { outline: 2px dashed var(--brand-light); outline-offset: -4px; }
+#chat-visor { position: fixed; inset: 0; z-index: 10000; background: rgba(var(--shadow-rgb), 0.88);
+  display: flex; align-items: center; justify-content: center; padding: 2rem; cursor: zoom-out; }
+#chat-visor[hidden] { display: none !important; }
+#chat-visor img { max-width: 100%; max-height: 100%; border-radius: 10px; box-shadow: 0 20px 60px rgba(var(--shadow-rgb), 0.6); }
+#chat-toast { position: fixed; right: 20px; bottom: 72px; z-index: 9999; width: 270px; background: var(--panel-solid);
+  border: 1px solid rgba(var(--warning-soft-rgb), 0.45); border-left: 3px solid var(--warning-soft); border-radius: 12px;
+  box-shadow: 0 18px 40px rgba(var(--shadow-rgb), 0.55); padding: 0.6rem 0.75rem; display: grid;
+  grid-template-columns: 32px 1fr; gap: 0.15rem 0.6rem; cursor: pointer; text-align: left; font-family: inherit; }
+#chat-toast .de { font-size: var(--t-xs); font-weight: 800; color: var(--text-strong); }
+#chat-toast .txt { font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* EL ATRIBUTO hidden TIENE QUE GANARLE AL display DE ARRIBA.
+   Un selector de id con display:grid le gana al [hidden]{display:none} que trae el navegador,
+   asi que el panel, la ventana de grupo y el globito se veian los TRES encimados aunque por
+   dentro estuvieran cerrados; y como quedaban uno sobre otro, los clics no llegaban. Lo vio
+   Daniel en su pantalla: "se esta pisando el chat... doy clic y no funciona nada". La prueba
+   automatica no lo agarro porque miraba la propiedad hidden y no si se veia: aplicado no es lo
+   mismo que se ve. */
+#chat-panel[hidden], #chat-grupo[hidden], #chat-toast[hidden], #chat-globo[hidden] { display: none !important; }
+#chat-grupo { position: fixed; right: 20px; bottom: 72px; z-index: 9998; width: 310px; background: var(--panel-solid);
+  border: 1px solid rgba(var(--brand-rgb), 0.4); border-radius: 14px; box-shadow: 0 18px 40px rgba(var(--shadow-rgb), 0.55);
+  padding: 0.9rem; display: grid; gap: 0.6rem; font-size: var(--t-xs); }
+#chat-grupo h3 { margin: 0; font-size: var(--t-sm); font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--text-strong); }
+#chat-grupo input[type="text"] { background: var(--panel-deep, #0b1120); color: var(--text-main);
+  border: 1px solid rgba(var(--ink-rgb), 0.1); border-radius: 8px; padding: 0.45rem 0.7rem; font-size: var(--t-xs); }
+#chat-grupo .gente { display: grid; gap: 0.3rem; max-height: 170px; overflow-y: auto; }
+#chat-grupo label { display: flex; align-items: center; gap: 0.5rem; color: var(--text-soft); cursor: pointer; }
+#chat-grupo .botones { display: flex; gap: 0.5rem; justify-content: flex-end; }
+#chat-grupo button { border-radius: 8px; padding: 0.4rem 0.8rem; font-size: var(--t-xs); font-weight: 700; cursor: pointer; }
+#chat-grupo .crear { background: var(--btn-fill); border: 1px solid var(--btn-fill); color: var(--on-primary); }
+#chat-grupo .cancelar { background: none; border: 1px solid rgba(var(--ink-rgb), 0.15); color: var(--text-muted); }
+@media (max-width: 900px) { #chat-ventanas, #chat-ventanas.solas { right: 20px; bottom: 130px; } #chat-panel, #chat-grupo { width: 280px; } }
+@media (prefers-reduced-motion: reduce) { #chat-burbuja.late { animation: none; } }

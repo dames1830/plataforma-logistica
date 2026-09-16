@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es" data-tema="indigo">
+<head>
+<meta charset="utf-8">
+<title>Prueba - entregado y le&iacute;do</title>
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/main.css">
+<style>
+  body { margin: 0; background: var(--bg-dark); color: var(--text-main);
+    font-family: var(--font-ui); padding: 20px; }
+  .barra { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .barra button { background: rgba(var(--ink-rgb), .08); border: 1px solid var(--border);
+    color: var(--text-strong); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+  #salida { font-family: monospace; font-size: 13px; white-space: pre;
+    background: rgba(var(--ink-rgb), .05); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px; margin-top: 14px; line-height: 1.7; }
+</style>
+</head>
+<body>
+<div class="barra">
+  <button type="button" data-t="indigo">Indigo</button>
+  <button type="button" data-t="pbi">PBI</button>
+  <button type="button" data-t="pbi-classic">PBI Classic</button>
+  <button type="button" data-t="negro">Negro</button>
+</div>
+<div id="salida">cargando&hellip;</div>
+
+<script type="module">
+const originalFetch = window.fetch;
+window.fetch = function (url, opc) {
+    const o = opc || {};
+    o.headers = Object.assign({}, o.headers || {}, { 'X-Environment': 'beta' });
+    return originalFetch(url, o);
+};
+
+/* IMPORT DINAMICO CON SELLO DE HORA: sin esto el navegador sirve la copia vieja de
+   chat.js y se depura un error que ya esta arreglado. */
+const CHAT = await import('../js/chat.js?nocache=' + Date.now());
+
+const YO = { username: 'dames', role: 'admin', token: '' };
+const ESPERADO = { m1: 'leido', m3: 'entregado', m4: 'enviado',
+                   g1: 'leido', g3: 'entregado', g4: 'enviado' };
+const CUANTOS = { g1: '3 de 3', g3: '0 de 3' };
+const GRUPOS = [['pru_dos', ['m1', 'm3', 'm4']], ['pru_grupo', ['g1', 'g3', 'g4']]];
+
+const lineas = [];
+let fallos = 0;
+
+try {
+    await CHAT.montarChat(YO);
+    await CHAT.latir();
+    const est = CHAT.estadoDelChat();
+
+    GRUPOS.forEach(function (par) {
+        const idSala = par[0];
+        const s = CHAT.salaDe(idSala);
+        const lista = (est.mensajes[idSala] || []);
+        lineas.push('--- ' + idSala + ' (' + lista.length + ' mensajes) ---');
+        par[1].forEach(function (id) {
+            const m = lista.filter(function (x) { return x.id === id; })[0];
+            if (!m) { lineas.push('MAL  ' + id + '  no llego'); fallos++; return; }
+            const v = CHAT.estadoDelMensaje(s, m);
+            const marca = CHAT.marcaDelMensaje(s, m);
+            const salio = v ? v.estado : '(nada)';
+            const cuenta = v ? (v.leyeron + ' de ' + v.total) : '';
+            const okEstado = salio === ESPERADO[id];
+            const okCuenta = !CUANTOS[id] || cuenta === CUANTOS[id];
+            if (!okEstado || !okCuenta) fallos++;
+            lineas.push((okEstado && okCuenta ? 'OK   ' : 'MAL  ') + id
+                + '  salio ' + salio.padEnd(10)
+                + 'esperado ' + ESPERADO[id].padEnd(10)
+                + (CUANTOS[id] ? ('conteo ' + cuenta.padEnd(8) + 'esperado ' + CUANTOS[id]) : ''));
+            lineas.push('       html  ' + marca.split('<').join('[').split('>').join(']'));
+        });
+    });
+} catch (e) {
+    lineas.push('SE CAYO: ' + (e && e.message));
+    fallos++;
+}
+
+lineas.push('');
+lineas.push('FALLARON: ' + fallos);
+document.getElementById('salida').textContent = lineas.join('\n');
+console.log('PRUEBA DE MARCAS - fallaron ' + fallos);
+
+document.querySelectorAll('.barra button').forEach(function (b) {
+    b.addEventListener('click', function () { document.documentElement.dataset.tema = b.dataset.t; });
+});
+</script>
+</body>
+</html>
