@@ -35,7 +35,7 @@
    para que le lleguen una notificacion"*. El mecanismo es el mismo que usa la app del
    celular; lo unico propio de aca es el boton y el cartelito que explica que va a llegar. */
 import { puedeAvisos, mirarAvisos, prenderAvisos, apagarAvisos, queLlega }
-    from './services_v245/avisos.js?v=29.0810';
+    from './services_v245/avisos.js?v=29.0811';
 
 /* `typeof window` y no `window` a secas: `scratch/probar_marcas_chat.mjs` carga este
    archivo desde Node para comprobar el calculo de las marcas sin navegador, y sin la
@@ -1522,8 +1522,24 @@ const abrirEnCuantoLlegue = () => {
 };
 
 const abrirSala = async (id) => {
-    const s = salaDe(id);
-    if (!s) { salaPendiente = id; return; }
+    let s = salaDe(id);
+    if (!s) {
+        /* NO SE ESPERA AL LATIDO.
+         *
+         * Antes esto dejaba la sala apuntada y se iba, y lo unico que la abria era la
+         * siguiente vuelta del latido: 20 segundos con el chat quieto, y **hasta un minuto
+         * con la pestaña oculta**, porque el navegador espacia los relojes de las pestañas
+         * que no se ven. Daniel, 16-sep-2026: *"el chat esta en blanco mas de un minuto, tuve
+         * que cambiar de pestaña y al volver recien se abrio"* — cambiar de pestaña es
+         * justamente lo que dispara un latido inmediato.
+         *
+         * Se pide la lista AHORA MISMO. Es un solo viaje y es el que hace falta. */
+        salaPendiente = id;
+        try { salas = (await traer(SALAS)).filter(esMiSala); } catch (e) { /* queda pendiente */ }
+        s = salaDe(id);
+        if (!s) return;                 // de verdad no existe todavia: lo reintenta el latido
+        salaPendiente = null;
+    }
     const ya = abiertas.filter(v => v.id === id)[0];
     if (ya) ya.plegada = false;
     else {
