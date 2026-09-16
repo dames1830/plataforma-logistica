@@ -35,7 +35,7 @@
    para que le lleguen una notificacion"*. El mecanismo es el mismo que usa la app del
    celular; lo unico propio de aca es el boton y el cartelito que explica que va a llegar. */
 import { puedeAvisos, mirarAvisos, prenderAvisos, apagarAvisos, queLlega }
-    from './services_v245/avisos.js?v=29.0813';
+    from './services_v245/avisos.js?v=29.0814';
 
 /* `typeof window` y no `window` a secas: `scratch/probar_marcas_chat.mjs` carga este
    archivo desde Node para comprobar el calculo de las marcas sin navegador, y sin la
@@ -1044,8 +1044,12 @@ const CSS = `
 .chat-msg.mio { align-self: flex-end; background: rgba(var(--brand-rgb), 0.22); border-color: rgba(var(--brand-rgb), 0.35);
   color: var(--text-strong); }
 .chat-msg.mio .pie { text-align: right; color: var(--brand-pale); }
-.chat-msg.aviso { align-self: center; max-width: 95%; text-align: center; font-size: 10px; color: var(--warning-soft);
-  background: rgba(var(--warning-soft-rgb), 0.08); border-color: rgba(var(--warning-soft-rgb), 0.3); }
+/* EL AVISO ES UNA ETIQUETA, NO UN MENSAJE (Daniel, 16-sep-2026). Ya iba al centro y en
+   amarillo, pero con el borde y las esquinas de una burbuja, y parecia un mensaje mas. Queda
+   como en la maqueta: pastilla chica, sin borde, redondeada entera. */
+.chat-msg.aviso { align-self: center; max-width: 92%; text-align: center; font-size: 10px; font-weight: 700;
+  color: var(--warning-soft); background: rgba(var(--warning-soft-rgb), 0.14);
+  border: 0; border-radius: 50px; padding: 0.2rem 0.75rem; margin: 0.15rem 0; }
 /* --text-muted y no --text-dim: medido, el gris mas apagado daba 3,03 a 1 contra el fondo
    del globo -por debajo de lo que se lee comodo- y encima en italica y chiquito. */
 .chat-msg.borrado { font-style: italic; color: var(--text-muted); }

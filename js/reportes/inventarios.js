@@ -37,9 +37,9 @@
  * antes.
  */
 
-import { getAreaData, getCol, parseFile } from '../services_v245/csvHub_v6.js?v=29.0813';
-import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0813';
-import { getSession } from '../services_v245/auth.js?v=29.0813';
+import { getAreaData, getCol, parseFile } from '../services_v245/csvHub_v6.js?v=29.0814';
+import * as cyclicService from '../services_v245/cyclicCountService.js?v=29.0814';
+import { getSession } from '../services_v245/auth.js?v=29.0814';
 
 /* EL ENTORNO, ATADO UNA SOLA VEZ. Ver el porque en la cabecera: son dieciseis
    llamadas de la pantalla a si misma y no se le quiso poner el parametro a cada
