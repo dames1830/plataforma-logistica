@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="es" data-tema="pbi">
+<head>
+<meta charset="utf-8">
+<title>Prueba · reloj del turno</title>
+<!--
+  EL RELOJ DE ADMINISTRACIÓN → ACTIVIDADES, CON EL MÓDULO DE VERDAD.
+
+  Monta `montarTurno` en un contenedor que NO se reemplaza, como hace el tablero, y repite lo
+  que pasa cuando el radar trae datos: el contenedor pasa a decir "Trayendo el turno..." y
+  después se vuelve a montar.
+
+  El reloj del módulo es un setInterval de 30 s que solo recalcula si cambió el minuto. Para no
+  esperar un minuto por caso, la página adelanta la hora un minuto y hace sonar los relojes que
+  siguen vivos, que es exactamente lo que harían solos. El setInterval es el real: solo se anota
+  cuál quedó programado y cuál se apagó.
+
+      _probar_turno_reloj.html                                   el módulo de ahora
+      _probar_turno_reloj.html?modulo=_turno_actividades_viejo.js la copia de antes, para comparar
+
+  La copia de antes NO está en el repo: se saca de git cuando hace falta y se borra después.
+      git show 52ec9e5d:js/reportes/turno_actividades.js > js/reportes/_turno_actividades_viejo.js
+  Con ella dio 7 fallas, entre ellas el mismo aviso que vio Daniel el 16-sep-2026; con la de ahora, 12 de 12.
+-->
+</head>
+<body style="font-family:monospace; background:#111; color:#ddd; padding:16px">
+<pre id="salida">cargando…</pre>
+<div id="contenedor" style="margin-top:16px"></div>
+
+<script type="module">
+const salida = document.getElementById('salida');
+const res = [];
+const chk = (ok, texto) => { res.push((ok ? 'OK    ' : 'FALLA ') + texto); };
+
+/* La hora, adelantable */
+const DateReal = Date;
+let desfase = 0;
+class DateCorrida extends DateReal {
+  constructor(...a) { if (a.length) super(...a); else super(DateReal.now() + desfase); }
+  static now() { return DateReal.now() + desfase; }
+}
+window.Date = DateCorrida;
+
+/* Los relojes: los de verdad, anotados */
+const relojes = [];
+const siReal = window.setInterval.bind(window), ciReal = window.clearInterval.bind(window);
+window.setInterval = (fn, ms, ...a) => { const id = siReal(fn, ms, ...a); relojes.push({ id, fn, ms, vivo: true }); return id; };
+window.clearInterval = (id) => { const r = relojes.find(x => x.id === id); if (r) r.vivo = false; return ciReal(id); };
+const vivos = () => relojes.filter(r => r.vivo && r.ms === 30000);
+
+/* Lo que harían solos al pasar el minuto. El error se anota como lo vería la pantalla. */
+const sonarLosRelojes = () => {
+  desfase += 60000;
+  const errores = [];
+  vivos().forEach(r => { try { r.fn(); } catch (e) { errores.push(e.message); } });
+  return errores;
+};
+
+const modulo = new URLSearchParams(location.search).get('modulo') || 'turno_actividades.js';
+const { montarTurno } = await import('../js/reportes/' + modulo + '?t=' + DateReal.now());
+const caja = document.getElementById('contenedor');
+const OPC = (fecha) => ({ estado: null, fuentes: null, fecha, alGuardar: () => {}, alCambiarFecha: () => {} });
+const cargando = () => { caja.innerHTML = '<div>Trayendo el turno...</div>'; };
+
+res.push('módulo: ' + modulo);
+
+/* 1. Un montaje solo: el reloj corre y no falla */
+montarTurno(caja, OPC('2026-09-15'));
+chk(vivos().length === 1, `un montaje deja UN reloj (${vivos().length})`);
+let e1 = sonarLosRelojes();
+chk(e1.length === 0, `con la pantalla a la vista, el reloj suena sin errores ${e1.length ? '— ' + e1.join(' | ') : ''}`);
+
+/* 2. Llega el radar: "Trayendo el turno..." y en ese rato suena el reloj viejo */
+cargando();
+let e2 = sonarLosRelojes();
+chk(e2.length === 0, `mientras dice "Trayendo el turno...", el reloj viejo NO da error ${e2.length ? '— ' + e2.join(' | ') : ''}`);
+chk(vivos().length === 0, `y se apaga solo (${vivos().length} vivos)`);
+
+/* 3. Se vuelve a montar varias veces seguidas, como con el radar */
+montarTurno(caja, OPC('2026-09-15'));
+montarTurno(caja, OPC('2026-09-14'));
+montarTurno(caja, OPC('2026-09-15'));
+chk(vivos().length === 1, `tres montajes seguidos dejan UN reloj, no tres (${vivos().length})`);
+
+/* 4. Con la pantalla nueva a la vista suena solo SU reloj (el paso 3 ya dejó uno) */
+const e4 = sonarLosRelojes();
+chk(e4.length === 0, `con la pantalla nueva a la vista, sin errores ${e4.length ? '— ' + e4.join(' | ') : ''}`);
+
+/* 5. Otra sección de Administración en el mismo contenedor */
+caja.innerHTML = '<table id="otra"><tbody></tbody></table>';
+const e5 = sonarLosRelojes();
+chk(e5.length === 0, `con OTRA sección en el contenedor, el reloj no da error ${e5.length ? '— ' + e5.join(' | ') : ''}`);
+chk(vivos().length === 0, `y se apaga (${vivos().length} vivos)`);
+
+/* 6. Achicar la ventana con la otra sección a la vista */
+let e6 = [];
+const alError = (ev) => { e6.push(ev.message); };
+window.addEventListener('error', alError);
+window.dispatchEvent(new Event('resize'));
+await new Promise(r => setTimeout(r, 50));
+window.removeEventListener('error', alError);
+chk(e6.length === 0, `achicar la ventana con otra sección a la vista no da error ${e6.length ? '— ' + e6.join(' | ') : ''}`);
+
+/* 7. Y de vuelta a Actividades: la pantalla se dibuja entera */
+montarTurno(caja, OPC('2026-09-16'));
+const filasCum = caja.querySelectorAll('#ta_t_cum tbody tr').length;
+const filasHor = caja.querySelectorAll('#ta_t_hor tbody tr').length;
+chk(filasCum > 0 && filasHor > 0, `al volver, se dibujan las dos tablas (${filasHor} actividades, ${filasCum} con meta)`);
+chk(vivos().length === 1, `con UN reloj (${vivos().length})`);
+const e7 = sonarLosRelojes();
+chk(e7.length === 0, `y suena sin errores ${e7.length ? '— ' + e7.join(' | ') : ''}`);
+
+const fallas = res.filter(r => r.startsWith('FALLA')).length;
+salida.textContent = res.join('\n') + '\n\n' + (fallas ? `HAY ${fallas} FALLA(S)` : `TODO BIEN (${res.length - 1})`);
+window.__resultado = { fallas, res };
+
+/* PARA MIRARLO EN TIEMPO REAL, sin adelantar nada: `__esperarDeVerdad()` pone "Trayendo el
+   turno..." y deja que el reloj suene solo a los 30 s. Después se mira `__relojes` y `__errores`. */
+desfase = 0;
+window.__relojes = relojes;
+window.__errores = [];
+window.addEventListener('error', (ev) => window.__errores.push(ev.message));
+window.__esperarDeVerdad = () => { cargando(); return { vivos: vivos().length, desde: new DateReal().toISOString() }; };
+window.__vivos = () => vivos().length;
+</script>
+</body>
+</html>
