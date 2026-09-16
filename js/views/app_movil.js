@@ -25,29 +25,37 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0797';
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0797';
-import * as ORD from '../services_v245/despachoOrden.js?v=29.0797';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0797';
+import * as adminService from '../services_v245/adminService.js?v=29.0799';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0799';
+import * as ORD from '../services_v245/despachoOrden.js?v=29.0799';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0799';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0797';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0797';
-import * as metasService from '../services_v245/metasService.js?v=29.0797';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0799';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0799';
+import * as metasService from '../services_v245/metasService.js?v=29.0799';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0797';
+import * as temaService from '../services_v245/temaService.js?v=29.0799';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0797';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0797';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0799';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0799';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
          bajarSala, marcarLeida, sinLeer, sinLeerTotal, enLinea, nombreDe, crearDirecta,
          iniciales as inicialesChat, nombreDeSala, salaDe, activos, horaCorta, diaDe,
-         traerAdjunto, pesoLegible } from '../chat.js?v=29.0797';
+         traerAdjunto, pesoLegible,
+         /* LA MISMA MARCA QUE LA WEB. El calculo vive en chat.js; aca solo se pinta,
+            con la cara de la app. Dos copias del mismo calculo se desincronizan. */
+         marcaDelMensaje } from '../chat.js?v=29.0799';
+/* LOS AVISOS DEL TELEFONO VIVEN EN UN SERVICIO COMPARTIDO desde el 15-sep-2026: la web
+   usa exactamente estas funciones para suscribir la PC. Ver `avisos.js`. */
+import { LLAVE_AVISOS, puedeAvisos, mirarAvisos as mirarSuscripcion,
+         prenderAvisos as suscribir, apagarAvisos as desuscribir }
+    from '../services_v245/avisos.js?v=29.0799';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -507,6 +515,21 @@ const CSS = `
 #app-movil .am-msg .hr { display: block; text-align: right; font-family: var(--am-num);
   font-size: .56rem; color: var(--am-tenue); margin-top: .1rem; }
 #app-movil .am-msg.mio .hr { color: var(--am-sobre); opacity: .7; }
+/* ── LAS MARCAS DE ENTREGADO Y LEIDO ──────────────────────────────────────
+   La misma marca que la web, con la cara de la app. Van pegadas a la hora.
+
+   UN SOLO AZUL PARA LOS CUATRO TEMAS, al reves que en la web. Aca la burbuja
+   propia es un color SATURADO -indigo, azul, verde azulado o negro- con letra
+   blanca encima, asi que un cian oscuro se perderia en todos. Medido contra ese
+   fondo: #CFFAFE da 5,62 · 4,09 · 4,09 · 12,82, y el blanco puro -el techo de
+   esta burbuja- solo llega a 4,58. La hora que ya estaba ahi anda en 3,04, o
+   sea que la marca se lee MEJOR que el texto que la acompaña. */
+#app-movil .am-msg .hr .visto { margin-left: .18rem; letter-spacing: -.08em; font-weight: 900; }
+#app-movil .am-msg .hr .visto.leido { color: #CFFAFE; opacity: 1; }
+#app-movil .am-msg .hr .cuantos { margin-left: .22rem; letter-spacing: 0; }
+/* La hora va al 70%, pero la marca tiene que destacarse sobre ella: si el mensaje
+   ya se leyo, eso es lo que se mira. */
+#app-movil .am-msg.mio .hr .visto.leido { opacity: 1; }
 #app-movil .am-msg .am-adj { display: flex; align-items: center; gap: .45rem; width: 100%;
   background: var(--am-papel); border: 0; border-radius: 8px; padding: .35rem .5rem;
   margin-bottom: .25rem; cursor: pointer; font-family: var(--am-ui); }
@@ -797,8 +820,6 @@ const ICONO_COMPARTIR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentCol
 /* LA LLAVE PUBLICA DE LOS AVISOS. Es publica a proposito: identifica al servidor que manda
    y no sirve para mandar nada. La privada vive SOLO en el servidor del almacen, como
    variable de maquina (`VAPID_PRIVADA`), nunca en el repositorio. */
-const LLAVE_AVISOS = 'BE2dQmsJ0AvtY2ZSq9C3CqEvfv9zRkpyuJCz40uiUxkbemrIWHrF4JAopR0z4ZYw28zRpe-HW0goOTh1yIxbGQk';
-const AREA_AVISOS = 'push_suscripciones';
 
 const SECCIONES = [
     { id: 'inicio', rotulo: 'Inicio', icono: 'inicio' },
@@ -1635,7 +1656,7 @@ const pantallaConversacion = () => {
                           ${ICO_PAPEL}<span class="nm">${esc(a.nombre || 'Archivo')}</span>
                           <span class="pz">${esc(pesoLegible(a.tamano || 0))}</span></button>`) : ''}
                 ${m.texto ? `<span class="tx">${esc(m.texto)}</span>` : ''}
-                <span class="hr">${esc(horaCorta(m.cuando))}</span>
+                <span class="hr">${esc(horaCorta(m.cuando))}${mio ? marcaDelMensaje(s, m) : ''}</span>
                </div>`;
     }).join('');
 
@@ -2609,70 +2630,17 @@ const mandarFoto = async () => {
 let avisosEstado = 'mirando';    // mirando | apagados | prendidos | sin-soporte | bloqueados
 let avisosTrabajando = false;
 
-/** El identificador de ESTE telefono. Una persona puede tener el celular y la tablet, y cada
- *  uno necesita su propia suscripcion: si se pisaran, el aviso llegaria a uno solo. */
-const idDeEsteTelefono = () => {
-    try {
-        let id = localStorage.getItem('deam_id_telefono');
-        if (!id) {
-            id = Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
-            localStorage.setItem('deam_id_telefono', id);
-        }
-        return id;
-    } catch (e) { return 'sin-memoria'; }
-};
+/* LO QUE SIGUE ACA ES SOLO LA PANTALLA. El mecanismo -el permiso, la suscripcion y la baja-
+   vive en `services_v245/avisos.js`, y la web usa el mismo. Estas dos funciones no hacen mas
+   que llamarlo y volver a pintar. */
 
-const puedeAvisos = () => ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
-
-const mirarAvisos = async () => {
-    if (!puedeAvisos()) { avisosEstado = 'sin-soporte'; return; }
-    if (Notification.permission === 'denied') { avisosEstado = 'bloqueados'; return; }
-    try {
-        const reg = await navigator.serviceWorker.ready;
-        const sus = await reg.pushManager.getSubscription();
-        avisosEstado = sus ? 'prendidos' : 'apagados';
-    } catch (e) { avisosEstado = 'apagados'; }
-};
-
-/** La llave viaja en base64 de URL y el navegador la quiere en bytes. */
-const llaveEnBytes = (base64) => {
-    const relleno = '='.repeat((4 - base64.length % 4) % 4);
-    const limpia = (base64 + relleno).replace(/-/g, '+').replace(/_/g, '/');
-    const crudo = atob(limpia);
-    const bytes = new Uint8Array(crudo.length);
-    for (let i = 0; i < crudo.length; i++) bytes[i] = crudo.charCodeAt(i);
-    return bytes;
-};
+const mirarAvisos = async () => { avisosEstado = await mirarSuscripcion(); };
 
 const prenderAvisos = async () => {
     if (avisosTrabajando) return;
     avisosTrabajando = true; pintar();
     try {
-        const permiso = await Notification.requestPermission();
-        if (permiso !== 'granted') {
-            avisosEstado = permiso === 'denied' ? 'bloqueados' : 'apagados';
-            return;
-        }
-        const reg = await navigator.serviceWorker.ready;
-        const sus = await reg.pushManager.subscribe({
-            userVisibleOnly: true,                       // sin esto el navegador no suscribe
-            applicationServerKey: llaveEnBytes(LLAVE_AVISOS)
-        });
-        const s = sus.toJSON();
-        await fetch(`${BASE_API}/${AREA_AVISOS}?date=MASTER`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', ...(YO.token ? { 'X-Auth-Token': YO.token } : {}) },
-            body: JSON.stringify({
-                id: YO.username + '|' + idDeEsteTelefono(),
-                usuario: YO.username,
-                rol: YO.role || '',
-                endpoint: s.endpoint,
-                claves: s.keys,
-                telefono: navigator.userAgent.slice(0, 90),
-                cuando: new Date().toISOString()
-            })
-        });
-        avisosEstado = 'prendidos';
+        avisosEstado = await suscribir(YO);
     } catch (e) {
         console.warn('[APP] no se pudieron prender los avisos:', e && e.message);
         alert('No se pudieron activar los avisos. Vuelve a intentar.');
@@ -2685,19 +2653,8 @@ const prenderAvisos = async () => {
 const apagarAvisos = async () => {
     if (avisosTrabajando) return;
     avisosTrabajando = true; pintar();
-    try {
-        const reg = await navigator.serviceWorker.ready;
-        const sus = await reg.pushManager.getSubscription();
-        if (sus) await sus.unsubscribe();
-        /* Se borra tambien del servidor: si quedara, el robot seguiria mandando avisos a un
-           telefono que ya no los quiere y el servicio terminaria rechazandolos. */
-        await fetch(`${BASE_API}/${AREA_AVISOS}?date=MASTER`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', ...(YO.token ? { 'X-Auth-Token': YO.token } : {}) },
-            body: JSON.stringify({ id: YO.username + '|' + idDeEsteTelefono(), usuario: YO.username, baja: true })
-        });
-        avisosEstado = 'apagados';
-    } catch (e) { console.warn('[APP] apagar avisos:', e && e.message); }
+    try { avisosEstado = await desuscribir(YO); }
+    catch (e) { console.warn('[APP] apagar avisos:', e && e.message); }
     avisosTrabajando = false;
     pintar();
 };

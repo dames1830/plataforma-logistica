@@ -194,6 +194,16 @@ html[data-tema="indigo"] {
 
   /* Los emoji del menu van a color ---------------------------------------- */
   --icon-filter:    none;
+
+  /* EL AZUL DEL "LEIDO" DEL CHAT. Daniel, 15-sep-2026: *"como WhatsApp, azul
+     cuando todos lo leyeron"*. Va por tema y no como un color fijo: medido sobre
+     la burbuja de verdad -que es translucida y aclara lo que tiene debajo-, un
+     cian vivo da 8,2 de contraste sobre la oscura y 1,1 sobre la clara, o sea
+     invisible. Mismo criterio que el sello de los reportes: vivo sobre oscuro,
+     oscurecido sobre claro. Medido: indigo 8,20 · negro 9,08 · pbi 5,53 ·
+     pbi-classic 6,00, contra un minimo legible de 4,5. */
+  --chat-leido:     #00e5ff;
+
 }
 
 
@@ -326,6 +336,16 @@ html[data-tema="pbi"] {
   --r-sm:           2px;
 
   --icon-filter:    none;
+
+  /* EL AZUL DEL "LEIDO" DEL CHAT. Daniel, 15-sep-2026: *"como WhatsApp, azul
+     cuando todos lo leyeron"*. Va por tema y no como un color fijo: medido sobre
+     la burbuja de verdad -que es translucida y aclara lo que tiene debajo-, un
+     cian vivo da 8,2 de contraste sobre la oscura y 1,1 sobre la clara, o sea
+     invisible. Mismo criterio que el sello de los reportes: vivo sobre oscuro,
+     oscurecido sobre claro. Medido: indigo 8,20 · negro 9,08 · pbi 5,53 ·
+     pbi-classic 6,00, contra un minimo legible de 4,5. */
+  --chat-leido:     #0c4a6e;
+
 }
 
 
@@ -453,6 +473,16 @@ html[data-tema="pbi-classic"] {
   --r-sm:           2px;
 
   --icon-filter:    none;
+
+  /* EL AZUL DEL "LEIDO" DEL CHAT. Daniel, 15-sep-2026: *"como WhatsApp, azul
+     cuando todos lo leyeron"*. Va por tema y no como un color fijo: medido sobre
+     la burbuja de verdad -que es translucida y aclara lo que tiene debajo-, un
+     cian vivo da 8,2 de contraste sobre la oscura y 1,1 sobre la clara, o sea
+     invisible. Mismo criterio que el sello de los reportes: vivo sobre oscuro,
+     oscurecido sobre claro. Medido: indigo 8,20 · negro 9,08 · pbi 5,53 ·
+     pbi-classic 6,00, contra un minimo legible de 4,5. */
+  --chat-leido:     #0c4a6e;
+
 }
 
 
@@ -584,6 +614,16 @@ html[data-tema="negro"] {
 
   /* Los emoji del menu se apagan: es lo que mas "colorido" dejaba al tema */
   --icon-filter:    grayscale(1) opacity(.68);
+
+  /* EL AZUL DEL "LEIDO" DEL CHAT. Daniel, 15-sep-2026: *"como WhatsApp, azul
+     cuando todos lo leyeron"*. Va por tema y no como un color fijo: medido sobre
+     la burbuja de verdad -que es translucida y aclara lo que tiene debajo-, un
+     cian vivo da 8,2 de contraste sobre la oscura y 1,1 sobre la clara, o sea
+     invisible. Mismo criterio que el sello de los reportes: vivo sobre oscuro,
+     oscurecido sobre claro. Medido: indigo 8,20 · negro 9,08 · pbi 5,53 ·
+     pbi-classic 6,00, contra un minimo legible de 4,5. */
+  --chat-leido:     #00e5ff;
+
 }
 
 
