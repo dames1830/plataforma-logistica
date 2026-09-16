@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es" data-tema="pbi">
+<head>
+<meta charset="utf-8">
+<title>Prueba · picking y embalaje en pares por hora</title>
+<!--
+  PICKING POR DÍA y EMBALAJE POR DÍA con el módulo real y los datos de producción (solo lectura).
+  Daniel, 16-sep-2026: "todo se debe calcular por pares, nada en líneas".
+
+      _probar_picking_pares.html?cual=picking&fecha=2026-09-15
+      _probar_picking_pares.html?cual=embalaje&fecha=2026-09-15
+-->
+<link rel="stylesheet" href="../css/main.css?v=29.0818">
+<link rel="stylesheet" href="../css/temas.css?v=29.0818">
+<link rel="stylesheet" href="../css/componentes.css?v=29.0818">
+<style>body{background:var(--bg);padding:16px}</style>
+</head>
+<body>
+<div id="caja"></div>
+<script type="module">
+const q = new URLSearchParams(location.search);
+const cual = q.get('cual') || 'picking', fecha = q.get('fecha') || '2026-09-15';
+const AREA = cual === 'picking' ? 'picking_por_hora' : 'embalaje_por_hora';
+const TEXTOS = {
+  picking: { titulo: 'Picking por día', cuadro: 'Picking por hora', verbo: 'picó', accion: 'movieron', origen: 'De dónde la sacan', fuente: 'archivo de picking' },
+  embalaje: { titulo: 'Embalaje por día', cuadro: 'Embalaje por hora', verbo: 'embaló', accion: 'embalaron', origen: 'De dónde salió', fuente: 'OBLPN de embalaje' },
+};
+const { montarProduccionHora } = await import('../js/reportes/produccion_hora.js?t=' + Date.now());
+const API = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+const datos = (await (await fetch(`${API}/${AREA}?date=${fecha}&t=${Date.now()}`)).json()).data;
+const fechas = (await (await fetch(`${API}/${AREA}/dates?t=${Date.now()}`)).json()).dates.sort();
+montarProduccionHora(document.getElementById('caja'), { dias: [{ fecha, datos }], textos: TEXTOS[cual], fecha, fechas, alCambiarFecha: () => {} });
+window.__listo = true;
+</script>
+</body>
+</html>

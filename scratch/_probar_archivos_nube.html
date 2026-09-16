@@ -39,11 +39,11 @@
     };
   })();
 </script>
-<script src="../js/env.js?v=29.0817"></script>
+<script src="../js/env.js?v=29.0818"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="../css/main.css?v=29.0817">
-<link rel="stylesheet" href="../css/temas.css?v=29.0817">
-<link rel="stylesheet" href="../css/componentes.css?v=29.0817">
+<link rel="stylesheet" href="../css/main.css?v=29.0818">
+<link rel="stylesheet" href="../css/temas.css?v=29.0818">
+<link rel="stylesheet" href="../css/componentes.css?v=29.0818">
 <style>
   body { background: var(--bg); color: var(--text-pale); padding: 16px 24px 80px; margin: 0; }
   .pr-barra { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 18px; padding:10px 12px;
@@ -80,8 +80,8 @@ document.querySelectorAll('[data-tema]').forEach(b => b.onclick = () => {
   document.documentElement.setAttribute('data-tema', b.dataset.tema);
 });
 
-const hub = await import('../js/services_v245/csvHub_v6.js?v=29.0817');
-const jornada = await import('../js/services_v245/jornadaService.js?v=29.0817');
+const hub = await import('../js/services_v245/csvHub_v6.js?v=29.0818');
+const jornada = await import('../js/services_v245/jornadaService.js?v=29.0818');
 
 /* EL CÓDIGO DE VERDAD, cortado del archivo que corre */
 const src = (await (await fetch('../js/views/dashboard_v28.js?t=' + Date.now())).text()).replace(/\r\n/g, '\n');

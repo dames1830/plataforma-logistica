@@ -506,7 +506,7 @@ export function montarProduccionHora(cont, OPC) {
             es retail. Lo que no es tienda lo separa el <b>Tipo de orden</b> del
             Detalle de Orden.</p></div>
         <div class="ph-sc"><table>
-          <thead><tr><th>Canal</th><th class="n">Líneas</th><th class="n">Suelto</th>
+          <thead><tr><th>Canal</th><th class="n">Suelto</th>
             <th class="n">Prepack</th><th class="n">No calz.</th><th class="n">Pares</th>
             <th class="n">%</th><th class="n">Personas</th></tr></thead>
           <tbody id="ph_porcanal"></tbody></table></div>
@@ -519,7 +519,7 @@ export function montarProduccionHora(cont, OPC) {
         <div class="ph-sc"><table>
           <thead><tr><th>Hora</th><th class="n">Calzado suelto</th>
             <th class="n">Calzado prepack</th><th class="n">No calzado</th>
-            <th class="n">Pares</th><th class="n">Líneas</th><th class="n">Personas</th>
+            <th class="n">Pares</th><th class="n">Personas</th>
             <th class="n">Pares/persona</th></tr></thead>
           <tbody id="ph_horas"></tbody></table></div>
         <div class="ph-nota" id="ph_nota_horas"></div>
@@ -533,8 +533,7 @@ export function montarProduccionHora(cont, OPC) {
           <thead><tr><th>#</th><th>Persona</th>
             ${HORAS.map(h => `<th class="n">${String(h).padStart(2, '0')}</th>`).join('')}
             <th class="n">Pares</th>
-            <th class="n" title="líneas por hora sobre el tiempo trabajado">Lín/h</th>
-            <th class="n">Líneas</th>
+            <th class="n" title="pares por hora sobre el tiempo trabajado">Par/h</th>
             <th class="n" title="minutos de trabajo, sumando tramos">Min</th></tr></thead>
           <tbody id="ph_cuerpo"></tbody></table></div>
         <div class="ph-nota" id="ph_mtz_nota"></div>
@@ -545,22 +544,20 @@ export function montarProduccionHora(cont, OPC) {
             <p>Las 10 que más movieron en lo que está filtrado</p></div>
           <div class="ph-sc"><table>
             <thead><tr><th>Marca</th><th class="n">Suelto</th><th class="n">Prepack</th>
-              <th class="n">No calz.</th><th class="n">Pares</th>
-              <th class="n">Líneas</th></tr></thead>
+              <th class="n">No calz.</th><th class="n">Pares</th></tr></thead>
             <tbody id="ph_marcas"></tbody></table></div></div>
 
         <div class="ph-pan"><div class="ph-cab"><h3>Por colección</h3>
             <p>La Coleccion PO del Maestro, no la Temporada del mezzanine</p></div>
           <div class="ph-sc"><table>
             <thead><tr><th>Colección</th><th class="n">Suelto</th><th class="n">Prepack</th>
-              <th class="n">No calz.</th><th class="n">Pares</th>
-              <th class="n">Líneas</th></tr></thead>
+              <th class="n">No calz.</th><th class="n">Pares</th></tr></thead>
             <tbody id="ph_colec"></tbody></table></div></div>
       </div>
 
       <div class="ph-pan">
         <div class="ph-cab"><h3>${esc(T.origen)}</h3>
-          <p>La zona sale de la ubicación de origen de cada línea</p></div>
+          <p>La zona sale de la ubicación de donde se sacó cada par</p></div>
         <div class="ph-sc"><table>
           <thead><tr><th>Zona</th><th class="n">Suelto</th><th class="n">Prepack</th>
             <th class="n">No calz.</th><th class="n">Pares</th>
@@ -577,25 +574,39 @@ export function montarProduccionHora(cont, OPC) {
     const activos = (tramos) => unirTramos(tramos, (C.puenteMin || 0) * 60)
         .reduce((s, [a, b]) => s + (b - a), 0);
 
-    function ritmo(lineas, tramos, dia) {
+    /* EL RITMO ES EN PARES POR HORA. Daniel, 16-sep-2026, contrastando con los 190 pares
+       por hora que dice el supervisor de picking: *"todo se debe calcular por pares, nada
+       en líneas"*, y *"si es solid o prepack son pares; también hay no calzado"*. El suelto
+       cuenta sus pares, el prepack los pares de sus cajas y el no calzado sus unidades,
+       según la clase elegida.
+
+       Hasta ese día era LÍNEAS por hora, y se leía como pares: el "201" de rluna3 a las
+       08:00 eran líneas; en pares fueron 161 en 38 minutos, 257 por hora.
+
+       Las líneas quedan SOLO como control de la muestra, y no se muestran: con muy pocas
+       idas a ubicaciones no hay ritmo que medir, y 37 líneas cerradas en 36 segundos no
+       son una persona picando sino una confirmación en bloque del WMS. */
+    function ritmo(pares, lineas, tramos, dia) {
         const seg = activos(tramos);
-        if (!seg || lineas < 2) return null;
+        if (!seg || !pares || lineas < 2) return null;
         if (lineas < (dia ? C.lineasDia : C.lineasCelda)) return null;
         if (seg < (dia ? C.minutosDia : C.minutosCelda) * 60) return null;
         if (seg / (lineas - 1) < C.segLineaMin) return null;  // confirmación en bloque
-        return Math.round(lineas / (seg / 3600));
+        return Math.round(pares / (seg / 3600));
     }
+    /* Las líneas de una clase en una celda (el robot las guarda aparte de los pares). */
+    const lineasDe = (c, suf) => (c[suf + '_l'] != null ? c[suf + '_l'] : c.lineas) || 0;
 
     /* ── el combo de canal ──
        ARRANCA EN RETAIL, no en todos. Daniel, 02-sep-2026: *"que los dos modulos
        se filtren en automatico con la fecha actual y en canal por RETAIL"*. Es lo
        que mira todos los dias; el resto de los canales son la excepcion y estan a
        un clic. Si ese dia no hubo retail se marcan todos, para no abrir en blanco. */
-    const PORDEF = SOLOS.includes('RETAIL') && D.vistas.RETAIL.totales.lineas
+    const PORDEF = SOLOS.includes('RETAIL') && D.vistas.RETAIL.totales.total
         ? ['RETAIL'] : SOLOS;
     el('lista').innerHTML = SOLOS.map(c => `<label><input type="checkbox"
         value="${esc(c)}"${PORDEF.includes(c) ? ' checked' : ''}> <span>${esc(c)}</span>
-        <span class="ph-chip">${nf(D.vistas[c].totales.lineas)}</span></label>`).join('');
+        <span class="ph-chip">${nf(D.vistas[c].totales.total)}</span></label>`).join('');
 
     const marcados = () => [...el('lista').querySelectorAll('input:checked')].map(x => x.value);
 
@@ -619,7 +630,6 @@ export function montarProduccionHora(cont, OPC) {
         const t = D.vistas[c].totales;
         return `<tr data-canal="${esc(c)}"><td class="k">${esc(c)}
             <span class="ph-cod">${esc(CANAL_PIE[c] || '')}</span></td>
-          <td class="n">${nf(t.lineas)}</td>
           <td class="n">${nf(t.cal_suelto)}</td><td class="n">${nf(t.cal_prepack)}</td>
           <td class="n">${nf(t.no_cal)}</td>
           <td class="n f">${nf(t.total)}<span class="ph-bar"
@@ -627,7 +637,7 @@ export function montarProduccionHora(cont, OPC) {
           <td class="n">${Math.round(1000 * t.total / (tot.total || 1)) / 10}%</td>
           <td class="n">${D.gentePorCanal[c]}</td></tr>`;
     }).join('') + `<tr class="total"><td class="k">TODOS</td>
-        <td class="n">${nf(tot.lineas)}</td><td class="n">${nf(tot.cal_suelto)}</td>
+        <td class="n">${nf(tot.cal_suelto)}</td>
         <td class="n">${nf(tot.cal_prepack)}</td><td class="n">${nf(tot.no_cal)}</td>
         <td class="n">${nf(tot.total)}</td><td class="n">100%</td>
         <td class="n">${D.gentePorCanal.TODOS}</td></tr>`;
@@ -659,7 +669,7 @@ export function montarProduccionHora(cont, OPC) {
             ['pre', 'Calzado prepack', nf(t.cal_prepack), 'pares, no cajas'],
             ['nc', 'No calzado', nf(t.no_cal), 'bolsas y complementos'],
             ['gr', 'Total', nf(t.total),
-             nf(t.lineas) + ' líneas · ' + v.gente.length + ' personas'],
+             v.gente.length + ' personas'],
             ['gr', 'Hora pico', pico[0] ? String(pico[0]).padStart(2, '0') + ':00' : '–',
              pico[1] ? nf(pico[1]) + ' pares con ' + v.por_hora[pico[0]].personas + ' personas' : ''],
         ].map(([cl, e, val, d]) => `<div class="ph-t ${cl}"><span class="e">${e}</span>
@@ -680,7 +690,7 @@ export function montarProduccionHora(cont, OPC) {
               <td class="n">${nf(x.no_cal)}</td>
               <td class="n f">${nf(x.total)}<span class="ph-bar"
                 style="width:${Math.round(100 * x.total / maxh)}%"></span></td>
-              <td class="n">${nf(x.lineas)}</td><td class="n">${n || '–'}</td>
+              <td class="n">${n || '–'}</td>
               <td class="n">${n ? nf(Math.round(x.total / n)) : '–'}</td></tr>`;
         }).join('');
         const avisoFuera = FUERA.length
@@ -705,8 +715,7 @@ export function montarProduccionHora(cont, OPC) {
               <td class="n">${nf(x.cal_suelto)}</td><td class="n">${nf(x.cal_prepack)}</td>
               <td class="n">${nf(x.no_cal)}</td>
               <td class="n f">${nf(x.total)}<span class="ph-bar"
-                style="width:${Math.round(100 * x.total / top)}%"></span></td>
-              <td class="n">${nf(x.lineas)}</td></tr>`).join('');
+                style="width:${Math.round(100 * x.total / top)}%"></span></td></tr>`).join('');
         };
         el('marcas').innerHTML = corte(v.marcas);
         el('colec').innerHTML = corte(v.coleccion);
@@ -733,7 +742,7 @@ export function montarProduccionHora(cont, OPC) {
         const dato = (celda, dia) => {
             const c = celda || {};
             return esEf
-                ? ritmo(c[suf + '_l'] != null ? c[suf + '_l'] : c.lineas, c[suf + '_iv'], !!dia)
+                ? ritmo(c[suf] || 0, lineasDe(c, suf), c[suf + '_iv'], !!dia)
                 : c[suf];
         };
 
@@ -759,7 +768,7 @@ export function montarProduccionHora(cont, OPC) {
         if (!gente.length) {
             /* UNA TABLA VACÍA NO EXPLICA NADA. Ecommerce no mueve prepack, y sin este
                aviso el cuadro quedaba en blanco y parecía roto. */
-            el('cuerpo').innerHTML = `<tr><td colspan="${HORAS.length + 6}" class="vacio">
+            el('cuerpo').innerHTML = `<tr><td colspan="${HORAS.length + 5}" class="vacio">
               ${esEf ? 'Nadie tiene ritmo medible en' : 'Nadie ' + esc(T.verbo)}
               <b>${NOMBRE[clase]}</b> en lo que está filtrado.</td></tr>`;
         } else {
@@ -771,16 +780,19 @@ export function montarProduccionHora(cont, OPC) {
                     /* El globito lista las TRES clases del robot. `Calzado` no entra:
                        es la suma de las dos de al lado y saldría repetido. */
                     const tit = CLASES.filter(([k]) => k !== 'total' && k !== 'calzado')
-                        .filter(([k]) => c[k + '_l'])
-                        .map(([k, lab]) => `${lab}: ${nf(c[k + '_l'])} líneas`).join(' — ');
+                        .filter(([k]) => c[k])
+                        .map(([k, lab]) => `${lab}: ${nf(c[k])} pares`).join(' — ');
                     return `<td class="n c${d ? '' : ' z'}" title="${esc(tit)}"
                       ${d ? `style="background:rgba(var(--brand-rgb), ${
                           (0.03 + 0.26 * d / (max || 1)).toFixed(3)})"` : ''}
                       >${d ? nf(d) : '–'}</td>`;
                 }).join('');
                 const G = g.total;
-                const rit = ritmo(G.total_l, G.total_iv, 1);
-                const mins = Math.round(activos(G.total_iv) / 60) || 0;
+                /* DE LA CLASE ELEGIDA, no del total. Antes esta columna medía todas las
+                   clases aunque el filtro dijera "Calzado suelto": quien picaba suelto y
+                   prepack salía con un ritmo que no era de ninguna de las dos. */
+                const rit = ritmo(G[suf] || 0, lineasDe(G, suf), G[suf + '_iv'], 1);
+                const mins = Math.round(activos(G[suf + '_iv']) / 60) || 0;
                 return `<tr><td class="k">${i + 1}</td>
                   <td class="k nom">${esc(g.usuario)}${mins > 0 && mins < (C.muestraCortaMin || 0)
                       ? ` <span class="ph-eti ph-eti-corta" title="menos de ${
@@ -788,7 +800,6 @@ export function montarProduccionHora(cont, OPC) {
                   ${celdas}
                   <td class="n tot">${nf(G[suf] || 0)}</td>
                   <td class="n tot${rit ? '' : ' z'}">${rit ? nf(rit) : '–'}</td>
-                  <td class="n sub">${nf(G[suf + '_l'] != null ? G[suf + '_l'] : G.lineas)}</td>
                   <td class="n sub">${nf(mins)}</td></tr>`;
             }).join('');
 
@@ -804,25 +815,24 @@ export function montarProduccionHora(cont, OPC) {
                 const x = col(g => dato(g.horas[h] || {}));
                 return `<td class="n${x ? '' : ' z'}">${x ? nf(x) : '–'}</td>`;
             }).join('');
-            const ritmos = gente.map(g => ritmo(g.total.total_l, g.total.total_iv, 1)).filter(Boolean);
+            const ritmos = gente.map(g => ritmo(g.total[suf] || 0, lineasDe(g.total, suf),
+                g.total[suf + '_iv'], 1)).filter(Boolean);
             const prom = ritmos.length
                 ? Math.round(ritmos.reduce((a, b) => a + b, 0) / ritmos.length) : null;
             const pares = gente.reduce((s, g) => s + (g.total[suf] || 0), 0);
-            const lin = gente.reduce((s, g) => s + (g.total[suf + '_l'] != null
-                ? g.total[suf + '_l'] : g.total.lineas), 0);
             el('cuerpo').insertAdjacentHTML('beforeend', `<tr class="total">
               <td class="k"></td><td class="k">TOTAL</td>
               ${celdas}
               <td class="n">${nf(pares)}</td>
               <td class="n${prom ? '' : ' z'}">${prom ? nf(prom) : '–'}</td>
-              <td class="n">${nf(lin)}</td>
               <td class="n">–</td></tr>`);
         }
 
         el('mtz_tit').textContent = T.cuadro;
         el('mtz_pie').innerHTML = 'Sigue el <b>filtro de canal</b> de arriba. ' + (esEf
-            ? 'Cada celda son las <b>líneas por hora</b> sobre el tiempo que esa persona '
-              + 'estuvo realmente trabajando. No depende de cuánto trabajo le tocara.'
+            ? 'Cada celda son los <b>pares por hora</b> sobre el tiempo que esa persona '
+              + 'estuvo realmente trabajando. El prepack cuenta por sus pares y el no calzado '
+              + 'por sus unidades.'
             : 'Cada celda son los <b>pares</b> que esa persona ' + esc(T.verbo) + ' en esa hora.');
         el('mtz_nota').innerHTML =
             `<b>${gente.length} de ${v.gente.length} personas</b> `
@@ -830,12 +840,11 @@ export function montarProduccionHora(cont, OPC) {
                     : `${esc(T.accion)} ${NOMBRE[clase]}`)
             + '; el resto no figura. '
             + (esEf
-                ? `Líneas por hora, <b>sin la equivalencia del prepack</b>: suelto y prepack
-                   se miden por separado. Una raya no es un cero: es que no alcanza la
-                   muestra —hacen falta ${C.lineasCelda} líneas y ${C.minutosCelda} min en la
-                   celda, ${C.lineasDia} y ${C.minutosDia} min en el total—, y se descartan
-                   los tramos de menos de ${C.segLineaMin} segundos por línea, que no son
-                   alguien trabajando sino una confirmación en bloque del WMS.`
+                ? `<b>Pares por hora</b> sobre el tiempo trabajando, uniendo pausas de hasta
+                   ${C.puenteMin || 15} min: el refrigerio y las pausas largas no cuentan. Una raya
+                   no es un cero: es que en esa hora trabajó muy poco para medir un ritmo
+                   —hacen falta ${C.minutosCelda} min en la celda y ${C.minutosDia} en el día—,
+                   o que el WMS confirmó un bloque de golpe, que no es alguien trabajando.`
                 : 'Ordenado por pares: dice cuánto trabajo le tocó a cada uno, no qué tan '
                   + 'rápido lo hizo. Para eso está Efectividad.');
     }
