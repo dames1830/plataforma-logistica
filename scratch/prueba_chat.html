@@ -503,6 +503,25 @@
           'al hacer clic, la ventanita aparece en ' + Math.round(tardo) + ' ms (sin esperar al servidor)');
       fingirPestana('hidden');
 
+      /* 15ter. EL CARTEL DE AVISOS, YA PRENDIDO, ES SOLO EL BOTON (Daniel, 16-sep-2026)
+         "tambien quita todo esto del chat, solo que quede el boton". El texto y la lista
+         siguen estando APAGADO, que es cuando hacen falta para decidir. */
+      chat.fingirEstadoAvisos('prendidos');
+      await esperar(150);
+      const cartel = document.getElementById('chat-avisos-cartel');
+      chk(!!cartel.querySelector('#chat-avisos-apagar'), 'prendido: el boton de apagar sigue estando');
+      chk(cartel.querySelectorAll('p, ul, li').length === 0,
+          'y no queda nada mas: ni texto ni lista (' + cartel.querySelectorAll('p, ul, li').length + ' sobrantes)');
+      chk(cartel.textContent.trim() === 'Apagar en esta PC',
+          'lo unico que se lee es "' + cartel.textContent.trim() + '"');
+
+      chat.fingirEstadoAvisos('apagados');
+      await esperar(150);
+      chk(!!cartel.querySelector('#chat-avisos-prender')
+          && cartel.querySelectorAll('li').length > 0,
+          'apagado si explica que va a llegar antes de pedir el permiso: '
+          + cartel.querySelectorAll('li').length + ' puntos');
+
       // 16. EL CHAT SE LEE EN LOS CUATRO TEMAS
       //     En Negro el acento es BLANCO: el boton Enviar quedaba blanco sobre blanco y la
       //     burbuja, blanca con el icono blanco. No se mira: se mide.

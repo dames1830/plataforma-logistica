@@ -35,7 +35,7 @@
    para que le lleguen una notificacion"*. El mecanismo es el mismo que usa la app del
    celular; lo unico propio de aca es el boton y el cartelito que explica que va a llegar. */
 import { puedeAvisos, mirarAvisos, prenderAvisos, apagarAvisos, queLlega }
-    from './services_v245/avisos.js?v=29.0801';
+    from './services_v245/avisos.js?v=29.0802';
 
 /* `typeof window` y no `window` a secas: `scratch/probar_marcas_chat.mjs` carga este
    archivo desde Node para comprobar el calculo de las marcas sin navegador, y sin la
@@ -1329,15 +1329,27 @@ const pintarAvisos = () => {
             + 'Despu\u00e9s vuelve a entrar aqu\u00ed.</p>';
         return;
     }
+    /* CON LOS AVISOS YA PRENDIDOS, SOLO EL BOTON.
+     *
+     * Daniel, 16-sep-2026, mandando dos capturas del cartel: *"tambien quita todo esto del
+     * chat, solo que quede el boton"*. Y tiene razon: el texto y la lista estan para que uno
+     * sepa QUE le va a llegar ANTES de darle el permiso al navegador. Una vez dado, ya no
+     * deciden nada \u2014 solo ocupan media pantalla del panel cada vez que se abre.
+     *
+     * APAGADO SE QUEDAN. Ahi si hacen falta: un "\u00bfpermitir notificaciones?" a secas se
+     * contesta que no sin leerlo, y volver atras obliga a entrar a los ajustes del navegador.
+     * Es la misma decision que ya se habia tomado para la app del celular. */
+    if (avisosEstado === 'prendidos') {
+        cartel.innerHTML = '<button type="button" class="apagar" id="chat-avisos-apagar">'
+            + 'Apagar en esta PC</button>';
+        return;
+    }
     const lista = queLlega(YO && YO.role).map(x => `<li>${esc(x)}</li>`).join('');
-    cartel.innerHTML = avisosEstado === 'prendidos'
-        ? `<p><b>Esta PC ya te avisa.</b> Te llega aunque el navegador est\u00e9 cerrado:</p>
-           <ul>${lista}</ul>
-           <button type="button" class="apagar" id="chat-avisos-apagar">Apagar en esta PC</button>`
-        : `<p><b>Que esta PC te avise</b>, aunque el navegador est\u00e9 cerrado:</p>
-           <ul>${lista}</ul>
-           <button type="button" class="prender" id="chat-avisos-prender">Activar los avisos</button>
-           <span class="nota">Tu celular se activa aparte, desde la app.</span>`;
+    cartel.innerHTML =
+        `<p><b>Que esta PC te avise</b>, aunque el navegador est\u00e9 cerrado:</p>
+         <ul>${lista}</ul>
+         <button type="button" class="prender" id="chat-avisos-prender">Activar los avisos</button>
+         <span class="nota">Tu celular se activa aparte, desde la app.</span>`;
 };
 
 const cambiarAvisos = async (prender) => {
@@ -1714,5 +1726,8 @@ export const desmontarChat = () => {
 if (typeof window !== 'undefined') window.__chat = { latir, mandar, crearDirecta, crearGrupo, borrar, bajarSala, marcasDelServidor,
                   mandarConAdjunto, subirAdjunto, achicarFoto,
                   anunciarme, mirarQuienEsta, enLinea, nombreBonito, sincronizarReloj,
+                  /* Para probar el cartel de avisos sin que el navegador conceda el
+                     permiso de verdad, que en una prueba automatica no se puede. */
+                  fingirEstadoAvisos: (e) => { avisosEstado = e; avisosAbierto = true; pintarAvisos(); },
                   estado: () => ({ salas, mensajes, leidos, noLeidos, abiertas, versionesVistas,
                                    sinLeer: sinLeerTotal() }) };
