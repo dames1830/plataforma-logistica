@@ -8225,9 +8225,9 @@ const fuentesDelTurno = async (dia) => {
             }
         } catch (e) { console.warn('[TURNO] Buffer del arranque:', e); }
     } else {
-        /* Jornada cerrada: lo que congeló el robot a las 06:30. Si esa noche el robot
-           no corrió, no hay fotos y las tres filas quedan sin avance medido, que es lo
-           honesto: se pueden escribir a mano. */
+        /* Jornada cerrada: las fotos que saca el ancla de las 07:00 con la fecha de esa
+           noche. Si el robot no corrió, no hay fotos y las tres filas quedan sin avance
+           medido, que es lo honesto: se pueden escribir a mano. */
         try {
             const bc = await leerArea('buffer_c_cierre', hoy);
             if (bc && bc.detalle) {
@@ -8242,6 +8242,18 @@ const fuentesDelTurno = async (dia) => {
                     totalC: Object.keys(bcAhora).reduce((s, a) => s + (bcAhora[a] || 0), 0),
                     lineas: 0, cerrada: true
                 };
+            }
+            /* LO MATRICULADO EN EL BUFFER AL CERRAR — 17-sep-2026.
+               La separación es min(plan, bajó de reserva, matriculado), y con la jornada
+               cerrada le faltaba la tercera punta: sin ella contaba lo que solo se había
+               bajado, la misma cuenta que la Bajada de paletas. La trae la foto del cierre
+               (`buffer`, desde el ancla del 17-sep) y la base es el buffer de cuando se
+               procesó el análisis esa noche. Sin las dos, la cuenta sigue como estaba. */
+            if (bc && bc.buffer) {
+                try {
+                    const bp = await leerArea(AREA_BUFFER_DEL_PLAN, hoy);
+                    if (bp && bp.detalle) { bufAhora = bc.buffer; bufIni = bp.detalle; }
+                } catch (e) { /* sin la base, la separación queda sin el tope de la matrícula */ }
             }
             /* La foto de reserva del cierre. `detalle` son los pares por paleta y
                `porCodigo` los abre por artículo — lo agrega el robot en la corrida de
@@ -8260,6 +8272,12 @@ const fuentesDelTurno = async (dia) => {
                     });
                 }
             }
+            /* LAS FOTOS DEL CIERRE LAS SACA EL ANCLA DE LAS 07:00, y son las que cierran la
+               noche. Se avisa con su hora para que el módulo las tome UNA vez aunque la
+               jornada ya tenga avance guardado — ver `tomaLaFotoDelCierre` en
+               turno_actividades.js. */
+            const horaDelCierre = (bc && bc.hora) || (rc && rc.hora) || '';
+            if (horaDelCierre) F.fotoDelCierre = { hora: horaDelCierre };
             /* `activo_cierre` ya no se lee: era la punta de la separación vieja, la que
                exigía que el par apareciera en su ubicación de destino. Con la regla de
                Daniel del 18-ago —separado es lo que bajó de reserva— sobran las dos

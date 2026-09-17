@@ -1543,6 +1543,25 @@ def run(fecha=None, ruta_act_dada=None, ruta_res_dada=None, igualmente=False):
 
             cierre_c = foto_buffer_c(act_web)
             cierre_c["fecha"] = jornada
+            # LO MATRICULADO EN EL BUFFER AL CERRAR, de los códigos del plan de esa noche.
+            #
+            # La separación es min(plan, bajó de reserva, matriculado). Con la jornada
+            # cerrada a la pantalla le faltaba esta punta y contaba lo que solo se había
+            # bajado, la misma cuenta que la Bajada de paletas (17-sep-2026). Es la misma
+            # función con la que `foto_del_plan.py` guarda la base, para que las dos
+            # puntas de la resta midan lo mismo. Si falla, la foto sale igual sin él.
+            try:
+                import foto_del_plan
+                plan = bajar_area("plan_buffer", jornada) or {}
+                cods = plan.get("codigos") if isinstance(plan, dict) else None
+                codigos = set(str((c or {}).get("sku") or "").strip() for c in (cods or []))
+                codigos.discard("")
+                cierre_c["buffer"] = foto_del_plan.buffer_por_codigo(act_web, codigos or None)
+                log("Buffer al cierre: %s artículos del plan matriculados"
+                    % format(len(cierre_c["buffer"]), ",d"))
+            except Exception as e:
+                log("No se pudo sumar lo matriculado en el buffer a la foto del cierre: %s: %s"
+                    % (type(e).__name__, str(e)[:150]), "WARN")
             log("Guardando el Buffer C del cierre de la jornada %s: %s pares en %s artículos"
                 % (jornada, cierre_c["pares"], cierre_c["articulos"]))
             if not subir_datos(AREA_BUFFER_C_CIERRE, cierre_c, fecha=jornada):

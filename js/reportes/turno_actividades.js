@@ -183,7 +183,12 @@ export const montarTurno = function (RAIZ, OPC) {
     }
     return g;
   }
-  function guardar() { if (typeof OPC.alGuardar === 'function') OPC.alGuardar(S); }
+  function guardar() {
+    /* Lo que se guarda con la jornada cerrada ya trae medida la foto del cierre: se anota
+       su hora para que no se vuelva a tomar. Ver `tomaLaFotoDelCierre`. */
+    if (tomaLaFotoDelCierre()) S.fotoDelCierre = OPC.fuentes.fotoDelCierre.hora;
+    if (typeof OPC.alGuardar === 'function') OPC.alGuardar(S);
+  }
 
   /* El navegador ofrece lo que ya se escribió en campos parecidos y lo pinta
      ENCIMA de la celda: en la columna Unidad se veían letras sueltas de otra
@@ -854,7 +859,40 @@ export const montarTurno = function (RAIZ, OPC) {
   function congelado(p, campo) {
     var cerrada = !!(OPC.fuentes && OPC.fuentes.jornadaCerrada);
     if (campo === 'meta') return metaCongelada();
+    if (esFuenteDeFoto(p.fuente) && tomaLaFotoDelCierre()) return false;
     return cerrada && p.av > 0;
+  }
+
+  /* LA FOTO DE LAS 07:00 CIERRA LA NOCHE — 17-sep-2026.
+   *
+   * La jornada pasa a cerrada a las 06:30 y desde ahí el avance guardado quedaba fijo.
+   * Pero la última foto de stock de la noche es la de las 04:00 —de 05:30 a 08:30 el WMS
+   * queda libre para el ancla— y la que cierra la noche es la de las 07:00, como pidió
+   * Daniel el 04-sep: *"que sea el de las siete el que cierre el turno de noche en tema
+   * de los stocks"*. Esa foto llegaba cuando el avance ya no se movía: la noche del 16
+   * quedó medida a las 04:00 con la separación planificada hasta las 05:45.
+   *
+   * Ahora las filas que se miden con fotos —Limpieza de Buffer C, Bajada de paletas y
+   * Separación— toman las fotos del cierre UNA vez, aunque ya tengan avance guardado. Al
+   * guardar se anota la hora de esa foto y desde ahí quedan fijas. Daniel, 17-sep:
+   * *"corrige y deja a slotting a mano"*.
+   *
+   * Lo escrito a mano no se toca (`aMano` manda antes de llegar acá), el avance sigue sin
+   * poder achicarse, y las noches anteriores al 16-sep quedan como se midieron. Las fotos
+   * del cierre tienen fecha y no cambian, así que abrir la jornada antes de que alguien
+   * guarde da siempre los mismos números: no es el "mirar cambia los datos" del 13-ago. */
+  /* Van como funciones y no como `var` sueltas: `guardar()` y `congelado()` se definen más
+     arriba y una `var` recién tiene valor cuando la ejecución llega a su línea. */
+  function esFuenteDeFoto(fuente) {
+    return fuente === 'bufferC' || fuente === 'paletas' || fuente === 'separacion';
+  }
+  function tomaLaFotoDelCierre() {
+    var DESDE = '2026-09-16';
+    var F = OPC.fuentes || {};
+    var foto = F.fotoDelCierre;
+    return !!(F.jornadaCerrada && foto && foto.hora
+      && String(S.dia || '') >= DESDE
+      && S.fotoDelCierre !== foto.hora);
   }
 
   /* ¿ESTA CONGELADA LA META? Lo decide el candado, no el hecho de que ya haya un
