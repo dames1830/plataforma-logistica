@@ -113,10 +113,11 @@ SEG_MIN_CELDA = 5 * 60
 SEG_MIN_DIA = 15 * 60
 SEG_LINEA_MIN = 5
 SEG_MUESTRA_CORTA = 60 * 60
-# DOS MARCAS PEGADAS SON LA MISMA TANDA. En embalaje el WMS estampa un solo
-# instante por caja, asi que sin este puente cada tarea duraria cero y el
-# ritmo se iria al cielo. Un hueco mayor que esto si es tiempo parado.
-PUENTE_SEG = 15 * 60
+# LA PAUSA Y EL REFRIGERIO, con los numeros de Daniel (17-sep-2026): menos de 30
+# minutos sin embalar es trabajo; 30 o mas es el refrigerio, y se descuentan hasta
+# 60 minutos en el dia. Ver `tiempo_de_cada_par`.
+PAUSA_SEG = 30 * 60
+REFRIGERIO_SEG = 60 * 60
 
 
 def base_onedrive():
@@ -515,10 +516,10 @@ iTarea = col('Número de tarea')
 ES_PRE = re.compile(r'^W?PRE', re.I)
 
 cel = defaultdict(lambda: defaultdict(float))
-# (canal, persona, hora, clase) -> {tarea: [segundos]}. Hace falta la
-# TAREA para poder armar los tramos; una lista suelta no distingue el
-# rato trabajado del rato parado.
-sellos = defaultdict(lambda: defaultdict(list))
+# persona -> [(segundo, canal, clase, hora)]: cada linea embalada de esa persona, de
+# TODOS los canales. El refrigerio se busca sobre la lista entera; ver
+# `tiempo_de_cada_par`.
+eventos = defaultdict(list)
 
 # EL TIEMPO PARA MEDIR PRODUCTIVIDAD. La misma regla que en picking, ver el
 # comentario largo en `produccion_picking.py`: cada tarea aporta (ultimo pick -
@@ -590,22 +591,17 @@ for x in crudas:
     tipos_vistos[can][tipo_orden.get(dt(x, iOrd)) or '(sin dato)'] += 1
     destinos[can][dt(x, iDest)] += 1
 
-    # LA TAREA: la del WMS, y si falta el LPN —la caja que se esta cerrando—.
-    tarea = dt(x, iTarea) or ('L:' + dt(x, iLpn))
-    tarea_real = dt(x, iTarea)      # sin el apaño del LPN
+    tarea_real = dt(x, iTarea)      # sin apaño: solo lo usan `_s` y `_q`
+    eventos[usr].append((seg, can, clase, h))
     for k in (can, TODOS):
         personas[k].add(usr)
         cel[(k, usr, h, clase)]['pares'] += pares
         cel[(k, usr, h, clase)]['lineas'] += 1
-        sellos[(k, usr, h, clase)][tarea].append(seg)
-        sellos[(k, usr, None, clase)][tarea].append(seg)
         if tarea_real:
             sellos_tarea[(k, usr, h, clase)][tarea_real].append(seg)
             sellos_tarea[(k, usr, None, clase)][tarea_real].append(seg)
             pares_tarea[(k, usr, h, clase)] += pares
             pares_tarea[(k, usr, None, clase)] += pares
-        sellos[(k, usr, h, 'total')][tarea].append(seg)
-        sellos[(k, usr, None, 'total')][tarea].append(seg)
         lineas_ph[(k, h)][clase] += pares
         lineas_ph[(k, h)]['lineas'] += 1
         marcas[(k, mar)][clase] += pares
@@ -650,53 +646,74 @@ def minutos_sumados(por_tarea):
     return sum(max(v) - min(v) for v in por_tarea.values() if len(v) > 1)
 
 
-def tramos(por_tarea):
-    """Los ratos en que esa persona estuvo trabajando, ya fusionados.
+def tiempo_de_cada_par(picks):
+    """EL TIEMPO TRABAJADO DE UNA PERSONA EN EL DIA, repartido entre lo que embalo.
 
-    UNIR, NO SUMAR. Las tareas se solapan -varios contenedores en un mismo
-    recorrido-, asi que sumar sus duraciones cuenta el mismo minuto dos veces y
-    da mas horas que las del dia. Fusionando, lo que queda entre tramo y tramo
-    es tiempo parado: el refrigerio sale solo, sin descontarlo a mano.
+    La misma regla de Daniel que en `produccion_picking.py`, ver el comentario largo
+    ahi: el reloj va de la primera a la ultima caja cerrada; una pausa de menos de 30
+    minutos es trabajo; una de 30 o mas es el refrigerio y se descuentan hasta 60
+    minutos en el dia; y el rato entre una caja y la siguiente se lo lleva la
+    siguiente. El WMS estampa un solo instante por caja, asi que las lineas de una
+    misma caja se reparten ese rato en partes iguales.
 
-    UNA PAUSA CON LA TAREA ABIERTA TAMBIEN ES PAUSA, desde el 17-sep-2026: la
-    tarea se corta donde pasan mas de PUENTE_SEG sin una sola caja cerrada, igual
-    que entre una tarea y otra. Antes entraba entera y el refrigerio de quien no
-    la cerraba se contaba como trabajo. Ver `tramos` en produccion_picking.py.
+    `picks` son [(segundo, canal, clase, hora)] de UNA persona, de todos los canales.
+    Devuelve {(canal, hora, clase): [[desde, hasta], ...]}, sin intervalos que se pisen.
     """
-    if not por_tarea:
-        return []
-    ts = []
-    for v in por_tarea.values():
-        marcas = sorted(v or [])
-        if not marcas:
-            continue
-        ini = fin = marcas[0]
-        for x in marcas[1:]:
-            if x - fin > PUENTE_SEG:
-                ts.append((ini, fin))
-                ini = x
-            fin = x
-        ts.append((ini, fin))
-    if not ts:
-        return []
-    ts.sort()
-    fus = [list(ts[0])]
-    for a, b in ts[1:]:
-        # se pisan, o estan lo bastante pegados como para ser la misma tanda
-        if a <= fus[-1][1] + PUENTE_SEG:
+    if not picks:
+        return {}
+    en = defaultdict(list)
+    for s, can, clase, h in picks:
+        en[s].append((can, clase, h))
+    tiempos = sorted(en)
+    huecos = [(tiempos[i] - tiempos[i - 1], i) for i in range(1, len(tiempos))]
+
+    descuento = {}
+    resto = REFRIGERIO_SEG
+    for d, i in sorted((x for x in huecos if x[0] >= PAUSA_SEG), reverse=True):
+        if resto <= 0:
+            break
+        descuento[i] = min(d, resto)
+        resto -= descuento[i]
+
+    out = defaultdict(list)
+    for d, i in huecos:
+        desde, hasta = tiempos[i - 1] + descuento.get(i, 0), tiempos[i]
+        quienes = sorted(en[hasta])
+        for j, (can, clase, h) in enumerate(quienes):
+            a = desde + (hasta - desde) * j // len(quienes)
+            b = desde + (hasta - desde) * (j + 1) // len(quienes)
+            if b > a:
+                out[(can, h, clase)].append([a, b])
+    return out
+
+
+def pegar(intervalos):
+    """Ordena y junta los intervalos que se tocan; no se pisan, la suma no cambia."""
+    fus = []
+    for a, b in sorted(intervalos or []):
+        if fus and a <= fus[-1][1]:
             fus[-1][1] = max(fus[-1][1], b)
         else:
             fus.append([a, b])
     return fus
 
 
+iv_trabajo = defaultdict(list)
+for _usr, _picks in eventos.items():
+    for (_can, _h, _clase), _ivs in tiempo_de_cada_par(_picks).items():
+        for _k in (_can, TODOS):
+            for _hh in (_h, None):
+                for _c in (_clase, 'total'):
+                    iv_trabajo[(_k, _usr, _hh, _c)].extend(_ivs)
+
+
 def celda(can, usr, h):
-    """Una celda: el volumen de las tres clases y EL PRIMER Y ULTIMO PICK.
+    """Una celda: el volumen de las tres clases y LOS RATOS TRABAJADOS de cada una.
 
     NO SE PUBLICA EL RITMO YA CALCULADO. La pantalla deja elegir varios canales a
-    la vez, y los ritmos no se suman: hay que rehacerlos sobre el conjunto. Con
-    el minimo de los minimos y el maximo de los maximos, mas las lineas sumadas,
-    el guion saca exactamente el mismo numero que sacaria aca.
+    la vez, y los ritmos no se suman: hay que rehacerlos sobre el conjunto. Como los
+    ratos de dos canales nunca comparten un segundo, la pantalla los junta, suma
+    los pares y saca exactamente el mismo numero que sacaria aca.
     """
     o = {}
     tot_l = 0
@@ -717,7 +734,7 @@ def celda(can, usr, h):
             tot_l += n
             o[c] = int(round(d.get('pares', 0)))
             o[c + '_l'] = n
-        o[c + '_iv'] = tramos(sellos.get((can, usr, h, c)))
+        o[c + '_iv'] = pegar(iv_trabajo.get((can, usr, h, c)))
         if c != 'total':
             o[c + '_s'] = minutos_sumados(sellos_tarea.get((can, usr, h, c)))
             o[c + '_q'] = int(round(pares_tarea.get((can, usr, h, c), 0)))
@@ -766,7 +783,10 @@ salida = {
     'horas': HORAS,
     'cortes': {'lineasCelda': LINEAS_MIN_CELDA, 'lineasDia': LINEAS_MIN_DIA,
                'minutosCelda': SEG_MIN_CELDA // 60, 'minutosDia': SEG_MIN_DIA // 60,
-               'segLineaMin': SEG_LINEA_MIN, 'puenteMin': PUENTE_SEG // 60, 'muestraCortaMin': SEG_MUESTRA_CORTA // 60},
+               'segLineaMin': SEG_LINEA_MIN, 'muestraCortaMin': SEG_MUESTRA_CORTA // 60,
+               # PUENTE EN CERO: los ratos ya traen cada pausa corta adentro
+               'puenteMin': 0,
+               'pausaMin': PAUSA_SEG // 60, 'refrigerioMin': REFRIGERIO_SEG // 60},
     'canales': [TODOS] + con_datos,
     'gentePorCanal': {c: len(personas[c]) for c in [TODOS] + con_datos},
     'preFuera': {'lineas': pre_fuera, 'pares': int(round(pre_pares))},

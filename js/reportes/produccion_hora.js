@@ -534,7 +534,7 @@ export function montarProduccionHora(cont, OPC) {
             ${HORAS.map(h => `<th class="n">${String(h).padStart(2, '0')}</th>`).join('')}
             <th class="n">Pares</th>
             <th class="n" title="pares por hora sobre el tiempo trabajado">Par/h</th>
-            <th class="n" title="minutos de trabajo, sumando tramos">Min</th></tr></thead>
+            <th class="n" title="minutos trabajados: del primer al último par, sin el refrigerio">Min</th></tr></thead>
           <tbody id="ph_cuerpo"></tbody></table></div>
         <div class="ph-nota" id="ph_mtz_nota"></div>
       </div>
@@ -677,13 +677,13 @@ export function montarProduccionHora(cont, OPC) {
 
         /* el turno hora por hora */
         const maxh = Math.max(1, ...HORAS.map(h => v.por_hora[h].total));
-        const topeGente = act.length ? Math.max(...act.map(y => v.por_hora[y[0]].personas)) : 0;
-        const valle = act.filter(x => v.por_hora[x[0]].personas >= topeGente / 2)
-            .reduce((a, b) => b[1] < a[1] ? b : a, [0, Infinity]);
+        /* SIN ETIQUETA DE REFRIGERIO. Marcaba como "refrigerio" la hora en que el equipo picó
+           menos, y eso se leía como que la pantalla da por hecho que todos almuerzan a las
+           13:00. Daniel, 17-sep-2026: *"quita la etiqueta que dice refrigerio"*. El refrigerio
+           de cada persona lo saca el robot de sus propios picks, a la hora que sea. */
         el('horas').innerHTML = HORAS.map(h => {
             const x = v.por_hora[h], n = x.personas;
-            const eti = h === pico[0] ? ' <span class="ph-eti ph-eti-ok">pico</span>'
-                      : h === valle[0] ? ' <span class="ph-eti ph-eti-ojo">refrigerio</span>' : '';
+            const eti = h === pico[0] ? ' <span class="ph-eti ph-eti-ok">pico</span>' : '';
             return `<tr${x.total ? '' : ' class="off"'}>
               <td class="k">${String(h).padStart(2, '0')}:00${eti}</td>
               <td class="n">${nf(x.cal_suelto)}</td><td class="n">${nf(x.cal_prepack)}</td>
@@ -698,12 +698,13 @@ export function montarProduccionHora(cont, OPC) {
                <b>${FUERA.map(h => String(h).padStart(2, '0') + ':00').join(', ')}</b>.`
                 .replace('tambien', 'también')
             : '';
-        el('nota_horas').innerHTML = act.length
-            ? `El hundimiento de las <b>${String(valle[0]).padStart(2, '0')}:00</b> es el
-               refrigerio: ${nf(valle[1])} pares contra ${nf(pico[1])} en el pico de las
-               <b>${String(pico[0]).padStart(2, '0')}:00</b>.` + avisoFuera
+        /* La frase de abajo decía lo mismo que la etiqueta —"el hundimiento de las 13:00 es el
+           refrigerio"— y se fue con ella. Queda solo el aviso de las horas fuera del turno. */
+        const notaHoras = act.length ? avisoFuera
             : (sel.length ? 'Esta selección no movió nada ese día.'
                           : 'Elige al menos un canal arriba.');
+        el('nota_horas').innerHTML = notaHoras;
+        el('nota_horas').hidden = !notaHoras.trim();
 
         pintarMatriz(v);
 
@@ -834,19 +835,30 @@ export function montarProduccionHora(cont, OPC) {
               + 'estuvo realmente trabajando. El prepack cuenta por sus pares y el no calzado '
               + 'por sus unidades.'
             : 'Cada celda son los <b>pares</b> que esa persona ' + esc(T.verbo) + ' en esa hora.');
+        /* LA REGLA DEL TIEMPO SE DICE COMO LA PUBLICÓ EL ROBOT. Desde el 17-sep-2026 es la de
+           Daniel —menos de 30 min sin mover nada es trabajo; de las pausas de 30 o más se
+           descuenta el refrigerio, hasta 60 min en el día— y el cuadro trae `pausaMin`. Los
+           días calculados antes siguen con el puente de 15 min, y dicen eso. */
+        const reglaTiempo = C.pausaMin != null
+            ? `Las pausas de menos de ${C.pausaMin} min cuentan como trabajo; de las de
+               ${C.pausaMin} min o más se descuenta el refrigerio, hasta ${C.refrigerioMin} min
+               en el día.`
+            : `Se unen las pausas de hasta ${C.puenteMin || 15} min: el refrigerio y las pausas
+               largas no cuentan.`;
         el('mtz_nota').innerHTML =
             `<b>${gente.length} de ${v.gente.length} personas</b> `
             + (esEf ? `tienen ritmo medible en ${NOMBRE[clase]}`
                     : `${esc(T.accion)} ${NOMBRE[clase]}`)
             + '; el resto no figura. '
             + (esEf
-                ? `<b>Pares por hora</b> sobre el tiempo trabajando, uniendo pausas de hasta
-                   ${C.puenteMin || 15} min: el refrigerio y las pausas largas no cuentan. Una raya
+                ? `<b>Pares por hora</b> sobre el tiempo trabajado, del primer al último par.
+                   ${reglaTiempo} Una raya
                    no es un cero: es que en esa hora trabajó muy poco para medir un ritmo
                    —hacen falta ${C.minutosCelda} min en la celda y ${C.minutosDia} en el día—,
                    o que el WMS confirmó un bloque de golpe, que no es alguien trabajando.`
                 : 'Ordenado por pares: dice cuánto trabajo le tocó a cada uno, no qué tan '
-                  + 'rápido lo hizo. Para eso está Efectividad.');
+                  + 'rápido lo hizo. Para eso está Efectividad. <b>Min</b> va del primer al '
+                  + 'último par. ' + reglaTiempo);
     }
 
     /* ── los enganches ── */
