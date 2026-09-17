@@ -1935,15 +1935,40 @@ async def patch_area_data(area: str, request: Request, tareas: BackgroundTasks,
         if not isinstance(existing_data, list):
             existing_data = []
             
+        # LA MARCA DE LEIDO DEL CHAT NO RETROCEDE. Cada aparato sube su fila entera, y un
+        # celular que todavia no bajo lo leido en la PC la pisaba con su marca vieja. Daniel,
+        # 17-sep-2026: *"lo veo en el aplicativo y en la web me sigue marcando como no leido"*.
+        # Se junta sala por sala y gana la mas adelantada -ver `avisos_chat.mezclar_leidos`-.
+        leido_avanzo = []
+        es_leidos = area == 'chat_leidos' and avisos_chat is not None and isinstance(partial_data, dict)
+
+        def _mensajes_de_la_sala(sala):
+            # Para comparar marcas por ORDEN DE LLEGADA hace falta la lista tal como esta
+            # guardada: el chat guarda todo en MASTER.
+            cursor.execute("SELECT data_json FROM logistics_snapshots WHERE area_id = ? AND snapshot_date = ?",
+                           ('chat_' + str(sala), 'MASTER'))
+            fila_sala = cursor.fetchone()
+            try:
+                lista_sala = json.loads(fila_sala[0]) if fila_sala else []
+            except Exception:
+                lista_sala = []
+            return lista_sala if isinstance(lista_sala, list) else []
+
         if 'id' in partial_data:
             task_id = partial_data['id']
             found = False
             for i, item in enumerate(existing_data):
                 if isinstance(item, dict) and item.get('id') == task_id:
+                    if es_leidos:
+                        partial_data, leido_avanzo = avisos_chat.mezclar_leidos(
+                            item, partial_data, _mensajes_de_la_sala)
                     existing_data[i] = partial_data
                     found = True
                     break
             if not found:
+                if es_leidos:
+                    partial_data, leido_avanzo = avisos_chat.mezclar_leidos(
+                        None, partial_data, _mensajes_de_la_sala)
                 existing_data.append(partial_data)
         else:
             existing_data.append(partial_data)
@@ -1966,6 +1991,14 @@ async def patch_area_data(area: str, request: Request, tareas: BackgroundTasks,
         if avisos_chat is not None and avisos_chat.es_sala(area):
             tareas.add_task(avisos_chat.avisar_del_mensaje,
                             db_path(), area, partial_data, print)
+
+        # Y LO QUE SE LEYO ACA SE BORRA EN LOS OTROS APARATOS de la misma persona: el
+        # aviso que tienen en la bandeja ya no es de un mensaje nuevo.
+        if es_leidos and leido_avanzo:
+            tareas.add_task(avisos_chat.avisar_leido, db_path(),
+                            str(partial_data.get('id') or ''),
+                            str(partial_data.get('aparato') or ''),
+                            leido_avanzo, print)
 
         return {"status": "success", "area": area, "date": target_date, "message": "Parcialmente actualizado"}
     except Exception as e: return {"status": "error", "message": str(e)}

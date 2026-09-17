@@ -149,7 +149,7 @@ def _leer_area(ruta_db, area):
         return []
 
 
-def _anotar_intento(ruta_db, resumen):
+def _anotar_intento(ruta_db, resumen, area='push_ultimo'):
     """Deja constancia del ULTIMO intento de aviso, para poder mirarlo desde fuera.
 
     EL AVISO QUE NO LLEGA FALLA EN SILENCIO. Hasta hoy lo unico que quedaba era un `print` en
@@ -168,7 +168,7 @@ def _anotar_intento(ruta_db, resumen):
                     "VALUES (?, ?, ?, ?) "
                     "ON CONFLICT(area_id, snapshot_date) DO UPDATE SET "
                     "data_json=excluded.data_json, updated_at=excluded.updated_at",
-                    ('push_ultimo', 'MASTER', json.dumps([resumen], ensure_ascii=False),
+                    (area, 'MASTER', json.dumps([resumen], ensure_ascii=False),
                      datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
         conn.commit()
         conn.close()
@@ -276,6 +276,11 @@ def avisar_del_mensaje(ruta_db, area, msg, log=None):
             # MISMA ETIQUETA POR SALA: dos mensajes seguidos de la misma persona
             # se reemplazan en vez de apilarse. Es lo mismo que hacen los robots.
             'etiqueta': 'chat_' + id_sala,
+            # DE QUE MENSAJE ES EL AVISO. Con esto el telefono sabe si el aviso que
+            # tiene en la bandeja es de algo que ya se leyo en la PC -ver `avisar_leido`-.
+            'sala': id_sala,
+            'msg': str(msg.get('id') or ''),
+            'cuando': str(msg.get('cuando') or ''),
         }, ensure_ascii=False)
 
         enviados = 0
@@ -334,4 +339,281 @@ def avisar_del_mensaje(ruta_db, area, msg, log=None):
         return enviados
     except Exception as e:
         apuntar('[CHAT PUSH] no se pudo avisar: %s' % str(e)[:160])
+        return 0
+
+
+# ══════════════════════════════════════════════════════════════════════════════════
+#  LO QUE SE LEYO EN UN APARATO, SE BORRA EN LOS OTROS
+# ══════════════════════════════════════════════════════════════════════════════════
+#
+# Daniel, 17-sep-2026: *"me llega un mensaje a los dos, tanto a la web como al
+# aplicativo, y si lo veo en el móvil ya debería quitar ese aviso en la web, y
+# viceversa... ahorita lo veo en el aplicativo y en la web me sigue marcando como
+# una conversación que todavía no lo veo"*.
+#
+# Son dos arreglos y los dos viven acá:
+#
+#   1. LA MARCA DE LEIDO NUNCA RETROCEDE (`mezclar_leidos`). Cada aparato sube su
+#      fila entera, y el servidor la reemplazaba tal cual: un celular que todavía no
+#      había bajado lo leído en la PC la pisaba con su marca vieja, y la conversación
+#      volvía a figurar como no leída en todos lados.
+#
+#   2. EL AVISO DE LA BANDEJA SE RETIRA (`avisar_leido`). El celular no pregunta
+#      nada con la pantalla apagada: hay que avisarle, igual que con el mensaje.
+
+AREA_LEIDOS = 'chat_leidos'
+
+# QUE TIENE QUE SABER EL AYUDANTE DEL APARATO (`sw.js`) para recibir el aviso de
+# "ya lo viste". Lo escribe la pagina en su suscripcion -campo `sabe`- DESPUES de
+# preguntarselo al ayudante. Un ayudante viejo no entiende este aviso y lo pintaria
+# como un mensaje: a ese no se le manda nada.
+SABE_BORRAR_LO_LEIDO = 2
+
+# Un dia: si el telefono estuvo sin senal, al volver igual tiene que enterarse.
+TTL_LEIDO = 86400
+
+
+def _numero(x):
+    try:
+        return float(x)
+    except (TypeError, ValueError):
+        return None
+
+
+def mezclar_leidos(vieja, nueva, lista_de=None):
+    """Junta la fila guardada con la que llega, sala por sala. NUNCA levanta una excepcion.
+
+    Devuelve `(fila, avanzadas)`: la fila que hay que guardar y las salas en las que la
+    persona leyo algo nuevo, como `(sala, id_antes, id_ahora, hora_antes, hora_ahora)`.
+
+    `lista_de(sala)` devuelve los mensajes de esa sala TAL COMO ESTAN GUARDADOS.
+
+    LA MARCA QUE MANDA ES `ids`: el ultimo mensaje que ese aparato tenia, POR ORDEN DE LLEGADA.
+    El servidor agrega cada mensaje al final de la lista, asi que la posicion en la lista es el
+    orden real en que llegaron, y no depende del reloj de nadie. La hora del mensaje -la que
+    usaba la marca vieja, `salas`- la escribe el reloj de quien lo mando, y en el almacen hay
+    PCs con minutos de diferencia: un mensaje que llega DESPUES puede traer una hora ANTERIOR.
+    Comparando por hora, ese mensaje quedaba como ya leido sin que nadie lo viera.
+
+    GANA LA MARCA MAS ADELANTADA, NO LA ULTIMA QUE LLEGO. Un celular que todavia no bajo lo
+    leido en la PC sube su fila con la marca vieja; antes la pisaba.
+
+    `salas` y `salasMs` se siguen guardando -las usan las marcas de entregado y leido de los
+    demas- y tampoco retroceden: gana la hora mas adelantada, con su hora de lectura pegada.
+    Separarlas haria figurar como leido algo que no se vio.
+
+    Un id que ya no esta en la lista es un mensaje que se llevo el robot de archivado: cuenta
+    como anterior a todos.
+    """
+    try:
+        if not isinstance(nueva, dict):
+            return nueva, []
+
+        def mapa(fila, campo):
+            if isinstance(fila, dict) and isinstance(fila.get(campo), dict):
+                return fila.get(campo)
+            return {}
+
+        n_salas, n_ms, n_ids = mapa(nueva, 'salas'), mapa(nueva, 'salasMs'), mapa(nueva, 'ids')
+        v_salas, v_ms, v_ids = mapa(vieja, 'salas'), mapa(vieja, 'salasMs'), mapa(vieja, 'ids')
+
+        memo = {}
+
+        def posiciones(sala):
+            if sala not in memo:
+                pos = {}
+                try:
+                    for i, m in enumerate((lista_de(sala) if lista_de else None) or []):
+                        if isinstance(m, dict) and m.get('id') is not None:
+                            pos[str(m.get('id'))] = i
+                except Exception:
+                    pos = {}
+                memo[sala] = pos
+            return memo[sala]
+
+        salas, salas_ms, ids, avanzadas = {}, {}, {}, []
+        for sala in set(v_salas) | set(n_salas) | set(v_ids) | set(n_ids) | set(v_ms) | set(n_ms):
+            v, n = str(v_salas.get(sala) or ''), str(n_salas.get(sala) or '')
+            vm, nm = v_ms.get(sala), n_ms.get(sala)
+            vi, ni = str(v_ids.get(sala) or ''), str(n_ids.get(sala) or '')
+
+            # LA HORA Y SU HORA DE LECTURA, en pareja.
+            if n > v:
+                hora, ms = n, (nm if nm is not None else vm)
+            elif v > n:
+                hora, ms = v, (vm if vm is not None else nm)
+            else:
+                hora = n
+                a, b = _numero(vm), _numero(nm)
+                ms = nm if (a is None or (b is not None and b >= a)) else vm
+            if hora:
+                salas[sala] = hora
+            if ms is not None:
+                salas_ms[sala] = ms
+
+            # EL ORDEN DE LLEGADA.
+            avanzo, por_id = False, False
+            if ni and vi and ni != vi:
+                pos = posiciones(sala)
+                pn, pv = pos.get(ni, -1), pos.get(vi, -1)
+                if pn > pv:
+                    ids[sala], avanzo, por_id = ni, True, True
+                elif pv > pn:
+                    ids[sala] = vi
+                else:
+                    # Ninguno de los dos esta en la lista: se decide por la hora, como antes.
+                    ids[sala] = ni if n >= v else vi
+                    avanzo = n > v
+            elif ni:
+                ids[sala] = ni
+                avanzo, por_id = ni != vi, True
+            elif vi:
+                ids[sala] = vi
+                # Un aparato con la version de antes no manda `ids`: vale su hora.
+                avanzo = n > v
+            else:
+                avanzo = n > v
+            if avanzo:
+                # Si avanzo por la hora, sin id nuevo, lo leido se busca por la hora.
+                avanzadas.append((str(sala), vi, ids[sala] if por_id else '', v, n))
+
+        fila = dict(nueva)
+        fila['salas'] = salas
+        fila['salasMs'] = salas_ms
+        fila['ids'] = ids
+        return fila, avanzadas
+    except Exception:
+        return nueva, []
+
+
+def _sabe_borrar(s):
+    try:
+        return int(s.get('sabe') or 0) >= SABE_BORRAR_LO_LEIDO
+    except (TypeError, ValueError):
+        return False
+
+
+def _es_de_otro(m, usuario):
+    """Un mensaje que pudo haber dejado un aviso en la bandeja de `usuario`: de otra persona, y
+    ni borrado ni renglon gris. Es la misma regla con la que `avisar_del_mensaje` decide avisar."""
+    return (isinstance(m, dict) and m.get('id') is not None
+            and str(m.get('de') or '') != str(usuario)
+            and not m.get('aviso') and not m.get('sistema') and not m.get('borrado'))
+
+
+def mensajes_leidos(lista, usuario, id_antes, id_ahora, hora_antes, hora_ahora):
+    """Los mensajes de otros que la persona acaba de leer: los que llegaron DESPUES de su marca
+    anterior y hasta la nueva, por orden de llegada. Si la marca nueva no esta en la lista
+    -aparato con la version de antes-, por la hora."""
+    lista = [m for m in (lista or []) if isinstance(m, dict)]
+    pos = {str(m.get('id')): i for i, m in enumerate(lista) if m.get('id') is not None}
+    if id_ahora and id_ahora in pos:
+        hasta = pos[id_ahora]
+        if id_antes:
+            desde = pos.get(id_antes, -1)
+            return [m for i, m in enumerate(lista) if desde < i <= hasta and _es_de_otro(m, usuario)]
+        # La primera marca por orden de llegada: lo anterior se leyo con la marca por hora.
+        return [m for i, m in enumerate(lista) if i <= hasta and _es_de_otro(m, usuario)
+                and str(m.get('cuando') or '') > str(hora_antes or '')]
+    return sorted([m for m in lista if _es_de_otro(m, usuario)
+                   and str(hora_antes or '') < str(m.get('cuando') or '') <= str(hora_ahora or '')],
+                  key=lambda m: str(m.get('cuando') or ''))
+
+
+def avisar_leido(ruta_db, usuario, aparato, avanzadas, log=None):
+    """Les dice a los OTROS aparatos de la persona que ya leyo. NUNCA levanta una excepcion.
+
+    A QUIEN: a los aparatos de ESA persona, menos el que leyo -ese ya lo sabe- y menos los
+    que tengan el ayudante viejo.
+
+    SOLO SI HAY ALGO QUE BORRAR: si entre la marca anterior y la nueva no hay ningun mensaje
+    de otra persona, ningun telefono tiene un aviso de eso en la bandeja y no se manda nada.
+
+    CUALES: los ids de esos mensajes (`cubiertos`). El aviso de la bandeja lleva el id de su
+    mensaje, y el telefono borra solo el que figure aca. Si mientras tanto entro un mensaje
+    NUEVO a esa conversacion, su aviso no esta en la lista y se queda.
+    """
+    def apuntar(t):
+        if log:
+            try:
+                log(t)
+            except Exception:
+                pass
+
+    try:
+        if not avanzadas or not usuario:
+            return 0
+        clave = _clave()
+        if not clave:
+            return 0
+        try:
+            from pywebpush import webpush, WebPushException
+        except ImportError:
+            return 0
+
+        propio = '%s|%s' % (usuario, aparato or '')
+        suyos = [s for s in _leer_area(ruta_db, AREA_SUS)
+                 if isinstance(s, dict) and str(s.get('usuario')) == str(usuario)
+                 and s.get('endpoint') and s.get('claves') and not s.get('baja')
+                 and _sabe_borrar(s) and str(s.get('id')) != propio]
+        if not suyos:
+            return 0
+
+        salas = None
+        enviados = 0
+        detalle = []
+        for id_sala, id_antes, id_ahora, hora_antes, hora_ahora in avanzadas:
+            tapados = mensajes_leidos(_leer_area(ruta_db, 'chat_' + id_sala), usuario,
+                                      id_antes, id_ahora, hora_antes, hora_ahora)
+            if not tapados:
+                continue
+            if salas is None:
+                salas = _leer_area(ruta_db, AREA_SALAS)
+            datos = json.dumps({
+                'tipo': 'leido',
+                'sala': id_sala,
+                # Los ultimos 40 alcanzan: el aviso de la bandeja es del ultimo mensaje, y un
+                # aviso de Google no puede pesar mas de 4 KB.
+                'cubiertos': [str(m.get('id')) for m in tapados][-40:],
+                # SI LO RECIBE UN AYUDANTE VIEJO -no deberia, ver `sabe`- que al menos diga
+                # algo con sentido y reemplace al aviso de esa conversacion.
+                'titulo': _titulo(ruta_db, salas, id_sala, tapados[-1].get('de')),
+                'cuerpo': '✓ Ya lo viste en otro dispositivo',
+                'etiqueta': 'chat_' + id_sala,
+                'url': _destino_de(id_sala),
+            }, ensure_ascii=False)
+            for s in suyos:
+                try:
+                    webpush(subscription_info={'endpoint': s['endpoint'], 'keys': s['claves']},
+                            data=datos, vapid_private_key=clave,
+                            vapid_claims={'sub': _correo()}, ttl=TTL_LEIDO)
+                    enviados += 1
+                    detalle.append({'aparato': str(s.get('id')), 'sala': id_sala,
+                                    'mensajes': len(tapados), 'resultado': 'entregado a Google'})
+                except WebPushException as e:
+                    codigo = getattr(getattr(e, 'response', None), 'status_code', 0)
+                    apuntar('[CHAT LEIDO] %s no recibio (codigo %s)' % (s.get('id'), codigo))
+                    detalle.append({'aparato': str(s.get('id')), 'sala': id_sala,
+                                    'resultado': 'rechazado', 'codigo': codigo})
+                except Exception as e:
+                    apuntar('[CHAT LEIDO] fallo con %s: %s' % (s.get('id'), str(e)[:120]))
+                    detalle.append({'aparato': str(s.get('id')), 'sala': id_sala,
+                                    'resultado': 'error', 'significa': str(e)[:160]})
+        if detalle:
+            # Aparte del de los mensajes: si compartieran el registro, cada lectura taparia
+            # la constancia del ultimo aviso de mensaje, que es la que se mira cuando algo
+            # no llega.
+            _anotar_intento(ruta_db, {
+                'id': 'ultimo',
+                'cuando': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'usuario': str(usuario),
+                'leyo_en': str(aparato or ''),
+                'enviados': enviados,
+                'detalle': detalle,
+            }, area='push_ultimo_leido')
+        if enviados:
+            apuntar('[CHAT LEIDO] %s leyo: aviso a %d aparato(s)' % (usuario, enviados))
+        return enviados
+    except Exception as e:
+        apuntar('[CHAT LEIDO] no se pudo avisar: %s' % str(e)[:160])
         return 0

@@ -25,23 +25,23 @@
  *  pide nada aparte al servidor.
  * ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-import * as adminService from '../services_v245/adminService.js?v=29.0823';
-import * as DES from '../services_v245/despachoCatalogo.js?v=29.0823';
-import * as ORD from '../services_v245/despachoOrden.js?v=29.0823';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0823';
+import * as adminService from '../services_v245/adminService.js?v=29.0824';
+import * as DES from '../services_v245/despachoCatalogo.js?v=29.0824';
+import * as ORD from '../services_v245/despachoOrden.js?v=29.0824';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0824';
 const BASE_API = (window.API_BASE_URL || 'https://logistics-backend-wv0x.onrender.com') + '/api/logistics';
 
-import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0823';
-import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0823';
-import * as metasService from '../services_v245/metasService.js?v=29.0823';
+import { armarLista, nombreCorto, nombreCompleto, claveDeOrden, iniciales } from '../services_v245/asistencia_comunes.js?v=29.0824';
+import * as tareasComunes from '../services_v245/tareas_comunes.js?v=29.0824';
+import * as metasService from '../services_v245/metasService.js?v=29.0824';
 /* EL TEMA ES EL MISMO DE LA PLATAFORMA, no uno aparte del celular: se guarda por usuario
    y se comparte con la web. Si tuviera el suyo, alguien lo cambiaria en un sitio y
    seguiria viendo el otro en el otro. */
-import * as temaService from '../services_v245/temaService.js?v=29.0823';
+import * as temaService from '../services_v245/temaService.js?v=29.0824';
 /* EL REPORTE QUE SE COMPARTE DESDE TAREAS. Las cuentas salen de aqui, el mismo modulo que
    usan el tablero y el portal publico: no hay una tercera version del calculo. */
-import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0823';
-import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0823';
+import { datosMarcas, armarTurnoDe } from '../reportes/marcas.js?v=29.0824';
+import { marcaCorta } from '../services_v245/reportesComunes.js?v=29.0824';
 /* EL CHAT ES EL MISMO DE LA WEB. De aqui salen las salas, los mensajes, los leidos y la
    presencia: leer algo en el celular lo deja leido en la PC. La app solo dibuja. */
 import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarConAdjunto,
@@ -50,12 +50,12 @@ import { arrancarDatosDelChat, alCambiarElChat, estadoDelChat, mandar, mandarCon
          traerAdjunto, pesoLegible, latir, agregarAlGrupo, sacarDelGrupo,
          /* LA MISMA MARCA QUE LA WEB. El calculo vive en chat.js; aca solo se pinta,
             con la cara de la app. Dos copias del mismo calculo se desincronizan. */
-         marcaDelMensaje } from '../chat.js?v=29.0823';
+         marcaDelMensaje, conversacionEnPantalla } from '../chat.js?v=29.0824';
 /* LOS AVISOS DEL TELEFONO VIVEN EN UN SERVICIO COMPARTIDO desde el 15-sep-2026: la web
    usa exactamente estas funciones para suscribir la PC. Ver `avisos.js`. */
 import { LLAVE_AVISOS, puedeAvisos, mirarAvisos as mirarSuscripcion,
          prenderAvisos as suscribir, apagarAvisos as desuscribir }
-    from '../services_v245/avisos.js?v=29.0823';
+    from '../services_v245/avisos.js?v=29.0824';
 
 /* ── LA PALETA DE LA APP ─────────────────────────────────────────────────────────────────
    Es la de la maqueta aprobada y a proposito NO son las variables de los temas: la app va
@@ -1588,6 +1588,12 @@ const prepararChat = async () => {
     if (chatListo || !YO) return;
     chatListo = true;
     alCambiarElChat(() => { abrirEnCuantoLlegue(); if (seccion === 'chat' || raiz) pintar(); });
+    /* QUE CONVERSACION ESTA EN PANTALLA. Daniel, 17-sep-2026: *"si lo veo en el móvil ya
+       debería quitar ese aviso en la web"*. Lo que entra a la conversacion abierta se da por
+       leido -si hay alguien mirando- y eso apaga el contador de la web. Antes la app no lo
+       decia: un mensaje que llegaba con la conversacion abierta quedaba como no leido en los
+       dos lados. Con la lista de integrantes del grupo encima, los mensajes no se ven. */
+    conversacionEnPantalla(() => (raiz && seccion === 'chat' && chatSala && !gentePantalla) ? chatSala : null);
     try { await arrancarDatosDelChat(YO); } catch (e) { console.warn('[APP] chat:', e && e.message); }
     abrirEnCuantoLlegue();
     pintar();

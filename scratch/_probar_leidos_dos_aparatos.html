@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es" data-tema="indigo">
+<head>
+<meta charset="utf-8">
+<title>Prueba - leido en dos aparatos</title>
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/main.css">
+<style>
+  body { margin: 0; background: var(--bg-dark); color: var(--text-main);
+    font-family: var(--font-ui); padding: 20px; min-height: 100vh; }
+  h1 { font-size: 18px; margin: 0 0 12px; }
+  #estado { font-family: monospace; font-size: 13px; white-space: pre; line-height: 1.7;
+    background: rgba(var(--ink-rgb), .05); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px; }
+  #bitacora { font-family: monospace; font-size: 12px; white-space: pre; margin-top: 12px;
+    line-height: 1.6; color: var(--text-muted, #aaa); }
+</style>
+</head>
+<body>
+<h1 id="titulo">Aparato</h1>
+<div id="estado">cargando&hellip;</div>
+<div id="bitacora"></div>
+
+<script type="module">
+/* UN APARATO DE PRUEBA. Cada pestaña se abre desde un origen distinto (127.0.0.1 y localhost)
+   para que no compartan la memoria del navegador: son dos aparatos de verdad para el chat.
+   NADA de esta pagina empuja el latido: solo mira el estado cada medio segundo. */
+const q = new URLSearchParams(location.search);
+const APARATO = q.get('aparato') || 'pc';
+window.API_BASE_URL = 'http://127.0.0.1:8021';
+try {
+    localStorage.setItem('deam_id_telefono', APARATO);
+    localStorage.removeItem('deam_chat_memoria_dames');
+} catch (e) { /* da igual */ }
+document.getElementById('titulo').textContent = 'Aparato: ' + APARATO.toUpperCase();
+
+const CHAT = await import('../js/chat.js?nocache=' + Date.now());
+await CHAT.montarChat({ username: 'dames', role: 'admin', token: '' });
+
+const bitacora = [];
+const anotar = (t) => {
+    const d = new Date();
+    const hh = [d.getHours(), d.getMinutes(), d.getSeconds()].map(n => String(n).padStart(2, '0')).join(':');
+    bitacora.push(hh + '.' + String(d.getMilliseconds()).padStart(3, '0') + '  ' + t);
+    document.getElementById('bitacora').textContent = bitacora.slice(-25).join('\n');
+};
+window.__bitacora = bitacora;
+
+let antes = null;
+setInterval(() => {
+    const e = window.__chat.estado();
+    const sala = 'pru_leidos';
+    const sin = (e.noLeidos || {})[sala] || 0;
+    const lineas = [
+        'sin leer (sala)   ' + sin,
+        'sin leer (total)  ' + e.sinLeer,
+        'marca por llegada ' + ((e.leidosIds || {})[sala] || '-'),
+        'marca del servidor ' + ((((e.leidosDeTodos || {}).dames || {}).ids || {})[sala] || '-'),
+        'mensajes          ' + ((e.mensajes || {})[sala] || []).map(m => m.id).join(' '),
+        'late cada         ' + (e.relojCada / 1000) + ' s',
+        'alguien mirando   ' + (e.mirando ? 'si' : 'no'),
+        'pestana           ' + document.visibilityState,
+        'titulo            ' + document.title,
+    ];
+    document.getElementById('estado').textContent = lineas.join('\n');
+    const ahora = sin + '|' + ((e.leidosIds || {})[sala] || '');
+    if (ahora !== antes) { anotar('sin leer=' + sin + '  marca=' + ((e.leidosIds || {})[sala] || '-')); antes = ahora; }
+}, 500);
+</script>
+</body>
+</html>

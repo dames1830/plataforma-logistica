@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prueba - la app del celular</title>
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/main.css">
+<style> body { margin: 0; } </style>
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+/* LA APP DEL CELULAR DE VERDAD, contra el servidor de prueba de esta PC. Nada de esta pagina
+   empuja el latido: se toca la pantalla como lo haria una persona. */
+const q = new URLSearchParams(location.search);
+window.API_BASE_URL = 'http://127.0.0.1:8021';
+try {
+    localStorage.setItem('deam_id_telefono', q.get('aparato') || 'cel');
+    localStorage.removeItem('deam_chat_memoria_dames');
+} catch (e) { /* da igual */ }
+const APP = await import('../js/views/app_movil.js?nocache=' + Date.now());
+await APP.renderAppMovil(document.getElementById('app'),
+    { username: 'dames', name: 'DANIEL AMES', role: 'admin', token: '' }, () => {});
+window.__listo = true;
+</script>
+</body>
+</html>

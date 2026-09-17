@@ -34,8 +34,9 @@
 /* LOS AVISOS DE ESTA PC. Daniel, 15-sep-2026: *"tambien hay que hacer lo mismo para la web,
    para que le lleguen una notificacion"*. El mecanismo es el mismo que usa la app del
    celular; lo unico propio de aca es el boton y el cartelito que explica que va a llegar. */
-import { puedeAvisos, mirarAvisos, prenderAvisos, apagarAvisos, queLlega }
-    from './services_v245/avisos.js?v=29.0823';
+import { puedeAvisos, mirarAvisos, prenderAvisos, apagarAvisos, queLlega,
+         idDeEsteAparato, ponerAlDiaAvisos }
+    from './services_v245/avisos.js?v=29.0824';
 
 /* `typeof window` y no `window` a secas: `scratch/probar_marcas_chat.mjs` carga este
    archivo desde Node para comprobar el calculo de las marcas sin navegador, y sin la
@@ -78,6 +79,11 @@ let leidos = {};            // { idSala: 'cuando' del ultimo mensaje leido } —
    Es un area chica -una fila por persona- y viaja en la misma bajada. */
 let leidosDeTodos = {};     // { usuario: { salas: {idSala:'cuando'}, salasMs: {idSala: ms} } }
 let leidosMs = {};          // lo mismo que `leidos`, pero en hora del SERVIDOR
+/* LA MARCA QUE NO DEPENDE DE NINGUN RELOJ: el id del ultimo mensaje leido POR ORDEN DE LLEGADA
+   al servidor. Ver `adoptarLeidos`. */
+let leidosIds = {};         // { idSala: id del ultimo mensaje -en orden de llegada- que se vio }
+let llegada = {};           // { idSala: { idMensaje: posicion en la lista del servidor } }
+let ultimoLlegado = {};     // { idSala: id del ultimo mensaje que llego, de los que ve esta persona }
 let noLeidos = {};          // { idSala: cuantos } — el contador vivo de esta pantalla
 let versionesVistas = {};   // { area: marca } para no bajar lo que no cambió
 let abiertas = [];          // [{ id, plegada }]
@@ -102,6 +108,11 @@ let ultimaMirada = 0;
 /* QUIEN MAS QUIERE ENTERARSE. La app del celular dibuja su propia pantalla, asi que el
    latido le avisa por aca en vez de pintar el cascaron de escritorio. */
 let avisarCambio = null;
+/* QUE CONVERSACION TIENE LA APP DEL CELULAR EN PANTALLA. Las ventanitas de la web viven en
+   `abiertas`; la app dibuja lo suyo y lo dice por aca -ver `conversacionEnPantalla`-. */
+let salaDeLaApp = null;
+/* La ultima vez que alguien toco, movio el raton o escribio en esta pantalla. */
+let ultimaActividad = Date.now();
 
 /* ── LO QUE HABLA CON EL SERVIDOR ──────────────────────────────────────────────────────── */
 
@@ -338,6 +349,10 @@ const mandar = async (idSala, texto, esAviso = false, adjunto = null) => {
     if (adjunto) msg.adjunto = adjunto;
     mensajes[idSala] = (mensajes[idSala] || []).concat(msg);
     leidos[idSala] = msg.cuando;
+    /* Quien escribe vio lo que tenia en pantalla. La marca por orden de llegada va hasta lo
+       ultimo que BAJO, no hasta este mensaje: lo que haya entrado recien y todavia no se vea
+       sigue sin leer. */
+    if (marcaAvanza(idSala, ultimoLlegado[idSala])) leidosIds[idSala] = ultimoLlegado[idSala];
     noLeidos[idSala] = 0;
     pintar();
     try {
@@ -376,8 +391,12 @@ const borrar = async (idSala, idMensaje) => {
  * `salas` se sigue escribiendo para no romper a quien todavia tenga la version vieja. */
 const guardarLeidos = async () => {
     try {
-        await poner(LEIDOS, { id: YO.username, salas: leidos, salasMs: leidosMs });
-        leidosDeTodos[YO.username] = { salas: { ...leidos }, salasMs: { ...leidosMs } };
+        /* `aparato`: desde cual se leyo. El servidor avisa a los OTROS aparatos de la persona
+           para que retiren el aviso de la bandeja; a este no le hace falta. */
+        await poner(LEIDOS, { id: YO.username, salas: leidos, salasMs: leidosMs, ids: leidosIds,
+                              aparato: idDeEsteAparato() });
+        leidosDeTodos[YO.username] = { salas: { ...leidos }, salasMs: { ...leidosMs },
+                                       ids: { ...leidosIds } };
     } catch (e) { /* el contador se corrige en la próxima vuelta */ }
 };
 
@@ -390,15 +409,221 @@ const sinLeer = (idSala) => noLeidos[idSala] || 0;
 
 const sinLeerTotal = () => salas.reduce((s, x) => s + sinLeer(x.id), 0);
 
+/** ¿`id` va mas adelante, POR ORDEN DE LLEGADA, que la marca de leido de esa sala?
+ *
+ * Si la marca de aca no esta en la lista bajada, se avanza igual. O se la llevo el robot de
+ * archivado -y entonces es anterior a todo-, o la puso otro aparato que ya tenia mensajes que
+ * aca todavia no bajaron: en ese caso el servidor se queda con la mas adelantada al guardar
+ * -ver `mezclar_leidos`- y la vuelta siguiente la trae de nuevo. Sin avanzar, una conversacion
+ * con la marca archivada quedaria trabada para siempre. */
+const marcaAvanza = (idSala, id) => {
+    if (!id) return false;
+    const actual = leidosIds[idSala];
+    if (!actual || actual === id) return !actual;
+    const pos = llegada[idSala] || {};
+    if (pos[actual] === undefined) return true;
+    if (pos[id] === undefined) return false;
+    return pos[id] > pos[actual];
+};
+
+/** Da por leida la sala hasta lo ultimo que bajo. Devuelve true si cambio algo. */
 const marcarLeida = (idSala) => {
     const lista = mensajes[idSala] || [];
     const ultimo = lista.slice(-1)[0];
+    const habia = noLeidos[idSala] || 0;
     noLeidos[idSala] = 0;
-    if (ultimo) {
-        leidos[idSala] = ultimo.cuando;
-        leidosMs[idSala] = ahoraDelServidor();
-        guardarLeidos();
+    if (!ultimo) return habia > 0;
+    const hasta = String(ultimo.cuando || '');
+    const avanzaHora = hasta > String(leidos[idSala] || '');
+    const avanzaId = marcaAvanza(idSala, ultimoLlegado[idSala]);
+    /* NADA NUEVO QUE MARCAR, NADA QUE ESCRIBIR. Pasa seguido: la conversacion ya estaba leida
+       -aca o en el otro aparato- y se vuelve a abrir. Escribir igual hacia viajar la fila
+       entera al servidor por nada. */
+    if (!avanzaHora && !avanzaId && !habia) return false;
+    /* LA MARCA NO RETROCEDE. Si la lista de aca todavia no bajo lo ultimo, lo que tiene es mas
+       viejo que lo que ya se leyo en el otro aparato: se queda la marca de alla. El servidor
+       hace lo mismo al guardar -ver `mezclar_leidos` en `avisos_chat.py`-. */
+    if (avanzaHora) leidos[idSala] = hasta;
+    if (avanzaId) leidosIds[idSala] = ultimoLlegado[idSala];
+    if (!avanzaHora && !avanzaId) return true;      // solo habia que apagar el contador de aca
+    leidosMs[idSala] = ahoraDelServidor();
+    guardarLeidos();
+    limpiarAvisos();
+    return true;
+};
+
+/* ══ LO QUE SE LEYO EN OTRO APARATO ═══════════════════════════════════════════════════════
+ *
+ * Daniel, 17-sep-2026: *"me llega un mensaje a los dos, tanto a la web como al aplicativo, y si
+ * lo veo en el móvil ya debería quitar ese aviso en la web, y viceversa... ahorita lo veo en el
+ * aplicativo, y en la web me sigue marcando como una conversación que todavía no lo veo"*.
+ *
+ * LA FILA YA LLEGABA Y NADIE LA USABA. El latido bajaba `chat_leidos` entera -la de todos, para
+ * las marcas azules- pero la MIA solo se leia al abrir la pagina. Lo leido en el celular quedaba
+ * guardado en el servidor, y la web seguia contando con lo suyo hasta que se recargara.
+ *
+ * SE COMPARA POR ORDEN DE LLEGADA, NO POR LA HORA. La hora de cada mensaje la pone el reloj de
+ * quien lo mando, y en el almacen hay PCs con minutos de diferencia: un mensaje que llega DESPUES
+ * puede traer una hora ANTERIOR. Comparando por hora, ese mensaje quedaba como ya leido en los
+ * dos aparatos sin que nadie lo viera -ni sonaba-. El servidor guarda cada mensaje al final de la
+ * lista, asi que su posicion es el orden real en que llegaron. La marca es el id del ultimo que
+ * el otro aparato tenia al leer (`ids`), y lo leido es todo lo que esta hasta esa posicion.
+ *
+ * SOLO AVANZA. Se toma la marca del servidor unicamente en las salas donde va MAS ADELANTE que la
+ * de aca; en las demas no se toca nada. Y el contador nunca SUBE por esto, solo baja: lo que el
+ * otro aparato no alcanzo a ver -un mensaje que entro despues- sigue contando aca.
+ *
+ * Si la marca del servidor es de un mensaje que aca todavia no bajo, se espera: el latido baja
+ * esa sala en la misma vuelta -ver `unaVuelta`- y se decide con la lista entera.
+ *
+ * EL CALCULO VA APARTE Y NO TOCA NADA DE AFUERA, como `calcularEstado`: se prueba sin navegador
+ * en `scratch/probar_marcas_chat.mjs`.
+ */
+export const adoptarLeidos = (o) => {
+    const yo = (o && o.yo) || '';
+    const fila = (o && o.fila) || {};
+    const suyasIds = fila.ids || {};
+    const suyas = fila.salas || {};
+    const suyasMs = fila.salasMs || {};
+    const leidosN = Object.assign({}, (o && o.leidos) || {});
+    const leidosMsN = Object.assign({}, (o && o.leidosMs) || {});
+    const leidosIdsN = Object.assign({}, (o && o.leidosIds) || {});
+    const noLeidosN = Object.assign({}, (o && o.noLeidos) || {});
+    const lista = (o && o.mensajes) || {};
+    const llegadaDe = (o && o.llegada) || {};
+    const cambiaron = [];
+    Object.keys(suyasIds).forEach(sala => {
+        const suya = String(suyasIds[sala] || '');
+        const mia = String(leidosIdsN[sala] || '');
+        if (!suya || suya === mia) return;
+        const pos = llegadaDe[sala] || {};
+        const pSuya = pos[suya];
+        if (pSuya === undefined) return;                     // aca todavia no bajo: se espera
+        if (mia && pos[mia] !== undefined && pos[mia] >= pSuya) return;   // aca va igual o mas adelante
+        leidosIdsN[sala] = suya;
+        const hora = String(suyas[sala] || '');
+        if (hora > String(leidosN[sala] || '')) {
+            leidosN[sala] = hora;
+            if (suyasMs[sala] !== undefined) leidosMsN[sala] = suyasMs[sala];
+        }
+        const quedan = (lista[sala] || []).filter(m => m && m.de !== yo && !m.sistema
+            && !(pos[m.id] <= pSuya)).length;
+        noLeidosN[sala] = Math.min(noLeidosN[sala] || 0, quedan);
+        cambiaron.push(sala);
+    });
+    return { leidos: leidosN, leidosMs: leidosMsN, leidosIds: leidosIdsN, noLeidos: noLeidosN,
+             cambiaron };
+};
+
+/** Toma lo que la persona leyo en otro aparato. Devuelve true si algo cambio. */
+const adoptarMisLeidos = () => {
+    if (!YO) return false;
+    const r = adoptarLeidos({ yo: YO.username, fila: leidosDeTodos[YO.username],
+                              leidos, leidosMs, leidosIds, noLeidos, mensajes, llegada });
+    if (!r.cambiaron.length) return false;
+    leidos = r.leidos; leidosMs = r.leidosMs; leidosIds = r.leidosIds; noLeidos = r.noLeidos;
+    /* El globito de "mensaje nuevo" de esa conversacion ya no tiene nada que anunciar. */
+    if (toastSala && !sinLeer(toastSala)) esconderToast();
+    limpiarAvisos();
+    return true;
+};
+
+/* ══ ¿HAY ALGUIEN MIRANDO? ═══════════════════════════════════════════════════════════════
+ *
+ * Hasta el 17-sep, una ventanita abierta bastaba para dar por leido todo lo que entraba. Con
+ * la PC sola en la oficina, la web marcaba leido cada mensaje apenas llegaba. Mientras cada
+ * aparato llevaba su cuenta no se notaba; ahora que lo leido en uno se borra en el otro, eso
+ * le apagaba a Daniel el aviso del celular de mensajes que nadie habia visto.
+ *
+ * SE DA POR VISTO SOLO SI: la pantalla esta a la vista, la ventana del navegador es la que
+ * esta en uso, y alguien toco, movio el raton o escribio en los ultimos 2 minutos. Es lo que
+ * hace WhatsApp Web: con la ventana en segundo plano el mensaje llega, pero no queda leido
+ * hasta que uno vuelve a ella.
+ */
+const QUIETO_MS = 120000;
+
+const hayAlguienMirando = () => {
+    if (typeof document === 'undefined' || document.visibilityState !== 'visible') return false;
+    try { if (typeof document.hasFocus === 'function' && !document.hasFocus()) return false; }
+    catch (e) { /* si no se puede saber, vale la vista */ }
+    return (Date.now() - ultimaActividad) < QUIETO_MS;
+};
+
+/** Las conversaciones que se ven en pantalla: las ventanitas desplegadas de la web, o la que
+ *  tenga abierta la app del celular. `abiertas` solo vale con el cascaron de la web: en la app
+ *  nadie la dibuja, y una sala que quedara ahi se daria por leida sin que nadie la vea. */
+const salasALaVista = () => {
+    const ids = raiz ? abiertas.filter(v => !v.plegada).map(v => v.id) : [];
+    if (salaDeLaApp) {
+        try { const id = salaDeLaApp(); if (id && ids.indexOf(id) < 0) ids.push(id); }
+        catch (e) { /* la app no contesto: no hay ninguna */ }
     }
+    return ids;
+};
+
+/** Marca leido lo que esta en pantalla, si hay alguien mirando. Devuelve true si marco algo. */
+const leerLoQueSeVe = () => {
+    if (!YO || !hayAlguienMirando()) return false;
+    let marco = false;
+    /* `marcarLeida` ya sabe si hay algo nuevo: si no lo hay, no escribe nada. */
+    salasALaVista().forEach(id => { if (marcarLeida(id)) marco = true; });
+    return marco;
+};
+
+/* VOLVIO. Tras un rato sin tocar nada, o al volver a la ventana: lo que tiene delante ya lo vio,
+   y se pregunta enseguida si hay algo nuevo en vez de esperar a la proxima vuelta. */
+const volvioAMirar = () => {
+    if (!YO || !hayAlguienMirando()) return;
+    if (leerLoQueSeVe()) pintar();
+    acomodarReloj();
+    latir();
+};
+
+const sentirActividad = () => {
+    const ahora = Date.now();
+    const estabaQuieto = (ahora - ultimaActividad) >= QUIETO_MS;
+    ultimaActividad = ahora;
+    if (estabaQuieto) volvioAMirar();
+};
+
+/* ══ LOS AVISOS DE LA BANDEJA DE ESTE APARATO ═══════════════════════════════════════════════
+ *
+ * Lo que se lee ACA tambien tiene que salir de la bandeja de ACA: si Daniel abre la app desde el
+ * icono -y no tocando el aviso-, el aviso del mensaje se quedaba ahi aunque ya lo haya leido.
+ * Los de los OTROS aparatos los retira el servidor -ver `avisar_leido` y `sw.js`-.
+ *
+ * Se retira un aviso del chat si su mensaje ya esta leido aca, y siempre los "✓ Ya lo viste en
+ * otro dispositivo" que hayan quedado. Los avisos de antes de este arreglo no dicen de que
+ * mensaje son: esos se retiran si su conversacion no tiene nada sin leer. */
+let limpiezaPendiente = null;
+
+const limpiarAvisos = () => {
+    if (limpiezaPendiente || typeof navigator === 'undefined' || !navigator.serviceWorker) return;
+    limpiezaPendiente = setTimeout(() => { limpiezaPendiente = null; cerrarAvisosDeLoLeido(); }, 400);
+};
+
+const cerrarAvisosDeLoLeido = async () => {
+    try {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (!reg || typeof reg.getNotifications !== 'function') return;
+        const lista = await reg.getNotifications();
+        lista.forEach(n => {
+            const tag = String(n.tag || '');
+            if (tag.indexOf('chat_') !== 0) return;
+            const d = n.data || {};
+            if (d.visto) { n.close(); return; }
+            const sala = tag.slice('chat_'.length);
+            if (!salaDe(sala)) return;
+            /* Por ORDEN DE LLEGADA, como todo lo leido: un mensaje que aca todavia no bajo no
+               esta leido, y su aviso se queda. */
+            const pos = llegada[sala] || {};
+            const hasta = posicionLeida(sala);
+            const leida = d.msg
+                ? (hasta !== undefined && pos[d.msg] !== undefined && pos[d.msg] <= hasta)
+                : sinLeer(sala) === 0;
+            if (leida) n.close();
+        });
+    } catch (e) { /* sin avisos en este aparato no hay nada que retirar */ }
 };
 
 /* ══ LO ULTIMO QUE SE VIO, GUARDADO EN EL APARATO ═══════════════════════════════════════
@@ -428,7 +653,7 @@ const guardarEnElAparato = () => {
             m[id] = (mensajes[id] || []).slice(-MEMORIA_TOPE);
         });
         localStorage.setItem(claveMemoria(), JSON.stringify({
-            v: 1, salas, mensajes: m, gente, leidos, leidosMs, cuando: Date.now()
+            v: 1, salas, mensajes: m, gente, leidos, leidosMs, leidosIds, cuando: Date.now()
         }));
     } catch (e) { /* sin sitio en el disco: se vive sin memoria, solo tarda mas */ }
 };
@@ -444,6 +669,7 @@ const leerDelAparato = () => {
         if (Array.isArray(c.gente) && c.gente.length) gente = c.gente;
         leidos = c.leidos || {};
         leidosMs = c.leidosMs || {};
+        leidosIds = c.leidosIds || {};
         salas.forEach(x => reponerContador(x.id));
         return salas.length > 0;
     } catch (e) { return false; }
@@ -454,9 +680,20 @@ const olvidarElAparato = () => {
 };
 
 const reponerContador = (idSala) => {
+    const deOtros = (mensajes[idSala] || []).filter(m => m.de !== YO.username && !m.sistema);
+    /* Con la marca por orden de llegada y la lista ya bajada, se cuenta por posicion: no la
+       engaña el reloj de nadie -ver `adoptarLeidos`-. */
+    const pos = llegada[idSala];
+    const marca = leidosIds[idSala];
+    if (pos && marca && pos[marca] !== undefined) {
+        const p = pos[marca];
+        noLeidos[idSala] = deOtros.filter(m => !(pos[m.id] <= p)).length;
+        return;
+    }
+    /* Sin eso -la memoria del aparato antes de bajar, o una marca de la version de antes-, por
+       la hora, como siempre. */
     const desde = leidos[idSala] || '';
-    noLeidos[idSala] = (mensajes[idSala] || [])
-        .filter(m => m.de !== YO.username && !m.sistema && String(m.cuando || '') > desde).length;
+    noLeidos[idSala] = deOtros.filter(m => String(m.cuando || '') > desde).length;
 };
 
 /* -- LAS FOTOS Y LOS ARCHIVOS -------------------------------------------------------------
@@ -673,16 +910,41 @@ const vistoDesde = (idSala) => {
 const bajarSala = async (idSala) => {
     try {
         let lista = await traer('chat_' + idSala);
+        /* EL ORDEN DE LLEGADA SE ANOTA ANTES DE ORDENAR POR HORA. El servidor guarda cada
+           mensaje al final de la lista: la posicion es el orden real en que llegaron, y es con
+           lo que se decide que esta leido -ver `adoptarLeidos`-. Ordenada por hora, se pierde. */
+        const pos = {};
+        lista.forEach((m, i) => { if (m && m.id) pos[m.id] = i; });
         const desde = vistoDesde(idSala);
         if (desde) lista = lista.filter(m => String(m.cuando || '') >= desde);
+        let ultimo = '';
+        lista.forEach(m => { if (m && m.id && (!ultimo || pos[m.id] > pos[ultimo])) ultimo = m.id; });
         lista.sort((a, b) => String(a.cuando).localeCompare(String(b.cuando)));
         const conocidos = {};
         (mensajes[idSala] || []).forEach(m => { conocidos[m.id] = m; });
         const nuevos = lista.filter(m => !conocidos[m.id]);
         mensajes[idSala] = lista;
+        llegada[idSala] = pos;
+        ultimoLlegado[idSala] = ultimo;
         return nuevos;
     } catch (e) { return []; }
 };
+
+/* HASTA DONDE ESTA LEIDA UNA SALA, POR ORDEN DE LLEGADA: la mas adelantada entre la marca de
+   este aparato y la del servidor -que trae lo leido en los otros-. `undefined` si ninguna de
+   las dos esta en la lista bajada. */
+const posicionLeida = (idSala) => {
+    const pos = llegada[idSala] || {};
+    const aca = pos[leidosIds[idSala]];
+    const alla = pos[(((leidosDeTodos[YO.username] || {}).ids) || {})[idSala]];
+    if (aca === undefined) return alla;
+    if (alla === undefined) return aca;
+    return Math.max(aca, alla);
+};
+
+/* La marca del servidor que se fue a buscar, por sala: si no aparece ni bajando la sala -se la
+   llevo el robot de archivado-, no se vuelve a bajar en cada vuelta por ella. */
+let marcaBuscada = {};
 
 /* LA LISTA DE USUARIOS SE VUELVE A PEDIR SI NO VINO.
  *
@@ -711,7 +973,32 @@ const cargarGente = async () => {
 let ultimoIntentoGente = 0;
 const REINTENTO_GENTE = 30000;
 
-const latir = async () => {
+/* UNA VUELTA A LA VEZ.
+ *
+ * El latido lo llaman el reloj, volver a la pestaña, tocar la burbuja, el aviso de "ya lo
+ * viste" que manda el ayudante... Dos vueltas encimadas bajaban la misma sala a la vez y las
+ * dos contaban el mismo mensaje como nuevo: el contador sumaba dos por uno.
+ *
+ * Quien pide una vuelta mientras otra esta en camino recibe esa misma, y al terminar se da UNA
+ * mas: lo que lo hizo llamar -por ejemplo, que se leyo en el celular- puede haber pasado
+ * despues de que la vuelta en camino ya pregunto. El reloj no pide la vuelta extra: si el
+ * servidor anda lento, las vueltas no se amontonan. */
+let latidoEnCurso = null;
+let otraVuelta = false;
+
+const latir = () => {
+    if (latidoEnCurso) { otraVuelta = true; return latidoEnCurso; }
+    latidoEnCurso = (async () => {
+        try {
+            do { otraVuelta = false; await unaVuelta(); } while (otraVuelta);
+        } finally { latidoEnCurso = null; }
+    })();
+    return latidoEnCurso;
+};
+
+const latirDelReloj = () => { if (!latidoEnCurso) latir(); };
+
+const unaVuelta = async () => {
     /* SE LATE TAMBIEN CON LA PESTANA EN SEGUNDO PLANO. El contador del titulo y el tono son
        justamente para cuando la persona esta mirando otra cosa; si el latido se apagara al
        cambiar de pestana, el mensaje aparecia recien al volver. El navegador espacia solo los
@@ -758,21 +1045,43 @@ const latir = async () => {
     }
 
     let llego = null;
+    const aLaVista = salasALaVista();
+    const mirando = hayAlguienMirando();
+    const marcasDeAlla = ((leidosDeTodos[YO.username] || {}).ids) || {};
     for (const s of salas) {
-        const abiertaViva = abiertas.some(v => v.id === s.id && !v.plegada);
-        if (!cambio('chat_' + s.id) && !abiertaViva) continue;
+        const enPantalla = aLaVista.indexOf(s.id) >= 0;
+        const cambiada = cambio('chat_' + s.id);
+        /* Lo leido en otro aparato llega hasta un mensaje que aca puede no haber bajado todavia:
+           se baja la sala en esta misma vuelta, para decidir con la lista entera. */
+        const alla = marcasDeAlla[s.id];
+        const faltaLaMarca = !!alla && ((llegada[s.id] || {})[alla] === undefined)
+            && marcaBuscada[s.id] !== alla;
+        if (!cambiada && !enPantalla && !faltaLaMarca) continue;
+        if (faltaLaMarca) marcaBuscada[s.id] = alla;
         /* `sistema` es lo que deja el robot de archivado: no suena ni pone globo rojo.
            Corre de madrugada y toca todas las conversaciones; sin esto todo el mundo
            amaneceria con un aviso por conversacion. */
-        const nuevos = (await bajarSala(s.id)).filter(m => m.de !== YO.username && !m.sistema);
+        const bajados = await bajarSala(s.id);
+        /* LO QUE YA SE LEYO EN OTRO APARATO no suena, no abre la ventana ni suma al contador:
+           la persona ya lo vio. Pasaba con la web atras: el mensaje bajaba recien despues de
+           leerlo en el celular, y la PC sonaba por algo ya leido. Por ORDEN DE LLEGADA, no por
+           la hora: ver `adoptarLeidos`. */
+        const pos = llegada[s.id] || {};
+        const leidaHasta = posicionLeida(s.id);
+        const nuevos = bajados.filter(m => m.de !== YO.username && !m.sistema
+            && !(leidaHasta !== undefined && pos[m.id] <= leidaHasta));
         if (!nuevos.length) continue;
-        if (abiertaViva) {
+        if (enPantalla && mirando) {
             marcarLeida(s.id);                       // la esta mirando: ya esta leido
         } else {
+            /* En pantalla pero SIN NADIE MIRANDO -la PC sola, o la ventana atras- cuenta como
+               cualquier otra: suena, suma, y se da por leida cuando alguien vuelva. */
             noLeidos[s.id] = (noLeidos[s.id] || 0) + nuevos.length;
             if (!llego) llego = { sala: s, msg: nuevos[nuevos.length - 1] };
         }
     }
+    /* Y DESPUES DE BAJAR, lo leido en el otro aparato: el recuento se hace con la lista fresca. */
+    adoptarMisLeidos();
     abrirEnCuantoLlegue();      // la que pidio el aviso, si ya bajo
     guardarEnElAparato();       // que la proxima vez abra con lo ultimo que se vio
 
@@ -792,21 +1101,37 @@ const latir = async () => {
            celular no hay ventanitas que abrir, y `abrirSala` marcaria la conversacion
            como LEIDA sin que nadie la haya visto — se perderia el aviso. */
         if (raiz && typeof document !== 'undefined' && document.visibilityState === 'visible') {
-            await abrirSala(llego.sala.id);
+            /* `true`: la abre el latido, no la persona. Queda leida solo si hay alguien
+               mirando -ver `hayAlguienMirando`-; si no, se abre y espera a que vuelva. */
+            await abrirSala(llego.sala.id, true);
             tin();
         } else {
             avisar(llego.sala, llego.msg);
         }
     }
     pintar();
+    acomodarReloj();            // el ritmo depende de lo que haya quedado en pantalla
 };
 
+let relojCada = 0;
+
 const acomodarReloj = () => {
-    if (reloj) clearInterval(reloj);
+    if (typeof document === 'undefined') return;
     /* Rapido solo cuando hay algo abierto Y la pestana esta a la vista: si esta oculta, el
-       ritmo lento alcanza y no se gasta bateria ni datos. */
-    const vivo = document.visibilityState === 'visible' && (abiertas.some(v => !v.plegada) || panelAbierto);
-    reloj = setInterval(latir, vivo ? CADA_VIVO : CADA_LENTO);
+       ritmo lento alcanza y no se gasta bateria ni datos.
+     *
+     * Y TAMBIEN CON ALGO SIN LEER Y ALGUIEN MIRANDO. Si Daniel lo lee en el celular con la PC
+     * delante, la PC tiene que apagar el contador en segundos, no en veinte. Con la PC sola
+     * vuelve al ritmo lento: nadie esta mirando ese contador. */
+    const vivo = document.visibilityState === 'visible'
+        && (salasALaVista().length > 0 || panelAbierto || (sinLeerTotal() > 0 && hayAlguienMirando()));
+    const cada = vivo ? CADA_VIVO : CADA_LENTO;
+    /* Si ya va a ese ritmo no se reinicia: el latido lo llama en cada vuelta, y reiniciarlo
+       cada vez correria la siguiente vuelta hacia adelante sin parar. */
+    if (reloj && relojCada === cada) return;
+    if (reloj) clearInterval(reloj);
+    relojCada = cada;
+    reloj = setInterval(latirDelReloj, cada);
 };
 
 /* ══ ENTREGADO Y LEIDO ════════════════════════════════════════════════════════════════════
@@ -1725,7 +2050,9 @@ const abrirEnCuantoLlegue = () => {
     abrirSala(id);
 };
 
-const abrirSala = async (id) => {
+/* `sola`: la abre el latido porque llego un mensaje, no la persona. Queda leida solo si hay
+   alguien mirando -ver `hayAlguienMirando`-; si no, se abre y espera a que vuelva. */
+const abrirSala = async (id, sola = false) => {
     let s = salaDe(id);
     if (!s) {
         /* NO SE ESPERA AL LATIDO.
@@ -1760,7 +2087,7 @@ const abrirSala = async (id) => {
     pintar();
     acomodarReloj();
     await bajarSala(id);
-    marcarLeida(id);
+    if (!sola || hayAlguienMirando()) marcarLeida(id);
     pintar();
     /* `raiz` es null en la app del celular, que usa estos datos y dibuja su propia
        pantalla. Sin la guarda, esto tumbaba el latido entero. */
@@ -2006,8 +2333,16 @@ const escribir = async (idSala) => {
  *  leidos son los mismos: leer algo en el celular lo deja leido en la PC.
  * ══════════════════════════════════════════════════════════════════════════════════════ */
 export const arrancarDatosDelChat = async (session) => {
+    const quienEra = YO && YO.username;
     YO = session && session.username ? session : null;
     if (!YO) return false;
+    /* OTRA PERSONA EN LA MISMA PAGINA: lo leido de la anterior no se mezcla con lo suyo. Lo del
+       servidor se junta con lo que ya habia en memoria -ver `traerLeidos`-, asi que tiene que
+       arrancar vacio. */
+    if (quienEra !== YO.username) {
+        leidos = {}; leidosMs = {}; leidosIds = {}; llegada = {}; ultimoLlegado = {};
+        noLeidos = {}; leidosDeTodos = {}; marcaBuscada = {};
+    }
     try { sonando = localStorage.getItem('chat_tono') !== '0'; } catch (e) { /* da igual */ }
 
     /* PRIMERO LO QUE YA SE SABIA. Se pinta sin pedir nada, asi el chat nunca sale vacio. */
@@ -2020,10 +2355,23 @@ export const arrancarDatosDelChat = async (session) => {
     const traerLeidos = traer(LEIDOS).then(filas => {
         leidosDeTodos = {};
         filas.forEach(f => { if (f && f.id) leidosDeTodos[f.id] = f; });
-        const mio = leidosDeTodos[YO.username];
-        leidos = (mio && mio.salas) || {};
-        leidosMs = (mio && mio.salasMs) || {};
-    }).catch(() => { leidos = {}; leidosMs = {}; leidosDeTodos = {}; });
+        const mio = leidosDeTodos[YO.username] || {};
+        /* LO DEL SERVIDOR MANDA -trae lo leido en los otros aparatos, ya juntado-, pero lo de
+           este aparato que vaya mas adelante no se pierde: si el ultimo guardado fallo, se
+           volveria a ver como nuevo algo ya leido. Las horas se comparan aca; el orden de
+           llegada, en la primera vuelta del latido, cuando las salas ya bajaron. */
+        const deAca = leidos, deAcaMs = leidosMs;
+        leidos = Object.assign({}, deAca);
+        leidosMs = Object.assign({}, deAcaMs);
+        Object.keys(mio.salas || {}).forEach(id => {
+            if (String(mio.salas[id] || '') <= String(leidos[id] || '')) return;
+            leidos[id] = mio.salas[id];
+            if ((mio.salasMs || {})[id] !== undefined) leidosMs[id] = mio.salasMs[id];
+        });
+        leidosIds = Object.assign({}, leidosIds, mio.ids || {});
+    /* SI EL SERVIDOR NO CONTESTA, VALE LO QUE RECORDABA EL APARATO. Antes se borraba todo, y con
+       el servidor reiniciando la persona entraba con todas las conversaciones como no leidas. */
+    }).catch(() => { leidosDeTodos = {}; });
 
     await Promise.all([
         cargarGente().catch(() => false),
@@ -2044,6 +2392,10 @@ export const arrancarDatosDelChat = async (session) => {
         bajarSala(x.id).then(() => reponerContador(x.id)).catch(() => {})));
     guardarEnElAparato();
     acomodarReloj();
+    /* Lo que ya estaba leido antes de abrir sale de la bandeja de este aparato. */
+    limpiarAvisos();
+    /* Que el servidor sepa que este aparato ya entiende el aviso de "ya lo viste". */
+    ponerAlDiaAvisos(YO).catch(() => {});
     /* AL TOCAR EL AVISO DE WINDOWS, ABRIR ESA CONVERSACION.
        El `sw.js` avisa con `{tipo:'ir', url:'...#chat=<sala>'}`. Lo escuchaba SOLO la app del
        celular, asi que en la PC el aviso traia la ventana al frente y dejaba a la persona
@@ -2053,7 +2405,14 @@ export const arrancarDatosDelChat = async (session) => {
             window.__chatEscuchaAvisos = true;
             navigator.serviceWorker.addEventListener('message', (ev) => {
                 const d = ev && ev.data;
-                if (!d || d.tipo !== 'ir') return;
+                /* LO LEYO EN OTRO APARATO: el ayudante lo avisa al recibirlo, y el contador se
+                   apaga ya, sin esperar la proxima vuelta -con la pestaña atras, el navegador
+                   la espacia hasta un minuto-. */
+                if (d && d.tipo === 'leido') { latir(); return; }
+                /* LA APP DEL CELULAR ATIENDE SU PROPIO "ir" -ver `irDesdeElAviso`-. Si ademas lo
+                   atendia esto, la sala quedaba anotada como ventanita abierta en una pantalla
+                   que no tiene ventanitas, y se daba por leido todo lo que entraba ahi. */
+                if (!d || d.tipo !== 'ir' || !raiz) return;
                 const u = String(d.url || '');
                 const i = u.indexOf('#chat');
                 if (i < 0) return;
@@ -2072,7 +2431,8 @@ export const arrancarDatosDelChat = async (session) => {
         let quiere = '';
         if (i >= 0) quiere = decodeURIComponent(h.slice(i + '#chat'.length).replace(/^=/, ''));
         if (!quiere) quiere = pedidoGuardado();
-        if (quiere) setTimeout(() => abrirSala(quiere), 0);
+        /* Solo en la web: la app del celular lee la direccion por su cuenta y abre su pantalla. */
+        if (quiere && raiz) setTimeout(() => abrirSala(quiere), 0);
     } catch (e) { /* da igual */ }
 
     /* `pintarGlobo()` va PRIMERO y aparte del latido: al volver a la pestaña, el nombre tiene
@@ -2080,8 +2440,24 @@ export const arrancarDatosDelChat = async (session) => {
        red y puede tardar segundos. */
     document.addEventListener('visibilitychange', () => {
         pintarGlobo();
-        if (document.visibilityState === 'visible') latir();
+        if (document.visibilityState !== 'visible') { acomodarReloj(); return; }
+        /* Volver a la pestaña o desbloquear el celular lo hace una persona: esta mirando. */
+        ultimaActividad = Date.now();
+        if (leerLoQueSeVe()) pintar();
+        acomodarReloj();
+        latir();
     });
+
+    /* ¿HAY ALGUIEN? Se escucha una sola vez por pagina, aunque se cierre y abra sesion. */
+    try {
+        if (!window.__chatSienteActividad) {
+            window.__chatSienteActividad = true;
+            ['pointerdown', 'keydown', 'wheel', 'touchstart', 'mousemove'].forEach(ev =>
+                window.addEventListener(ev, sentirActividad, { passive: true, capture: true }));
+            /* Volver a la ventana del navegador desde otro programa. */
+            window.addEventListener('focus', () => { ultimaActividad = Date.now(); volvioAMirar(); });
+        }
+    } catch (e) { /* sin esto, lo abierto se da por leido cuando se toca o se escribe */ }
     console.log(`💬 [CHAT] datos listos para ${YO.username}: ${salas.length} conversación(es).`);
     return true;
 };
@@ -2100,6 +2476,10 @@ export const montarChat = async (session) => {
    Se exporta lo que ya existe; no hay funciones nuevas ni reglas nuevas. `alCambiarElChat`
    es el aviso del latido: llega un mensaje, y quien escucha redibuja. */
 export const alCambiarElChat = (fn) => { avisarCambio = fn; };
+/* LA APP DICE QUE CONVERSACION TIENE EN PANTALLA: una funcion que devuelve su id, o null en la
+   lista. Con eso el latido da por leido lo que entra ahi -si hay alguien mirando- y late rapido
+   mientras este abierta, igual que una ventanita de la web. */
+export const conversacionEnPantalla = (fn) => { salaDeLaApp = typeof fn === 'function' ? fn : null; };
 export const estadoDelChat = () => ({
     yo: YO, salas, mensajes, leidos, noLeidos, gente, presencia,
     sinLeerTotal: sinLeerTotal()
@@ -2144,4 +2524,6 @@ if (typeof window !== 'undefined') window.__chat = { latir, mandar, crearDirecta
                      permiso de verdad, que en una prueba automatica no se puede. */
                   fingirEstadoAvisos: (e) => { avisosEstado = e; avisosAbierto = true; pintarAvisos(); },
                   estado: () => ({ salas, mensajes, leidos, noLeidos, abiertas, versionesVistas, gente,
+                                   leidosIds, llegada, leidosDeTodos, relojCada,
+                                   mirando: hayAlguienMirando(),
                                    sinLeer: sinLeerTotal() }) };

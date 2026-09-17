@@ -90,22 +90,71 @@ export const prenderAvisos = async (yo) => {
         userVisibleOnly: true,                       // sin esto el navegador no suscribe
         applicationServerKey: llaveEnBytes(LLAVE_AVISOS)
     });
-    const s = sus.toJSON();
-    await fetch(`${BASE}/api/logistics/${AREA}?date=MASTER`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json',
-                   ...(yo && yo.token ? { 'X-Auth-Token': yo.token } : {}) },
-        body: JSON.stringify({
-            id: yo.username + '|' + idDeEsteAparato(),
-            usuario: yo.username,
-            rol: yo.role || '',
-            endpoint: s.endpoint,
-            claves: s.keys,
-            telefono: navigator.userAgent.slice(0, 90),
-            cuando: new Date().toISOString()
-        })
-    });
+    await guardarSuscripcion(yo, sus.toJSON(), await loQueSabeElAyudante(reg));
     return 'prendidos';
+};
+
+const guardarSuscripcion = (yo, s, sabe) => fetch(`${BASE}/api/logistics/${AREA}?date=MASTER`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json',
+               ...(yo && yo.token ? { 'X-Auth-Token': yo.token } : {}) },
+    body: JSON.stringify({
+        id: yo.username + '|' + idDeEsteAparato(),
+        usuario: yo.username,
+        rol: yo.role || '',
+        endpoint: s.endpoint,
+        claves: s.keys,
+        telefono: navigator.userAgent.slice(0, 90),
+        cuando: new Date().toISOString(),
+        /* Lo que sabe hacer el ayudante de este aparato: el servidor le manda el aviso de
+           "ya lo viste en otro dispositivo" solo si es 2 o mas. Ver `loQueSabeElAyudante`. */
+        sabe: sabe || 0
+    })
+});
+
+/* LE PREGUNTA AL AYUDANTE (`sw.js`) QUE SABE HACER, y no a esta pagina.
+ *
+ * El aviso de "ya lo viste" lo atiende el ayudante, y el ayudante se actualiza por su cuenta:
+ * la pagina nueva puede estar corriendo con el ayudante viejo todavia puesto. Ese viejo no
+ * entiende el aviso y lo pintaria como un mensaje. Por eso se le pregunta a EL; si no contesta
+ * en 3 segundos, es viejo, y se vuelve a preguntar la proxima vez que se abra. */
+const loQueSabeElAyudante = (reg) => new Promise((listo) => {
+    const ayudante = reg && reg.active;
+    if (!ayudante || typeof MessageChannel === 'undefined') { listo(0); return; }
+    const canal = new MessageChannel();
+    const tope = setTimeout(() => listo(0), 3000);
+    canal.port1.onmessage = (ev) => {
+        clearTimeout(tope);
+        listo(Number(ev && ev.data && ev.data.sabe) || 0);
+    };
+    try { ayudante.postMessage({ tipo: 'que-sabes' }, [canal.port2]); }
+    catch (e) { clearTimeout(tope); listo(0); }
+});
+
+/**
+ * PONE AL DIA LA SUSCRIPCION DE ESTE APARATO, sin pedir nada.
+ *
+ * Los aparatos que ya tenian los avisos prendidos se suscribieron con el ayudante viejo, y en
+ * su fila no dice que sepan retirar lo leido. No hay que pedirle a nadie que los vuelva a
+ * prender: al abrir, si el permiso ya esta dado y el ayudante ya es el nuevo, se reescribe la
+ * fila con lo que sabe. Una sola vez por aparato; se anota en el aparato para no repetirlo.
+ */
+export const ponerAlDiaAvisos = async (yo) => {
+    try {
+        if (!yo || !yo.username || !puedeAvisos() || Notification.permission !== 'granted') return false;
+        const anotado = 'deam_avisos_sabe_' + yo.username;
+        let ya = '';
+        try { ya = localStorage.getItem(anotado) || ''; } catch (e) { /* sin memoria: se reescribe */ }
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (!reg) return false;
+        const sus = await reg.pushManager.getSubscription();
+        if (!sus) return false;
+        const sabe = await loQueSabeElAyudante(reg);
+        if (!sabe || String(sabe) === ya) return false;
+        const r = await guardarSuscripcion(yo, sus.toJSON(), sabe);
+        if (r && r.ok) { try { localStorage.setItem(anotado, String(sabe)); } catch (e) { /* da igual */ } }
+        return !!(r && r.ok);
+    } catch (e) { return false; }
 };
 
 /** APAGARLOS en este aparato. Los otros siguen recibiendo. */
