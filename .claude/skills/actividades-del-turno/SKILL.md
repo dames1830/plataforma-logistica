@@ -108,12 +108,40 @@ quedaba fijo. Corregido en v29.0298.
 | **Almacenamiento** | BUFFER | TOTAL | `datosMarcas(...).granTotal` sobre las tareas finalizadas |
 | **Slotting** | a mano | a mano | no hay fuente: el stock no trae usuario |
 | **Limpieza de Buffer C** | lo que había en el C al arrancar | `min(lo que bajó del C, lo que subió fuera del C)` | `buffer_c_arranque` vs `layout_stock_hora` |
-| **Bajada de paletas** | `plan.paletas` | paletas pedidas que ya no están arriba **o tienen menos pares** | `analisis_sku_reserva` vs `reserva_hora` |
+| **Bajada de paletas** | `plan.paletas` | paletas pedidas que ya no están arriba **o perdieron 3 pares o más** | `reserva_arranque` vs `reserva_hora` (`contarPaletasBajadas`) |
 | **Separación de mercadería** | el plan entero, prepack incluido | `min(plan, bajó de reserva, matriculado en el buffer)` | `analisis_sku_reserva` vs `reserva_hora`, y `almacenaje_activo` vs `layout_stock_hora` para el buffer |
 | BPA | — | — | solo Gantt |
 
 **Una paleta no se vacía**: se baja, se le sacan las cajas del plan y vuelve arriba. Por eso la
 bajada cuenta también las que siguen arriba con menos pares — si no, de 164 se veían 47.
+
+## EL PAR QUE SALE POR E-COMMERCE NO ES UNA BAJADA — 16-sep-2026
+
+> *"¿Por qué estás marcando en bajada de paletas cuatro en avance si todavía no he bajado nada?"*
+> — Daniel, 22:12, con el turno recién abierto.
+
+**Las cuatro eran del plan y estaban en la ubicación que dice el plan**, cada una con **UN par
+menos** que a las 19:09. Ese par salió en pedidos de **e-commerce (Multivende)** despachados a las
+19:17 y a las 19:30: de esas cuatro tallas no había ni un par en el piso, así que el WMS lo sacó de
+la paleta de arriba. Nadie bajó nada. En toda la reserva (2.306 paletas) no se había movido nada
+más.
+
+"Le quedan menos pares" contaba ese par suelto como una paleta bajada. **Lo que separa una cosa de
+la otra es la cantidad:** en 28 noches (06-ago al 16-sep, la foto de las 19:00 contra la de la
+mañana) **ninguna paleta bajada perdió 1 o 2 pares** — desaparece de arriba o pierde 3 o más. Y
+ningún plan pidió bajar una paleta de 2 pares o menos.
+
+**La regla: cuenta si ya no está arriba o si perdió 3 pares o más** (`MIN_PARES_PALETA_BAJADA`).
+Desaparecer es perder todo lo que traía. Si la foto del arranque no trae esa paleta, se queda la
+regla de antes: cuenta si ya no está arriba.
+
+**La separación no se toca**: el par del e-commerce no se matricula en el buffer, y el `min()` con
+lo matriculado ya lo deja fuera (con el turno de esa noche daba 0).
+
+**Cómo se comprobó**: cortando `fuentesDelTurno` del dashboard y corriéndola con las áreas del
+servidor de las 22:09 y el reloj en las 22:12 — la de antes da 4, la nueva 0 — y con las noches del
+14 y el 15 cerradas, que dan lo mismo con las dos reglas (96 y 105 paletas). Y simulando tres
+paletas trabajadas, sube a 3.
 
 **Si una fuente falta, la fila queda SIN NÚMERO y editable.** Nunca un cero, que se lee como
 trabajo no hecho.
@@ -127,6 +155,7 @@ trabajo no hecho.
 | **v29.0248** 18-ago | "separado es lo que bajó de reserva" | **Convirtió la separación en una copia de la bajada de paletas.** Las mismas 46 paletas alimentaban las dos filas |
 | **v29.0296** 20-ago | "el prepack no se separa, fuera de la meta" | **Mío, y Daniel no lo pidió.** Dejó la noche en 0 de 1.469 y el trabajo hecho invisible |
 | **v29.0297** 20-ago | — | Faltaba el tercer filtro: **que esté matriculado**. Meta 2.398, avance 512 |
+| **v29.0820** 16-sep | "si la paleta tiene menos pares, se bajó" | Un par de e-commerce sacado de la paleta de arriba contaba como bajada: **4 de 476 sin haber bajado nada** |
 
 **El síntoma siempre fue el mismo** y Daniel lo dijo con las mismas palabras las cuatro veces:
 *"al comenzar el turno ya tenía mercadería separada y no se había bajado ni una paleta"*.
