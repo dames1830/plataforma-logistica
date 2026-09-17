@@ -657,12 +657,29 @@ def tramos(por_tarea):
     recorrido-, asi que sumar sus duraciones cuenta el mismo minuto dos veces y
     da mas horas que las del dia. Fusionando, lo que queda entre tramo y tramo
     es tiempo parado: el refrigerio sale solo, sin descontarlo a mano.
+
+    UNA PAUSA CON LA TAREA ABIERTA TAMBIEN ES PAUSA, desde el 17-sep-2026: la
+    tarea se corta donde pasan mas de PUENTE_SEG sin una sola caja cerrada, igual
+    que entre una tarea y otra. Antes entraba entera y el refrigerio de quien no
+    la cerraba se contaba como trabajo. Ver `tramos` en produccion_picking.py.
     """
     if not por_tarea:
         return []
-    ts = sorted((min(v), max(v)) for v in por_tarea.values() if v)
+    ts = []
+    for v in por_tarea.values():
+        marcas = sorted(v or [])
+        if not marcas:
+            continue
+        ini = fin = marcas[0]
+        for x in marcas[1:]:
+            if x - fin > PUENTE_SEG:
+                ts.append((ini, fin))
+                ini = x
+            fin = x
+        ts.append((ini, fin))
     if not ts:
         return []
+    ts.sort()
     fus = [list(ts[0])]
     for a, b in ts[1:]:
         # se pisan, o estan lo bastante pegados como para ser la misma tanda

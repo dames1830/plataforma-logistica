@@ -593,12 +593,37 @@ def tramos(por_tarea):
     recorrido-, asi que sumar sus duraciones cuenta el mismo minuto dos veces y
     da mas horas que las del dia. Fusionando, lo que queda entre tramo y tramo
     es tiempo parado: el refrigerio sale solo, sin descontarlo a mano.
+
+    UNA PAUSA CON LA TAREA ABIERTA TAMBIEN ES PAUSA. Hasta el 17-sep-2026 cada tarea
+    entraba entera, de su primer a su ultimo pick, y la pausa se buscaba solo ENTRE
+    una tarea y otra: quien se iba a almorzar sin cerrar la tarea se llevaba el
+    refrigerio contado como trabajo. Daniel, mirando el Picking por hora del 16-sep:
+    *"que pasa si es que comenzo su tarea a las doce y termino su tarea a la una y
+    media?"*. Les pasaba a 13 de las 20 personas del calzado suelto: rluna3 no pico
+    nada de 12:48 a 13:43 y esos 55 minutos entraban como trabajo; salia con 153
+    pares por hora en vez de 176.
+
+    Ahora la tarea se corta donde pasan mas de PUENTE_SEG sin un solo pick. La vara
+    es la misma adentro y afuera de la tarea: quince minutos sin mover nada es tiempo
+    parado, este la tarea abierta o cerrada.
     """
     if not por_tarea:
         return []
-    ts = sorted((min(v), max(v)) for v in por_tarea.values() if v)
+    ts = []
+    for v in por_tarea.values():
+        marcas = sorted(v or [])
+        if not marcas:
+            continue
+        ini = fin = marcas[0]
+        for x in marcas[1:]:
+            if x - fin > PUENTE_SEG:
+                ts.append((ini, fin))
+                ini = x
+            fin = x
+        ts.append((ini, fin))
     if not ts:
         return []
+    ts.sort()
     fus = [list(ts[0])]
     for a, b in ts[1:]:
         # se pisan, o estan lo bastante pegados como para ser la misma tanda
