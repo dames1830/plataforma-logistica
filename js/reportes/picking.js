@@ -401,7 +401,9 @@ export const agregar = (filas, maestro) => {
         desde: new Date(Math.min(...a.horas)).toTimeString().slice(0, 5),
         hasta: new Date(Math.max(...a.horas)).toTimeString().slice(0, 5),
         minutos: Math.round((Math.max(...a.horas) - Math.min(...a.horas)) / 60000)
-    })).sort((a, b) => b.lineas - a.lineas).slice(0, 15);
+    // LAS 15 MÁS GRANDES POR PARES desde el 17-sep-2026. Daniel: "todo se debe calcular por
+    // pares, nada en líneas". Antes se elegían por líneas.
+    })).sort((a, b) => b.pares - a.pares).slice(0, 15);
 
     // ── LOS ARTÍCULOS QUE MÁS SALIERON ────────────────────────────────────
     const ta = new Map();
@@ -614,7 +616,7 @@ export const juntarDias = (resumenes, segmento) => {
     // Las corridas son de cada día y no se juntan: se apilan y se queda con las
     // más grandes del período.
     o.corridas = dias.flatMap(d => d.corridas || [])
-        .sort((a, b) => b.lineas - a.lineas).slice(0, 15);
+        .sort((a, b) => b.pares - a.pares).slice(0, 15);
 
     const ta = new Map();
     dias.forEach(d => (d.articulos || []).forEach(x => {
