@@ -7695,6 +7695,23 @@ const AREA_RESERVA_DE_LA_HORA = 'reserva_hora';
    junto con el stock, y es lo que permite saber QUÉ BAJÓ DE ARRIBA y de qué artículo — el
    dato con el que la separación deja de contar lo que llegó por otro lado. */
 const AREA_RESERVA_DEL_ARRANQUE = 'analisis_sku_reserva';
+/* EL PUNTO DE PARTIDA DE LA BAJADA Y DE LA SEPARACIÓN: la foto que saca el robot DESPUÉS
+ * de que se procesa el Análisis de Buffer (17-sep-2026).
+ *
+ * Daniel: *"si yo proceso el análisis buffer a las 8 y me dicen que tengo que bajar de la
+ * paleta 1 hasta la paleta 100, desde las 8 yo comienzo a ver si hay algún avance. ¿Cómo
+ * me vas a decir que ya van 4 de avance y que esas paletas se bajaron antes de las 8?"*.
+ *
+ * La lista nace al procesar, así que lo que pasó antes no puede ser avance de ella. Hasta
+ * acá se medía desde la foto de las 19:09 y la noche del 16-sep contaba 4 pares que
+ * salieron por e-commerce a las 19:17 y 19:30, casi una hora antes del proceso (20:11).
+ *
+ * `reserva_plan` son las paletas altas abiertas por código —igual que `reserva_arranque`—
+ * y `buffer_plan` lo matriculado en el buffer de los códigos del plan. Las saca el robot
+ * del stock de la hora entre 10 y 20 minutos después de procesar (robot/foto_del_plan.py).
+ * Si esa noche no quedaron, se mide desde las 19:09 como antes. */
+const AREA_RESERVA_DEL_PLAN = 'reserva_plan';
+const AREA_BUFFER_DEL_PLAN = 'buffer_plan';
 
 /* LAS CORRIDAS DEL REPLENISHMENT, una por día y hasta siete.
  *
@@ -7927,13 +7944,17 @@ const altasPorCodigoDe = (filas) => {
  * o pierde 3 o más. Y ningún plan pidió bajar una paleta que tuviera 2 pares o menos.
  * Desaparecer es perder todo lo que traía, así que se mide igual.
  *
- * Si la foto del arranque no trae esa paleta no se sabe cuánto tenía, y queda la regla de
- * antes: cuenta si ya no está arriba.
+ * `traia` es la foto desde la que se cuenta: la del plan si el robot ya la sacó, o la del
+ * arranque. UNA PALETA QUE NO ESTÁ EN ESA FOTO NO ESTABA ARRIBA cuando empezó la cuenta, así
+ * que no pudo bajar después: cuenta cero. Es lo que deja fuera a la que bajó antes de
+ * procesar el análisis. Solo si no hay ninguna foto se queda la regla de antes: cuenta si ya
+ * no está arriba.
  */
 const MIN_PARES_PALETA_BAJADA = 3;
 
 const contarPaletasBajadas = (pedidas, traia, palAhora) => {
     let bajaron = 0, pares = 0;
+    const hayFoto = Object.keys(traia || {}).length > 0;
     (pedidas || []).forEach(p => {
         const lpn = String((p && p.lpn) || '').trim().toUpperCase();
         /* Sin LPN no se puede decidir contra la foto del cierre, que guarda
@@ -7943,8 +7964,8 @@ const contarPaletasBajadas = (pedidas, traia, palAhora) => {
         const sigue = palAhora.has(lpn);
         const queda = sigue ? (palAhora.get(lpn) || 0) : 0;
         const antes = traia[lpn] || 0;
-        const bajo = Object.prototype.hasOwnProperty.call(traia, lpn)
-            ? (antes - queda) >= MIN_PARES_PALETA_BAJADA
+        const bajo = hayFoto
+            ? (Object.prototype.hasOwnProperty.call(traia, lpn) && (antes - queda) >= MIN_PARES_PALETA_BAJADA)
             : !sigue;
         if (bajo) {
             bajaron++;
@@ -7992,6 +8013,8 @@ const fuentesDelTurno = async (dia) => {
     leerArea('reserva_cierre', hoy).catch(_nada);
     leerArea('plan_buffer', hoy).catch(_nada);
     leerArea('reserva_arranque', hoy).catch(_nada);
+    leerArea(AREA_RESERVA_DEL_PLAN, hoy).catch(_nada);
+    leerArea(AREA_BUFFER_DEL_PLAN, hoy).catch(_nada);
     leerArea(AREA_RESERVA_DEL_ARRANQUE).catch(_nada);
     bajarCajonDeLaHora(AREA_STOCK_DE_LA_HORA).catch(_nada);
     bajarCajonDeLaHora(AREA_RESERVA_DE_LA_HORA).catch(_nada);
@@ -8189,10 +8212,17 @@ const fuentesDelTurno = async (dia) => {
            Durante la noche el `almacenaje_activo` del servidor ES la foto de las 19:00
            —el robot recién la pisa a las 06:00—. */
         try {
-            const st0 = (dataStore.almacenaje_activo || []).length
-                ? dataStore.almacenaje_activo
-                : await leerArea('almacenaje_activo');
-            if (st0 && st0.length) bufIni = enBufferDe(st0);
+            /* Y SI YA SE PROCESÓ EL ANÁLISIS, la base es lo matriculado en ese momento: lo
+               que entró al buffer antes de que existiera la lista no es separación de ella. */
+            const bp = await leerArea(AREA_BUFFER_DEL_PLAN, hoy);
+            if (bp && bp.detalle) {
+                bufIni = bp.detalle;
+            } else {
+                const st0 = (dataStore.almacenaje_activo || []).length
+                    ? dataStore.almacenaje_activo
+                    : await leerArea('almacenaje_activo');
+                if (st0 && st0.length) bufIni = enBufferDe(st0);
+            }
         } catch (e) { console.warn('[TURNO] Buffer del arranque:', e); }
     } else {
         /* Jornada cerrada: lo que congeló el robot a las 06:30. Si esa noche el robot
@@ -8329,7 +8359,13 @@ const fuentesDelTurno = async (dia) => {
                 /* Y los pares se sacan de la foto del arranque, que es donde está
                    cuánto traía cada paleta cuando todavía estaba arriba. */
                 const arranquePal = await leerArea('reserva_arranque', hoy);
-                const det = (arranquePal && arranquePal.detalle) || {};
+                /* SE CUENTA DESDE QUE SE PROCESÓ EL ANÁLISIS: si el robot ya sacó la foto
+                   del plan, esa es la base y lo que pasó antes no es avance de la lista.
+                   Si no la hay, la del arranque, como hasta el 16-sep. */
+                const fotoPlan = await leerArea(AREA_RESERVA_DEL_PLAN, hoy);
+                const desdeElPlan = !!(fotoPlan && fotoPlan.detalle);
+                const base = desdeElPlan ? fotoPlan : arranquePal;
+                const det = (base && base.detalle) || {};
                 const traia = {};
                 Object.keys(det).forEach(l => { traia[String(l).toUpperCase()] = Number(det[l]) || 0; });
 
@@ -8347,7 +8383,10 @@ const fuentesDelTurno = async (dia) => {
                     hora: horaAhora,
                     alArrancar: pedidas.filter(p => String((p && p.lpn) || '').trim()).length,
                     paresBajados: Math.round(pares),
-                    exacto: exacto
+                    exacto: exacto,
+                    /* Desde qué foto se cuenta, para decirlo en pantalla. */
+                    desde: (base && base.hora) || '',
+                    procesado: desdeElPlan ? String(fotoPlan.procesado || '') : ''
                 });
             }
         } catch (e) { console.warn('[TURNO] Bajada de paletas:', e); }
@@ -8454,7 +8493,13 @@ const fuentesDelTurno = async (dia) => {
                 if (bajo > 0) bajoDeReserva[sku] = (bajoDeReserva[sku] || 0) + bajo;
               };
               let congelada = null;
+              /* LA BASE ES LA FOTO DEL PLAN si el robot ya la sacó: lo que bajó de reserva
+                 antes de procesar el análisis no es separación de esta lista (17-sep-2026). */
               try {
+                const fp = await leerArea(AREA_RESERVA_DEL_PLAN, hoy);
+                if (fp && fp.porCodigo && Object.keys(fp.porCodigo).length) congelada = fp.porCodigo;
+              } catch (e) { /* sin foto del plan */ }
+              if (!congelada) try {
                 const arr = await leerArea('reserva_arranque', hoy);
                 if (arr && arr.porCodigo && Object.keys(arr.porCodigo).length) congelada = arr.porCodigo;
               } catch (e) { /* sin foto congelada */ }

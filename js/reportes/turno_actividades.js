@@ -712,6 +712,13 @@ export const montarTurno = function (RAIZ, OPC) {
         '<b>Llega solo del robot</b> · foto de las <b>' + esc(p.hora) + '</b>' +
         '<br>' + nf(p.avance) + (aprox ? ' paletas bajaron esa noche' : ' de ' + nf(p.alArrancar) + ' paletas pedidas ya no están arriba') +
         (p.paresBajados ? ' · ' + nf(p.paresBajados) + ' pares' : '') +
+        /* DESDE CUÁNDO SE CUENTA (17-sep-2026): lo que pasó antes de procesar el análisis
+           no es avance de la lista, y el número tiene que decir desde qué foto sale. */
+        (p.procesado
+          ? '<br>Cuenta desde la foto de las <b>' + esc(p.desde) + '</b>, sacada después de ' +
+            'procesar el análisis (' + esc(String(p.procesado).slice(0, 5)) + ')'
+          : (p.desde ? '<br>Cuenta desde la foto de las <b>' + esc(p.desde) + '</b>: todavía no ' +
+            'hay foto después de procesar el análisis' : '')) +
         '<br><span style="opacity:.7">Se cuenta paleta por paleta: las que subieron ' +
         'durante el turno no descuentan.' +
         (aprox ? ' <b>Esa noche no se guardó qué paletas pidió el análisis</b>, así que ' +
