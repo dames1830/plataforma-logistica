@@ -66,8 +66,8 @@
  * }
  */
 
-import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0820';
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0820';
+import { resolverColoresChart } from '../services_v245/temaService.js?v=29.0821';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0821';
 
 const nf = (n) => (n || n === 0) ? Math.round(Number(n)).toLocaleString('es-PE') : '–';
 const n1 = (n) => (n || n === 0) ? Number(n).toLocaleString('es-PE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '–';
@@ -537,8 +537,8 @@ export function montarProduccionProyeccion(cont, OPC) {
                 + 'accesorio, y por eso el ritmo sale mucho más alto que en calzado. Se mira '
                 + 'contra sí mismo, no contra el calzado.'
                 : (_modo === 'solid'
-                    ? '. Solo el <b>solid</b>: acá un pick es un par, así que el par sí mide el '
-                    + 'trabajo. Es el número que se compara contra el piso.'
+                    ? '. Solo el <b>solid</b>, en <b>pares</b>. Es el número que se compara contra '
+                    + 'el piso.'
                   : '. Solo el <b>prepack</b>, en <b>pares</b>: cada caja cuenta por los pares '
                     + 'que trae.'))
             + '</p>');

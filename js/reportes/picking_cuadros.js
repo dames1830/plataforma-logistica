@@ -54,12 +54,11 @@ export const cuadroPorHora = (R) => {
           ${td(`<b style="color:var(--text-strong);">${String(x.hora).padStart(2, '0')}:00</b>`)}
           ${td(barra(x.pares, max, x.hora === pico.hora ? 'var(--success)' : 'var(--primary-2)'), false, 'width:45%;')}
           ${td(`<b style="color:var(--text-strong);">${F(x.pares)}</b>`, true)}
-          ${td(F(x.lineas), true, 'color:var(--text-muted);')}
           ${td(x.personas, true, 'color:var(--text-muted);')}
         </tr>`).join('');
     return panel('🕐 A QUÉ HORA SE PICÓ',
         `El pico es a las <b style="color:var(--success-soft);">${String(pico.hora).padStart(2, '0')}:00</b>, con ${F(pico.pares)} pares.`,
-        tabla(th('Hora') + th('') + th('Pares', 1) + th('Líneas', 1) + th('Personas', 1), filas, '340px'),
+        tabla(th('Hora') + th('') + th('Pares', 1) + th('Personas', 1), filas, '340px'),
         'La hora es la del reloj, no la de la jornada. Con varias fechas elegidas se suma la misma hora de cada día; las personas no se suman —es la misma gente— y se muestra el día más cargado.');
 };
 
@@ -69,25 +68,24 @@ export const cuadroCurvas = (R) => {
     const d = R.curvas || [];
     if (!d.length) return '';
     const total = d.reduce((s, x) => s + x.pares, 0);
-    const tot = d.reduce((s, x) => ({ cajas: s.cajas + x.cajas, lineas: s.lineas + x.lineas, pares: s.pares + x.pares }),
-                         { cajas: 0, lineas: 0, pares: 0 });
+    const tot = d.reduce((s, x) => ({ cajas: s.cajas + x.cajas, pares: s.pares + x.pares }),
+                         { cajas: 0, pares: 0 });
     const max = Math.max(...d.map(x => x.pares));
     const filas = d.map(x => `
         <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.03);">
           ${td(`<b style="color:var(--text-strong);">${x.curva} pares</b>`)}
           ${td(barra(x.pares, max, 'var(--warning)'), false, 'width:35%;')}
           ${td(`<b style="color:var(--text-strong);">${F(x.cajas)}</b>`, true)}
-          ${td(F(x.lineas), true, 'color:var(--text-muted);')}
           ${td(`<b style="color:var(--text-strong);">${F(x.pares)}</b>`, true)}
           ${td(pct(x.pares, total) + '%', true, 'color:var(--text-muted);')}
         </tr>`).join('')
       + `<tr style="border-top:2px solid rgba(var(--ink-rgb), 0.1); font-weight:900; color:var(--text-strong);">
-          ${td('Total')}${td('')}${td(F(tot.cajas), 1)}${td(F(tot.lineas), 1)}${td(F(tot.pares), 1)}${td('100%', 1)}
+          ${td('Total')}${td('')}${td(F(tot.cajas), 1)}${td(F(tot.pares), 1)}${td('100%', 1)}
         </tr>`;
     return panel('📦 QUÉ CURVAS SE PICARON',
         'De todo lo que salió en caja, qué tamaños de curva fueron.',
-        tabla(th('Pares por caja') + th('') + th('Cajas', 1) + th('Líneas', 1) + th('Pares', 1) + th('% de los ' + F(total), 1), filas),
-        '<b style="color:rgba(var(--ink-rgb), 0.6);">Las cajas no son las líneas.</b> Una misma línea puede llevar más de una caja del mismo código: por eso la curva de 10 tiene más cajas que líneas.');
+        tabla(th('Pares por caja') + th('') + th('Cajas', 1) + th('Pares', 1) + th('% de los ' + F(total), 1), filas),
+        '<b style="color:rgba(var(--ink-rgb), 0.6);">Cada caja cuenta por los pares que trae:</b> una caja de la curva de 10 son 10 pares.');
 };
 
 /* --- El recorrido ----------------------------------------------------------- */
@@ -109,8 +107,6 @@ export const cuadroRecorrido = (R) => {
              <div class="txt-chico">contenedores armados</div></div>
            <div style="flex:1; min-width:150px;"><div style="font-size:var(--t-xl); font-weight:900; color:var(--warning-soft);">${F(r.con_varias_zonas)}</div>
              <div class="txt-chico">obligaron a cambiar de zona</div></div>
-           <div style="flex:1; min-width:150px;"><div style="font-size:var(--t-xl); font-weight:900; color:var(--text-strong);">${F(r.lineas_en_multi)}</div>
-             <div class="txt-chico">líneas dentro de esos</div></div>
          </div>`
         + tabla(th('El contenedor se armó en') + th('') + th('Contenedores', 1) + th('%', 1), filas),
         'Un contenedor que se arma en una sola zona no obliga a caminar entre pasillos. Cuantos más crucen zonas, más tiempo se va en el traslado y no en sacar.');
@@ -145,12 +141,13 @@ export const cuadroRepetida = (R) => {
 /* --- Las corridas ----------------------------------------------------------- */
 
 export const cuadroCorridas = (R) => {
-    const d = R.corridas || [];
+    /* LAS MÁS GRANDES POR PARES. Los días guardados antes del 17-sep-2026 traen sus 15
+       corridas elegidas y ordenadas por líneas: se reordenan acá. */
+    const d = (R.corridas || []).slice().sort((a, b) => b.pares - a.pares);
     if (!d.length) return '';
     const filas = d.map(x => `
         <tr style="border-bottom:1px solid rgba(var(--ink-rgb), 0.03);">
           ${td(`<b style="color:var(--text-strong);">${esc(x.ola)}</b>`)}
-          ${td(F(x.lineas), true)}
           ${td(`<b style="color:var(--text-strong);">${F(x.pares)}</b>`, true)}
           ${td(x.personas, true, 'color:var(--text-muted);')}
           ${td(`${x.desde}–${x.hasta}`, true, 'color:var(--text-muted); font-size:var(--t-xs);')}
@@ -158,7 +155,7 @@ export const cuadroCorridas = (R) => {
         </tr>`).join('');
     return panel('🌊 LAS CORRIDAS MÁS GRANDES',
         'Cada corrida es una ola de trabajo del WMS.',
-        tabla(th('Corrida') + th('Líneas', 1) + th('Pares', 1) + th('Personas', 1) + th('Franja', 1) + th('Duró', 1), filas, '340px'),
+        tabla(th('Corrida') + th('Pares', 1) + th('Personas', 1) + th('Franja', 1) + th('Duró', 1), filas, '340px'),
         'Con varias fechas elegidas las corridas no se juntan —cada día tiene las suyas—: se muestran las más grandes del período.');
 };
 
@@ -177,12 +174,11 @@ export const cuadroArticulos = (R) => {
           ${td(esc(x.coleccion), false, 'color:var(--text-muted); font-size:var(--t-xs);')}
           ${td(barra(x.pares, max, 'var(--violet-soft)'), false, 'width:14%;')}
           ${td(`<b style="color:var(--text-strong);">${F(x.pares)}</b>`, true)}
-          ${td(F(x.lineas), true, 'color:var(--text-muted);')}
           ${td(F(x.ubicaciones), true, 'color:var(--text-muted);')}
         </tr>`).join('');
     return panel('🏆 LOS ARTÍCULOS QUE MÁS SALIERON',
         'Los 25 con más pares del período.',
-        tabla(th('#') + th('Código') + th('Descripción') + th('Marca') + th('Colección') + th('') + th('Pares', 1) + th('Líneas', 1) + th('Ubicaciones', 1), filas, '420px'),
+        tabla(th('#') + th('Código') + th('Descripción') + th('Marca') + th('Colección') + th('') + th('Pares', 1) + th('Ubicaciones', 1), filas, '420px'),
         'Las ubicaciones son de cuántos sitios distintos salió ese código; con varias fechas se toma el día más amplio.');
 };
 
@@ -211,8 +207,7 @@ export const cuadroQuePaso = (R, segmento, ayer) => {
         const d = ayer.pares ? Math.round(100 * (R.pares - ayer.pares) / ayer.pares) : 0;
         m.push({ t: `Contra la jornada anterior: ${d >= 0 ? 'más' : 'menos'} ${u}`,
                  d: `${F(R.pares)} ${u} contra ${F(ayer.pares)} (${d >= 0 ? '+' : ''}${d}%), con `
-                  + `${R._personas.length} personas contra ${ayer._personas.length} y ${F(R.lineas)} líneas `
-                  + `contra ${F(ayer.lineas)}. El promedio por línea pasó de ${ayer.pares_x_linea} a ${R.pares_x_linea}.`,
+                  + `${R._personas.length} personas contra ${ayer._personas.length}.`,
                  tipo: d >= 0 ? 'bueno' : 'aviso' });
     }
 
@@ -229,12 +224,12 @@ export const cuadroQuePaso = (R, segmento, ayer) => {
                  tipo: veces > 2.5 ? 'aviso' : 'dato' });
     }
 
-    // 3. Dónde se camina
-    const zl = (R.zonas || []).slice().sort((a, b) => b.lineas - a.lineas)[0];
+    // 3. De dónde sale más. EN PARES desde el 17-sep-2026: antes se ordenaba por líneas.
+    const zl = (R.zonas || []).slice().sort((a, b) => b.pares - a.pares)[0];
     if (zl) {
-        m.push({ t: `${esc(zl.nom)} es donde más se camina`,
-                 d: `${F(zl.lineas)} líneas (${pct(zl.lineas, R.lineas)}% de ${F(R.lineas)}) salieron de ahí, `
-                  + `repartidas en ${F(zl.ubicaciones)} ubicaciones distintas, por ${F(zl.pares)} ${u}.`,
+        m.push({ t: `${esc(zl.nom)} es de donde más sale`,
+                 d: `${F(zl.pares)} ${u} (${pct(zl.pares, R.pares)}% de ${F(R.pares)}) salieron de ahí, `
+                  + `de ${F(zl.ubicaciones)} ubicaciones distintas.`,
                  tipo: 'dato' });
     }
 
@@ -253,16 +248,16 @@ export const cuadroQuePaso = (R, segmento, ayer) => {
     const c0 = (R.coleccion || [])[0];
     if (c0) {
         m.push({ t: `La colección que más sale es ${esc(c0.nom)}`,
-                 d: `${F(c0.pares)} ${u} (${pct(c0.pares, R.pares)}% de ${F(R.pares)}) en ${F(c0.lineas)} líneas. `
+                 d: `${F(c0.pares)} ${u} (${pct(c0.pares, R.pares)}% de ${F(R.pares)}). `
                   + `Se tocaron ${R.coleccion.length} colecciones distintas.`,
                  tipo: 'dato' });
     }
 
     // 6. La corrida más grande
-    const ol = (R.corridas || [])[0];
+    const ol = (R.corridas || []).slice().sort((a, b) => b.pares - a.pares)[0];
     if (ol) {
         m.push({ t: 'La corrida más grande',
-                 d: `${F(ol.lineas)} líneas y ${F(ol.pares)} ${u} entre ${ol.desde} y ${ol.hasta} `
+                 d: `${F(ol.pares)} ${u} entre ${ol.desde} y ${ol.hasta} `
                   + `(${ol.minutos} minutos) con ${ol.personas} personas. En total hubo ${F(R.olas)} corridas.`,
                  tipo: 'dato' });
     }
@@ -271,7 +266,7 @@ export const cuadroQuePaso = (R, segmento, ayer) => {
     const t0 = (R.articulos || [])[0];
     if (segmento === 'no_calzado' && t0) {
         m.unshift({ t: 'Por qué esto va aparte',
-                    d: `«${esc(String(t0.desc || '').slice(0, 46))}» son ${F(t0.pares)} unidades en ${F(t0.lineas)} líneas. `
+                    d: `«${esc(String(t0.desc || '').slice(0, 46))}» son ${F(t0.pares)} unidades. `
                      + `Medir eso junto al calzado ensucia el número: no es lo mismo bajar ${F(t0.pares)} unidades `
                      + `de ${t0.ubicaciones} ubicación(es) que recorrer el almacén par por par.`,
                     tipo: 'aviso' });
@@ -354,7 +349,6 @@ export const cuadroTotal = (dias, segmento) => {
     const dmy = (f) => String(f).slice(8, 10) + '/' + String(f).slice(5, 7);
     const INDIC = [
         ['Pares',                 s => s.pares],
-        ['Líneas',                s => s.lineas],
         ['Pedidos',               s => s.pedidos],
         ['Personas',              s => s._personas.length],
         ['Corridas',              s => s.olas],
