@@ -282,44 +282,32 @@ def leer_maestro(base):
     'BATA-06044' y 'BUBBLEGUMMERS / MARVEL-08006', y adivinarla de ahí es frágil. Si el
     artículo no está en el Maestro, se cae al texto, que para eso está.
 
-    Se lee con zipfile y no con openpyxl a propósito: así el estudio corre igual en una
-    PC que no tenga la librería instalada."""
-    ruta = os.path.join(base, "scraping Stock", "Archivos", "Maestro_Articulos.xlsx")
-    if not os.path.exists(ruta):
-        log("No está el Maestro (%s): la marca sale de la descripción y no habrá "
-            "Colección PO" % ruta, "WARN")
-        return {}
+    ES EL MAESTRO DE LA WEB, el que publica Daniel. Hasta el 16-sep-2026 salía del Excel
+    de `scraping Stock\\Archivos`, que era del 30-jul: le faltaban 905 artículos y en 431
+    la Colección PO no era la de hoy. Ver `maestro_web.py`. `base` queda porque la
+    rotación y SKUs sin salida la llaman así."""
     try:
-        z = zipfile.ZipFile(ruta)
-        shared = []
-        if "xl/sharedStrings.xml" in z.namelist():
-            for si in ET.fromstring(z.read("xl/sharedStrings.xml")):
-                shared.append("".join(t.text or "" for t in si.iter(NS + "t")))
-        hoja = sorted(n for n in z.namelist() if n.startswith("xl/worksheets/sheet"))[0]
+        import maestro_web
+        it = iter(maestro_web.filas())
+        if maestro_web.aviso():
+            log(maestro_web.aviso(), "WARN")
+        titulos = [str(c or "").strip() for c in next(it)]
+        iB, iN, iI = (titulos.index("CodArticulo"), titulos.index("Marcas"),
+                      titulos.index("MarcaStd"))
+        iJ, iC = titulos.index("Coleccion PO"), titulos.index("G. Gender")
         mapa = {}
-        for i, row in enumerate(ET.fromstring(z.read(hoja)).iter(NS + "row")):
-            if i == 0:
-                continue
-            cel = {}
-            for c in row.iter(NS + "c"):
-                ref = re.match(r"([A-Z]+)", c.get("r") or "")
-                if not ref:
-                    continue
-                v = c.find(NS + "v")
-                val = v.text if v is not None else ""
-                if c.get("t") == "s" and val:
-                    val = shared[int(val)]
-                cel[ref.group(1)] = val
-            cod = (cel.get("B") or "").strip()
+        for f in it:
+            cel = lambda i: str(f[i] if i < len(f) and f[i] is not None else "")
+            cod = cel(iB).strip()
             if not cod:
                 continue
-            # N 'Marcas' es el nombre que usa el negocio; I 'MarcaStd' es el interno.
-            # C 'G. Gender' dice si es Footwear: es lo único que separa de verdad el
+            # 'Marcas' es el nombre que usa el negocio; 'MarcaStd' es el interno.
+            # 'G. Gender' dice si es Footwear: es lo único que separa de verdad el
             # calzado de las bolsas y la papelería.
-            mapa[cod.lstrip("0") or "0"] = ((cel.get("N") or cel.get("I") or "").strip(),
-                                            (cel.get("J") or "").strip(),
-                                            (cel.get("C") or "").strip())
-        log("Maestro: %s artículos" % format(len(mapa), ",d"))
+            mapa[cod.lstrip("0") or "0"] = ((cel(iN) or cel(iI)).strip(),
+                                            cel(iJ).strip(),
+                                            cel(iC).strip())
+        log("Maestro: %s artículos (%s)" % (format(len(mapa), ",d"), maestro_web.descripcion()))
         return mapa
     except Exception as e:
         log("No se pudo leer el Maestro (%s): se sigue sin él" % str(e)[:150], "WARN")

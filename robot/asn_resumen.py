@@ -34,6 +34,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import maestro_web  # noqa: E402
 
 API = "https://logistics-backend-wv0x.onrender.com/api/logistics"
 AREA = "asn_recepcion"
@@ -50,7 +51,6 @@ TOPE_DIA_LEJOS = 25
 ROBOT_TOKEN = os.environ.get("ROBOT_TOKEN", "")
 
 CARPETA_ASN = None          # se resuelve con wms_automation_final
-MAESTRO = None
 # La marca por codigo, para la tabla. Se llena al leer el Maestro en construir().
 MARCA_DE = {}
 
@@ -231,15 +231,10 @@ def limpio(texto):
 
 
 def rutas():
-    global CARPETA_ASN, MAESTRO
+    global CARPETA_ASN
     import wms_automation_final as wms
     base = wms._base_onedrive()                     # ...\scraping Stock
     CARPETA_ASN = os.path.join(base, "ASN")
-    MAESTRO = os.path.join(os.path.dirname(base), "Maestro_Articulos.xlsx")
-    if not os.path.isfile(MAESTRO):
-        alterno = os.path.join(base, "Archivos", "Maestro_Articulos.xlsx")
-        if os.path.isfile(alterno):
-            MAESTRO = alterno
 
 
 def af(v):
@@ -274,11 +269,13 @@ def leer_maestro():
     LA COLUMNA DE LA MARCA SE LLAMA `Marcas`, EN PLURAL. Buscarla como "Marca" no
     la encuentra y la pantalla sale con todo en "(sin marca)": paso en la primera
     medicion. Es la misma que usa el robot de picking.
+
+    ES EL MAESTRO DE LA WEB, el que publica Daniel. Hasta el 16-sep-2026 salia de un
+    Excel del OneDrive del servidor al que le faltaban 159 articulos. Ver `maestro_web.py`.
     """
-    from openpyxl import load_workbook
-    wb = load_workbook(MAESTRO, read_only=True, data_only=True)
-    h = wb[wb.sheetnames[0]]
-    it = h.iter_rows(values_only=True)
+    it = iter(maestro_web.filas())
+    if maestro_web.aviso():
+        log(maestro_web.aviso(), "WARN")
     enc = [str(c).strip() if c is not None else "" for c in next(it)]
 
     def col(*nombres):
@@ -304,9 +301,9 @@ def leer_maestro():
         ficha[cod[:7]] = (gen or "(sin gender)",
                           (str(f[iM]).strip() if iM is not None and iM < len(f) and f[iM] else "")
                           or "(sin marca)")
-    wb.close()
-    log("Maestro: %s articulos, %s de calzado, marca en la columna %s"
-        % ("{:,}".format(total), "{:,}".format(len(calzado)), enc[iM] if iM is not None else "?"))
+    log("Maestro: %s articulos, %s de calzado, marca en la columna %s (%s)"
+        % ("{:,}".format(total), "{:,}".format(len(calzado)), enc[iM] if iM is not None else "?",
+           maestro_web.descripcion()))
     return calzado, ficha
 
 

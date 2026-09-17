@@ -8,8 +8,7 @@ Reemplaza el proceso manual de Power Query del libro
 Fuentes:
     scraping Stock\\Stock Activo\\Stock Activo DD-MM-AA.csv     (lo baja el robot)
     scraping Stock\\Stock Reserva\\Stock Reserva DD-MM-AA.xlsx  (lo baja el robot)
-    scraping Stock\\Archivos\\Maestro_Articulos.xlsx            (lo actualiza Daniel)
-    scraping Stock\\Archivos\\Marcas.xlsx                       (lo actualiza Daniel)
+    el Maestro de Articulos DE LA WEB                           (lo publica Daniel)
 
 Salida:
     scraping Stock\\Slotting\\Slotting DD-MM-AA.xlsx
@@ -25,7 +24,8 @@ Reglas, tal como estaban en el Power Query original:
     Qty Buffer  = NIVEL CDBUFFER
     Qty Reserva = NIVEL ALTO, salvo ubicaciones SEL-14
   - La talla sale del final de la descripción (...BUBBLEGUMMERS-1-23 -> 23)
-  - Marca: MarcaStd del Maestro traducida con Marcas.xlsx
+  - Marca: la columna Marcas del Maestro de la web, que ya viene traducida con la
+    tabla de marcas que publica Daniel
   - Lo que no está en el Maestro queda con guión
 """
 
@@ -48,6 +48,8 @@ from datetime import datetime
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
+
+import maestro_web
 
 # ─────────────────────────────── Configuración ───────────────────────────────
 
@@ -87,9 +89,6 @@ DIR_ACTIVO = os.path.join(BASE, "Stock Activo")
 DIR_RESERVA = os.path.join(BASE, "Stock Reserva")
 DIR_ARCHIVOS = os.path.join(BASE, "Archivos")
 DIR_SALIDA = os.path.join(BASE, "Slotting")
-
-MAESTRO = os.path.join(DIR_ARCHIVOS, "Maestro_Articulos.xlsx")
-MARCAS = os.path.join(DIR_ARCHIVOS, "Marcas.xlsx")
 
 LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
 
@@ -442,39 +441,37 @@ def leer_reserva(ruta):
     return filas
 
 
-def leer_maestro(ruta):
-    """CodArticulo -> (MarcaStd, Gender RIMS, Temporada)"""
-    wb = openpyxl.load_workbook(ruta, read_only=True, data_only=True)
-    ws = wb[wb.sheetnames[0]]
+def leer_maestro():
+    """CodArticulo -> (Marcas, Gender RIMS, Temporada), del Maestro de la web.
+
+    Hasta el 16-sep-2026 salía del Excel de `scraping Stock\\Archivos`, que era del
+    30-jul: le faltaban 905 artículos —iban con guión— y en 130 la Temporada no era la
+    de hoy. Y la marca se traducía con un `Marcas.xlsx` aparte; ahora viene en la columna
+    Marcas, traducida por la web con la tabla que publica Daniel, la misma que ven las
+    pantallas. Ver `maestro_web.py`.
+
+    Se lee POR NOMBRE DE COLUMNA: por posición, el día que la tabla sume una columna
+    adelante el cruce da cero sin avisar, como pasó el 12-ago."""
+    it = iter(maestro_web.filas())
+    titulos = [str(c or "").strip() for c in next(it)]
+    iC, iM = titulos.index("CodArticulo"), titulos.index("Marcas")
+    iG, iT = titulos.index("Gender RIMS"), titulos.index("Temporada")
     mapa = {}
-    for f in ws.iter_rows(min_row=2, values_only=True):
-        if not f[1]:
+    for f in it:
+        if not f[iC]:
             continue
-        cod = str(f[1]).strip().zfill(7)
+        cod = str(f[iC]).strip().zfill(7)
         mapa[cod] = (
-            str(f[8] or SIN_DATO).strip(),    # I MarcaStd
-            str(f[3] or SIN_DATO).strip(),    # D Gender RIMS
-            str(f[14] or SIN_DATO).strip(),   # O Temporada
+            str(f[iM] or SIN_DATO).strip(),
+            str(f[iG] or SIN_DATO).strip(),
+            str(f[iT] or SIN_DATO).strip(),
         )
-    wb.close()
-    return mapa
-
-
-def leer_marcas(ruta):
-    """MarcaStd -> Marcas"""
-    wb = openpyxl.load_workbook(ruta, read_only=True, data_only=True)
-    ws = wb[wb.sheetnames[0]]
-    mapa = {}
-    for f in ws.iter_rows(min_row=2, values_only=True):
-        if f[0]:
-            mapa[str(f[0]).strip().upper()] = str(f[1] or SIN_DATO).strip()
-    wb.close()
     return mapa
 
 
 # ─────────────────────────────── Armado ───────────────────────────────
 
-def construir(filas, maestro, marcas):
+def construir(filas, maestro):
     """Aplica exclusiones, reparte las cantidades y agrega los datos del artículo."""
     resultado = []
     fuera = {"CDBUFFER-C": 0, "SKU inválido": 0, "NIVEL no usado": 0, "ALTO en SEL-14": 0}
@@ -509,8 +506,8 @@ def construir(filas, maestro, marcas):
         articulo = x["SKU"][:7]
         datos = maestro.get(articulo)
         if datos:
-            marca_std, gender, temporada = datos
-            marca = marcas.get(marca_std.upper(), marca_std) or SIN_DATO
+            marca, gender, temporada = datos
+            marca = marca or SIN_DATO
         else:
             sin_maestro.add(articulo)
             marca = gender = temporada = SIN_DATO
@@ -1372,10 +1369,6 @@ def run(fecha=None, ruta_act_dada=None, ruta_res_dada=None, igualmente=False):
         faltan.append("Stock Activo")
     if not ruta_res:
         faltan.append("Stock Reserva")
-    if not os.path.exists(MAESTRO):
-        faltan.append("Maestro_Articulos.xlsx en la carpeta Archivos")
-    if not os.path.exists(MARCAS):
-        faltan.append("Marcas.xlsx en la carpeta Archivos")
     if faltan:
         for f in faltan:
             log("Falta: %s" % f, "ERROR")
@@ -1427,14 +1420,20 @@ def run(fecha=None, ruta_act_dada=None, ruta_res_dada=None, igualmente=False):
     log("Filas leídas: %s (Activo %s + Reserva %s)" %
         (format(len(filas), ",d"), format(n_act, ",d"), format(len(filas) - n_act, ",d")))
 
-    log("Leyendo Maestro de Artículos y tabla de Marcas...")
-    maestro = leer_maestro(MAESTRO)
-    marcas = leer_marcas(MARCAS)
-    log("Maestro: %s artículos   Marcas: %s equivalencias" %
-        (format(len(maestro), ",d"), format(len(marcas), ",d")))
+    log("Leyendo el Maestro de Artículos de la web...")
+    try:
+        maestro = leer_maestro()
+    except maestro_web.MaestroNoDisponible as e:
+        # Igual que cuando faltaba el Excel: sin Maestro no se publica. Todo el stock
+        # saldría sin marca, sin gender y sin temporada.
+        log("Falta: el Maestro de Artículos. %s" % e, "ERROR")
+        return 1
+    if maestro_web.aviso():
+        log(maestro_web.aviso(), "WARN")
+    log("Maestro: %s artículos (%s)" % (format(len(maestro), ",d"), maestro_web.descripcion()))
 
     log("Aplicando reglas...")
-    datos, fuera, sin_maestro = construir(filas, maestro, marcas)
+    datos, fuera, sin_maestro = construir(filas, maestro)
 
     log("Filas del reporte: %s" % format(len(datos), ",d"))
     for k, v in sorted(fuera.items(), key=lambda x: -x[1]):

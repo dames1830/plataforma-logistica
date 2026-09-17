@@ -109,6 +109,8 @@ try:
 except ImportError:
     openpyxl = None
 
+import maestro_web
+
 WEB_DATOS_API = "https://logistics-backend-wv0x.onrender.com/api/logistics"
 # EL TOKEN DEL ROBOT. Desde v29.0415 el servidor puede EXIGIR credencial para
 # escribir datos (ver EXIGIR_TOKEN_ESCRITURA en backend/main.py). El robot no tiene
@@ -159,11 +161,6 @@ def _base_onedrive():
 BASE = _base_onedrive()
 CORREOS = os.path.join(BASE, 'Correos Picking')
 PENDIENTES = os.path.join(BASE, 'Detalle Orden', 'Detalle Orden Pendientes.csv')
-MAESTRO_CANDIDATOS = [
-    os.path.join(os.path.dirname(BASE), 'Maestro_Articulos.xlsx'),
-    os.path.join(BASE, 'Archivos', 'Maestro_Articulos.xlsx'),
-    os.path.join(os.path.dirname(BASE), 'Pruebas Sistema', 'Maestro_Articulos.xlsx'),
-]
 # EL MAESTRO DE RUTAS. Dice de cada tienda si es LIMA o PROVINCIA, que dia sale y
 # con que transportista. OJO: el nombre lleva DOS ESPACIOS entre RUTAS y TURNOS.
 RUTAS_CANDIDATOS = [
@@ -390,15 +387,17 @@ def leer_maestro():
     Y OJO CON LA TEMPORADA: hay dos campos y se confunden. Lo que Daniel llama
     "la coleccion" es **Coleccion PO** (el `2026-Q4`). La columna que *se llama*
     Temporada es la franja del mezzanine -actual o anterior- y NO es esto.
+
+    ES EL MAESTRO DE LA WEB, el que publica Daniel. Hasta el 16-sep-2026 salia de un
+    Excel del OneDrive del servidor al que le faltaban 159 articulos. Ver `maestro_web.py`.
     """
-    ruta = next((r for r in MAESTRO_CANDIDATOS if os.path.isfile(r)), None)
-    if not ruta:
-        log('No se encontro el Maestro de articulos. Los cortes por Gender RIMS '
-            'y por coleccion van a salir vacios.', 'AVISO')
+    try:
+        it = iter(maestro_web.filas())
+    except maestro_web.MaestroNoDisponible as e:
+        log('%s Los cortes por Gender RIMS y por coleccion van a salir vacios.' % e, 'AVISO')
         return {}, {}, {}
-    wb = openpyxl.load_workbook(ruta, read_only=True, data_only=True)
-    ws = wb.worksheets[0]
-    it = ws.iter_rows(values_only=True)
+    if maestro_web.aviso():
+        log(maestro_web.aviso(), 'AVISO')
     cab = [str(c).strip() if c is not None else '' for c in next(it)]
 
     def col(*nombres):
@@ -428,11 +427,7 @@ def leer_maestro():
             rims[c] = str(r[iR] or '').strip()
         if iK is not None and iK < len(r):
             colec[c] = str(r[iK] or '').strip()
-    try:
-        wb.close()
-    except Exception:
-        pass
-    log('Maestro: %s articulos (%s)' % (format(len(gen), ',d'), os.path.basename(ruta)))
+    log('Maestro: %s articulos (%s)' % (format(len(gen), ',d'), maestro_web.descripcion()))
     return gen, rims, colec
 
 

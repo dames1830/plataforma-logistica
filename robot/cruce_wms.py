@@ -43,6 +43,7 @@ sys.path.insert(0, r"C:\wms_scraping")
 
 from openpyxl import load_workbook
 
+import maestro_web
 import prodhora_web
 from publicar_area import publicar
 
@@ -352,14 +353,18 @@ def tiendas():
 
 
 def maestro():
-    """G. Gender dice que es calzado, y la descripcion sirve para reconocerlo."""
-    cand = [os.path.join(os.path.dirname(BASE), 'Maestro_Articulos.xlsx'),
-            os.path.join(BASE, 'Archivos', 'Maestro_Articulos.xlsx')]
-    ruta = next((r for r in cand if os.path.isfile(r)), None)
-    if not ruta:
+    """G. Gender dice que es calzado, y la descripcion sirve para reconocerlo.
+
+    ES EL MAESTRO DE LA WEB, el que publica Daniel. Hasta el 16-sep-2026 salia de un
+    Excel del OneDrive del servidor al que le faltaban 159 articulos. Ver `maestro_web.py`.
+    """
+    try:
+        it = iter(maestro_web.filas())
+    except maestro_web.MaestroNoDisponible as e:
+        log('%s El detalle va sin gender.' % e, 'AVISO')
         return {}, {}
-    wb = load_workbook(ruta, read_only=True, data_only=True)
-    it = wb.worksheets[0].iter_rows(values_only=True)
+    if maestro_web.aviso():
+        log(maestro_web.aviso(), 'AVISO')
     cab = [str(c).strip() if c is not None else '' for c in next(it)]
 
     def col(*nn):
@@ -378,7 +383,7 @@ def maestro():
         if k and k not in gen:
             gen[k] = limpio(f[iG]) if 0 <= iG < len(f) else ''
             des[k] = limpio(f[iD]) if 0 <= iD < len(f) else ''
-    wb.close()
+    log('Maestro: %s articulos (%s)' % (format(len(gen), ',d'), maestro_web.descripcion()))
     return gen, des
 
 
