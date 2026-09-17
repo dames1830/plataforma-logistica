@@ -459,10 +459,41 @@ def _anotar(tarea, franja):
         print(f'[HORARIO] no se pudo anotar la corrida: {e}')
 
 
+def foto_del_plan_pendiente(cfg, ahora=None):
+    """
+    El unico "te toca" fuera de horario: el stock de la hora corre apenas se procesa el
+    Analisis de Buffer, para sacar la foto desde la que se cuenta el avance del turno.
+
+    Daniel, 17-sep-2026: *"si yo proceso el analisis buffer a las 8, desde las 8 yo
+    comienzo a ver si hay algun avance"*. Esperar a la corrida de las 22:00 dejaria sin
+    contar lo que se trabaje en ese rato. Ver foto_del_plan.py.
+
+    Si algo falla aca se contesta "no": el horario de siempre sigue mandando.
+    """
+    try:
+        if not _de(cfg, 'stock_hora').get('activa', True):
+            return None
+        ahora = ahora or datetime.now()
+        if 6 <= ahora.hour < 19:          # fuera del turno noche no hay proceso que esperar
+            return None
+        import foto_del_plan
+        p = foto_del_plan.pendiente(ahora)
+        if p:
+            return (f'le toca: falta la foto del plan de la jornada {p[0]} '
+                    f'(se proceso a las {p[1]:%H:%M:%S})')
+    except Exception as e:
+        print(f'[HORARIO] no se pudo revisar la foto del plan: {e}')
+    return None
+
+
 def le_toca(tarea, ahora=None, anotar=True):
     cfg, fuente = configuracion()
     franja = franja_actual(tarea, cfg, ahora)
     if not franja:
+        if tarea == 'stock_hora':
+            motivo = foto_del_plan_pendiente(cfg, ahora)
+            if motivo:
+                return True, motivo
         return False, f'no le toca (horario segun {fuente})'
     if _corridas().get(tarea) == franja:
         return False, f'ya corrio en esta franja ({franja})'

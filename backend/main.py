@@ -713,6 +713,11 @@ RETENCION_SNAPSHOTS = {
     'buffer_c_arranque': 31,
     'reserva_cierre': 31,
     'buffer_c_cierre': 31,
+    # LA FOTO DESDE LA QUE SE CUENTA EL AVANCE, un mes como las demas (17-sep-2026). La saca
+    # el robot despues de que se procesa el Analisis de Buffer: lo que paso antes no es
+    # avance de la lista. La reserva ~195 KB por noche y el buffer unos pocos KB.
+    'reserva_plan': 31,
+    'buffer_plan': 31,
 }
 RETENCION_POR_DEFECTO = 2
 

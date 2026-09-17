@@ -408,7 +408,27 @@ def run():
 
     carpeta = tempfile.mkdtemp(prefix="stock_hora_")
     try:
+        # ── LA FOTO DEL PLAN (17-sep-2026) ───────────────────────────────────
+        # El avance de la Bajada de paletas y de la Separación se cuenta desde que se
+        # procesa el Análisis de Buffer, no desde las 19:09. Daniel: *"si antes de las 8
+        # yo no he procesado nada"*. Ver foto_del_plan.py.
+        #
+        # SE DECIDE ANTES DE BAJAR, y es lo que garantiza que la foto sea posterior al
+        # proceso: si el proceso ya estaba anotado cuando esta corrida arrancó, todo lo
+        # que baje después es de después.
+        plan = None
+        try:
+            import foto_del_plan
+            plan = foto_del_plan.pendiente()
+            if plan:
+                log("Esta corrida saca también la foto del plan de la jornada %s "
+                    "(se procesó a las %s)" % (plan[0], plan[1].strftime("%H:%M:%S")))
+        except Exception as e:
+            log("No se pudo revisar si toca la foto del plan: %s: %s"
+                % (type(e).__name__, str(e)[:150]), "WARN")
+
         ruta_act, ruta_res = bajar_los_dos(carpeta)
+        hora_foto = datetime.now().strftime("%H:%M")
 
         if not ruta_act and not ruta_res:
             log("No bajó ninguno de los dos stocks. Las áreas de la hora se quedan con "
@@ -422,6 +442,17 @@ def run():
 
         publicados = publicar(ruta_act, ruta_res)
         esperados = (1 if ruta_act else 0) + (1 if ruta_res else 0)
+
+        # Va después de publicar y NO cambia el código de salida: si la foto del plan
+        # falla, el cajón de la hora ya quedó bien, y la pantalla sigue midiendo desde
+        # la foto de las 19:09 hasta que el próximo despertar la saque.
+        if plan:
+            try:
+                if not foto_del_plan.guardar(plan[0], plan[1], ruta_act, ruta_res, hora_foto, log):
+                    log("La foto del plan no quedó: se intenta en el próximo despertar", "WARN")
+            except Exception as e:
+                log("No se pudo guardar la foto del plan: %s: %s"
+                    % (type(e).__name__, str(e)[:150]), "WARN")
 
         # LA CORRIDA DE LAS 06:30 CONGELA LA NOCHE. Va después de publicar, y a
         # propósito NO cambia el código de salida: si el cierre falla, el cajón de la
