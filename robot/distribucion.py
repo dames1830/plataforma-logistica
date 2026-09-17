@@ -28,7 +28,7 @@ ir pegado a cualquier hora libre.
     scraping Stock/Detalle Orden/*.csv               lo que se pidio
     scraping Stock/OBLPN Embalaje/OBLPN *.csv        los bultos: TODOS los dias
     scraping Stock/Correos Picking/Guias DD.MM.xlsx  lo que mando comercial
-    Maestro_Articulos.xlsx                           el gender de cada articulo
+    el Maestro de Articulos de la web                el gender de cada articulo
     Proyecto web Logistico/RUTAS -  TURNOS.xlsx      que destino es tienda
 
 EL DIA LO MANDA EL OBLPN MAS NUEVO, no la fecha de hoy: si una noche el archivo
@@ -81,6 +81,7 @@ import traceback
 import openpyxl
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import maestro_web
 import publicar_area
 
 csv.field_size_limit(10 ** 9)
@@ -271,39 +272,22 @@ def orden_fecha(fecha):
 
 # ══ EL MAESTRO Y LAS RUTAS ════════════════════════════════════════════════════
 #
-# EL MAESTRO TIENE TRES COPIAS Y NO SIEMPRE MANDA LA MISMA. Al 05-sep-2026 la
-# fresca es la de la raiz (25-ago, 30.175 articulos) y la de `Pruebas Sistema`
-# -que era la buena antes- se quedo en el 05-ago con 29.465. Por eso salian
-# articulos "sin gender": no estaban en la copia vieja. Se toma SIEMPRE la mas
-# reciente de las tres.
-#
-# Y SE COPIA ANTES DE ABRIR: en OneDrive el archivo puede estar solo en la nube y
-# openpyxl lo ve como un zip roto.
-def leer_maestro(base):
-    copias = [os.path.join(base, 'Maestro_Articulos.xlsx'),
-              os.path.join(base, 'Pruebas Sistema', 'Maestro_Articulos.xlsx'),
-              os.path.join(base, 'scraping Stock', 'Archivos', 'Maestro_Articulos.xlsx')]
-    hay = [p for p in copias if os.path.exists(p)]
-    if not hay:
-        raise SystemExit('No hay ninguna copia del Maestro.')
-    src = max(hay, key=os.path.getmtime)
-    dst = os.path.join(TEMP, '_maestro.xlsx')
-    shutil.copy2(src, dst)
-    wb = openpyxl.load_workbook(dst, read_only=True, data_only=True)
-    ws = wb[wb.sheetnames[0]]
-    gen, h = {}, None
-    for row in ws.iter_rows(values_only=True):
-        if h is None:
-            h = [str(c or '').strip() for c in row]
-            iC, iG = h.index('CodArticulo'), h.index('G. Gender')
-            continue
+# EL MAESTRO ES EL DE LA WEB, el que publica Daniel. Hasta el 16-sep-2026 se buscaba
+# la copia mas reciente de TRES Excel del OneDrive, y ni la mas reciente estaba al
+# dia: le faltaban 159 articulos. Por eso salian articulos "sin gender". Ver
+# `maestro_web.py`.
+def leer_maestro():
+    it = iter(maestro_web.filas())
+    if maestro_web.aviso():
+        log(maestro_web.aviso(), 'AVISO')
+    h = [str(c or '').strip() for c in next(it)]
+    iC, iG = h.index('CodArticulo'), h.index('G. Gender')
+    gen = {}
+    for row in it:
         c = str(row[iC] or '').strip()
         if c:
             gen[s7(c)] = str(row[iG] or '').strip()
-    wb.close()
-    t = datetime.datetime.fromtimestamp(os.path.getmtime(src))
-    log('Maestro: %s (%s) - %d articulos'
-        % (os.path.basename(os.path.dirname(src)) or '.', t.strftime('%d-%b'), len(gen)))
+    log('Maestro: %d articulos (%s)' % (len(gen), maestro_web.descripcion()))
     return gen
 
 
@@ -881,7 +865,7 @@ def main():
     archivos, ultimo, fecha = elegir_dia(ss)
     log('dia %s - %d archivos de OBLPN' % (fecha.strftime('%d-%m-%Y'), len(archivos)))
 
-    gen = leer_maestro(base)
+    gen = leer_maestro()
     TIENDAS = leer_rutas(base)
 
     # LA FOTO VA PRIMERO: el cuadro grande usa sus cuatro columnas de despacho.

@@ -62,6 +62,8 @@ from collections import defaultdict
 
 import openpyxl
 
+import maestro_web
+
 csv.field_size_limit(10 ** 7)
 
 FORMA_PREPACK = re.compile(r'^\d{7}-\d-\d{5}$')
@@ -227,8 +229,6 @@ ARCHIVO = elegir_archivo(
      os.path.join(BASE, 'Picking')],
     ['Picking %d-%d.csv', 'Picking %02d-%02d.csv'])
 CARPETA_ORD = os.path.join(BASE, 'Detalle Orden')
-MAESTROS = [os.path.join(os.path.dirname(BASE), 'Maestro_Articulos.xlsx'),
-            os.path.join(BASE, 'Archivos', 'Maestro_Articulos.xlsx')]
 RUTAS_CAND = [os.path.join(os.path.dirname(BASE), 'Proyecto web Logistico',
                            'RUTAS -  TURNOS.xlsx'),
               os.path.join('C:' + os.sep, 'wms_scraping', '_rutas.xlsx')]
@@ -315,18 +315,23 @@ def abrir(ruta):
     return f, csv.DictReader(f, delimiter=sep)
 
 
-# ── el Maestro de articulos ─────────────────────────────────────────────
-ruta_m = next((r for r in MAESTROS if os.path.isfile(r)), None)
-wb = openpyxl.load_workbook(ruta_m, read_only=True, data_only=True)
-it = wb.worksheets[0].iter_rows(values_only=True)
+# ── el Maestro de articulos: EL DE LA WEB ───────────────────────────────
+# Hasta el 16-sep-2026 salia de un Excel del OneDrive del servidor, el del 05-sep:
+# dos modelos Puma que no estaban dejaron 212 pares de calzado como "sin tipo" y el
+# cuadro no cuadro con el del supervisor. Ver `maestro_web.py`.
+it = iter(maestro_web.filas())
 cab = [str(c).strip() if c is not None else '' for c in next(it)]
 
 
 def col(*nombres):
-    bajos = [n.lower() for n in nombres]
-    for i, c in enumerate(cab):
-        if c.lower() in bajos:
-            return i
+    # EL ORDEN DE LOS NOMBRES ES LA PREFERENCIA. Antes se recorrian los titulos y
+    # ganaba el que venia primero en la tabla: `MarcaStd` esta antes que `Marcas`, y
+    # la pantalla decia "Bata Comfit" y "Bubblegummers/Marvel" donde el KPI Picking
+    # decia "Bata" y "B.G Licenses".
+    bajos = [c.lower() for c in cab]
+    for n in nombres:
+        if n.lower() in bajos:
+            return bajos.index(n.lower())
     return -1
 
 
@@ -342,8 +347,9 @@ for f in it:
             v = limpio(f[i]) if 0 <= i < len(f) else ''
             return v if v and v != '(en blanco)' else 'Sin dato'
         maestro[k] = (d(iG), d(iM), d(iC))
-wb.close()
-print('maestro de articulos: %d codigos' % len(maestro))
+print('maestro de articulos: %d codigos (%s)' % (len(maestro), maestro_web.descripcion()))
+if maestro_web.aviso():
+    print('AVISO: ' + maestro_web.aviso())
 
 # ── el maestro de RUTAS: quien es tienda ────────────────────────────────
 # SE COPIA ANTES DE ABRIRLO: en OneDrive esta solo en la nube y openpyxl lo ve
