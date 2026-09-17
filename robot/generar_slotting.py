@@ -842,13 +842,16 @@ def datos_activo_web(ruta):
     return filas
 
 
-def foto_buffer_c(filas_activo):
+def foto_buffer_c(filas_activo, tambien=None):
     """
     El Buffer C de esta corrida, artículo por artículo.
 
     Es prepack, y el generador de tareas lo deja fuera a propósito, así que limpiarlo
     no deja rastro en ninguna tarea: la única forma de medirlo es comparar dos fotos
     del stock. Esta es la del arranque del turno.
+
+    `tambien` son artículos que hay que medir fuera del C aunque ya no estén adentro.
+    La foto del cierre pasa los del arranque: ver la nota de `fuera` más abajo.
     """
     def qty_de(f):
         try:
@@ -885,13 +888,20 @@ def foto_buffer_c(filas_activo):
     # La misma funcion arma la foto del arranque (19:00) y la del cierre (06:30), asi
     # que las dos quedan con su base y la jornada se puede medir despues de cerrada.
     # Son unos 90 SKU, menos de 2 KB por foto.
+    #
+    # EN EL CIERRE HAY QUE MEDIR LOS ARTICULOS DEL ARRANQUE, no solo los que siguen en
+    # el C. El que se vacio entero es justo el que mas se trabajo, y sin su `fuera` la
+    # pantalla no le encuentra destino: la noche del 16-sep-2026 dio "+400 en LPN sin
+    # matricular" cuando eran 35. De 67 articulos del arranque, 48 ya no estaban en el
+    # C a las 07:09 y la foto solo media los 34 que quedaban.
+    medir = set(por_articulo) | set(tambien or ())
     fuera = {}
     for f in filas_activo:
         ubi = (f.get("Ubicación") or "").strip().upper()
         if ubi.startswith("CDBUFFER-C"):
             continue
         art = (f.get("Artículo") or "").strip()
-        if art not in por_articulo:
+        if art not in medir:
             continue
         qty = qty_de(f)
         if qty > 0:
@@ -1541,7 +1551,15 @@ def run(fecha=None, ruta_act_dada=None, ruta_res_dada=None, igualmente=False):
             log("Corrida de la mañana: las fotos del arranque no se tocan")
             jornada = jornada_que_termina()
 
-            cierre_c = foto_buffer_c(act_web)
+            # Los artículos con los que ARRANCÓ esa noche, para medirles el `fuera` aunque
+            # hayan salido enteros del C. Si no se puede leer, la foto sale igual, pero la
+            # pantalla va a ver sin destino lo que se vació entero y lo dice el log.
+            arranque_c = bajar_area(AREA_BUFFER_C, jornada)
+            del_arranque = ((arranque_c or {}).get("detalle") or {}) if isinstance(arranque_c, dict) else {}
+            if not del_arranque:
+                log("No se pudo leer el Buffer C del arranque de la jornada %s: la foto del "
+                    "cierre solo mide fuera del C lo que sigue adentro" % jornada, "WARN")
+            cierre_c = foto_buffer_c(act_web, tambien=del_arranque.keys())
             cierre_c["fecha"] = jornada
             # LO MATRICULADO EN EL BUFFER AL CERRAR, de los códigos del plan de esa noche.
             #
