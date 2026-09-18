@@ -88,6 +88,13 @@ FORMA_PREPACK = re.compile(r'^\d{7}-\d-\d{5}$')
 PROBAR = '--probar' in sys.argv
 
 CARPETA_LOGS = os.path.join(AQUI, 'logs')
+
+# LOS ARCHIVOS QUE NO SE PUDIERON LEER. Un correo, un picking o un OBLPN que no se lee
+# no es un dia sin trabajo: es un agujero, y publicar con agujeros da numeros creibles y
+# falsos. Si hay alguno, no se publica y el log dice cual. En el servidor la causa tipica
+# es OneDrive dejando un archivo "solo en la nube" (Errno 22 corriendo como SYSTEM); se
+# arregla anclandolo:  attrib +P -U "<carpeta>\*"
+FALLIDOS = []
 _ARCHIVO_LOG = os.path.join(CARPETA_LOGS, 'fillrate_%s.log'
                             % datetime.datetime.now().strftime('%Y-%m-%d_%H%M%S'))
 
@@ -228,7 +235,8 @@ def leer_correos(base):
         try:
             wb = openpyxl.load_workbook(os.path.join(carpeta, nombre), read_only=True, data_only=True)
         except Exception as e:
-            log('No se pudo abrir %s (%s)' % (nombre, type(e).__name__), 'AVISO')
+            log('No se pudo abrir %s (%s: %s)' % (nombre, type(e).__name__, str(e)[:80]), 'ERROR')
+            FALLIDOS.append(nombre)
             continue
         ok = False
         for ws in wb.worksheets:
@@ -335,8 +343,11 @@ def leer_picking(base, guias):
                     if h and (ult is None or h > ult):
                         ult = h
             leidos += 1
-        except (OSError, StopIteration) as e:
-            log('%s: no se pudo leer (%s)' % (n, type(e).__name__), 'AVISO')
+        except StopIteration:
+            log('%s: esta vacio' % n, 'AVISO')
+        except OSError as e:
+            log('%s: no se pudo leer (%s: %s)' % (n, type(e).__name__, str(e)[:80]), 'ERROR')
+            FALLIDOS.append(n)
     return picado, picado_pp, ult, leidos
 
 
@@ -348,7 +359,13 @@ def leer_pendientes(base, sin_pick):
     ruta = os.path.join(base, 'Detalle Orden', 'Detalle Orden Pendientes.csv')
     if not sin_pick or not os.path.isfile(ruta):
         return pend_pp, pend_tot
-    with io.open(ruta, encoding='utf-8-sig', newline='', errors='replace') as fh:
+    try:
+        fh = io.open(ruta, encoding='utf-8-sig', newline='', errors='replace')
+    except OSError as e:
+        log('Detalle Orden Pendientes.csv: no se pudo leer (%s: %s)' % (type(e).__name__, str(e)[:80]), 'ERROR')
+        FALLIDOS.append('Detalle Orden Pendientes.csv')
+        return pend_pp, pend_tot
+    with fh:
         rd = csv.reader(fh, delimiter=';')
         cab = [c.strip() for c in next(rd)]
         ix = {c: i for i, c in enumerate(cab)}
@@ -383,7 +400,13 @@ def leer_oblpn(base, guias):
     picks = collections.defaultdict(dict)
     for f, n in archivos:
         vistas = set()
-        with io.open(os.path.join(carpeta, n), encoding='utf-8-sig', newline='', errors='replace') as fh:
+        try:
+            fh = io.open(os.path.join(carpeta, n), encoding='utf-8-sig', newline='', errors='replace')
+        except OSError as e:
+            log('%s: no se pudo leer (%s: %s)' % (n, type(e).__name__, str(e)[:80]), 'ERROR')
+            FALLIDOS.append(n)
+            continue
+        with fh:
             rd = csv.reader(fh, delimiter=';')
             cab = [c.strip() for c in next(rd)]
             ix = {c: i for i, c in enumerate(cab)}
@@ -549,6 +572,10 @@ def main():
         return 1
     log('Lee de: %s' % base)
     datos, tot = calcular(base)
+    if FALLIDOS:
+        log('No se publica: %d archivo(s) no se pudieron leer y los numeros saldrian con '
+            'agujeros: %s' % (len(FALLIDOS), ', '.join(FALLIDOS[:12])), 'ERROR')
+        return 1
 
     # UN CUADRO VACIO NO SE PUBLICA: pisaria el bueno. Este almacen nunca tiene cero
     # guias ni cero picado en dos meses y medio de correos.
