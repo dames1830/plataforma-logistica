@@ -591,6 +591,9 @@ export const renderLayoutActivo = async (container) => {
           const brandTitle = currentLayoutZona === 'MZN01' ? 'BG Y POWER' : (currentLayoutZona === 'MZN02' ? 'NORTH STAR' : 'BATA');
           const isMZN = currentLayoutZona.startsWith('MZN');
           
+          /* LOS NÚMEROS DE CUERPO ARRANCAN DONDE ARRANCA EL MAPA (padding-top de su columna):
+             con la tira de temporadas arriba —15 px más 5 de margen— quedaban corridos una fila.
+             Igual que en la web. 18-sep-2026. */
           targetContainer.innerHTML = `
                 <div style="display:flex; width:100%; gap:20px; flex-direction:row; align-items:flex-start;">
                     <div class="glass-panel" style="padding:20px; position:relative; flex: 0 0 70%; max-width: 70%; min-width:0; overflow-x:auto; background:#FFFFFF; border:1px solid #DDD8CF; min-height:500px;">
@@ -619,7 +622,7 @@ export const renderLayoutActivo = async (container) => {
                       </div>
                       
                       <div style="display:flex; gap:10px;">
-                          <div style="display:flex; flex-direction:column; gap:2px; padding-right:5px; font-size:var(--t-xs); color:var(--text-muted); font-weight:800; text-align:right; padding-top:1px;">
+                          <div style="display:flex; flex-direction:column; gap:2px; padding-right:5px; font-size:var(--t-xs); color:var(--text-muted); font-weight:800; text-align:right; padding-top:${hayFranjas ? 21 : 1}px;">
                               ${Array.from({length:maxRows}, (_,i) => maxRows-i).map(n => `<div style="height:15px; display:flex; align-items:center; justify-content:flex-end;">${n}</div>`).join('')}
                           </div>
                           ${gridHtml}
