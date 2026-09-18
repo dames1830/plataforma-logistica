@@ -2,7 +2,7 @@
  * Admin Service v24 - BRIDGE EDITION
  * Este archivo actúa como puente entre la UI y el nuevo Motor de Sincronización v24.
  */
-import * as syncEngine from './sync_engine_v24_9.js?v=29.0827';
+import * as syncEngine from './sync_engine_v24_9.js?v=29.0828';
 
 export const adminStore = syncEngine.syncStore;
 
@@ -477,17 +477,66 @@ export const saveBufferHistory = async (data) => {
  * servidor no contesta se sigue con lo que hubiera: un enlace que ya funcionaba
  * no se rompe por un corte de red.
  */
+/* ─────────────────────────────────────────────────────────────────────────────
+ * LOS LINKS SE GUARDAN SOLO EN LA PC DEL ADMIN (18-sep-2026).
+ *
+ * Daniel: *"¿está bien, está hasheado?"*. Desde ese día el servidor guarda solo la
+ * HUELLA de cada token y la lista que entrega sale sin tokens (ver "LOS LINKS DE LOS
+ * REPORTES PÚBLICOS" en backend/main.py). Así, un link se puede volver a copiar solo
+ * desde la PC donde se generó: queda acá, en `deam_links_publicos`, {id del grupo:
+ * token}. En otra PC la pantalla lo dice y ofrece generar uno nuevo.
+ *
+ * Antes de que la lista del servidor pise la copia local se rescatan los tokens que
+ * esa copia traía de antes: son los links que Daniel ya mandó.
+ * ───────────────────────────────────────────────────────────────────────────── */
+const CLAVE_LINKS = 'deam_links_publicos';
+
+export const linksPublicosGuardados = () => {
+    try { return JSON.parse(localStorage.getItem(CLAVE_LINKS) || '{}') || {}; }
+    catch (e) { return {}; }
+};
+
+const recordarLinks = (grupos) => {
+    if (!Array.isArray(grupos)) return;
+    const m = linksPublicosGuardados();
+    let cambio = false;
+    grupos.forEach(g => {
+        if (g && g.id && g.token && m[g.id] !== g.token) { m[g.id] = g.token; cambio = true; }
+    });
+    if (cambio) {
+        try { localStorage.setItem(CLAVE_LINKS, JSON.stringify(m)); } catch (e) { /* sin disco: da igual */ }
+    }
+};
+
+export const olvidarLinkPublico = (id) => {
+    const m = linksPublicosGuardados();
+    if (!(id in m)) return;
+    delete m[id];
+    try { localStorage.setItem(CLAVE_LINKS, JSON.stringify(m)); } catch (e) { /* da igual */ }
+};
+
+/* La copia local de la lista va SIN tokens: los tokens viven solo en `deam_links_publicos`. */
+const guardarCopiaLocal = (grupos) => {
+    try {
+        localStorage.setItem('deam_public_reports_config', JSON.stringify(
+            (grupos || []).map(g => { const { token, ...resto } = g || {}; return resto; })));
+    } catch (e) { /* modo incognito: da igual, ya está en memoria */ }
+};
+
 export const cargarPublicReportsConfig = async () => {
     const API_URL = 'https://logistics-backend-wv0x.onrender.com/api/logistics';
+    // Primero se rescatan los links que esta PC ya conocía; después se trae la lista.
+    try { recordarLinks(JSON.parse(localStorage.getItem('deam_public_reports_config') || '[]')); } catch (e) { /* nada */ }
+    recordarLinks(adminStore.public_reports_config);
     try {
         const r = await fetch(`${API_URL}/public_reports_config?date=MASTER&z=${Date.now()}`);
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const j = await r.json();
         const d = (j && j.data !== undefined) ? j.data : j;
-        if (Array.isArray(d) && d.length) {
+        if (Array.isArray(d)) {
+            recordarLinks(d);     // un servidor viejo todavía los manda en claro
             adminStore.public_reports_config = d;
-            try { localStorage.setItem('deam_public_reports_config', JSON.stringify(d)); }
-            catch (e) { /* modo incognito: da igual, ya está en memoria */ }
+            guardarCopiaLocal(d);
         }
     } catch (e) {
         console.warn('[Reportes] no se pudo traer la lista de grupos del servidor:',
@@ -503,51 +552,22 @@ export const getPublicReportsConfig = () => {
             if (local) adminStore.public_reports_config = JSON.parse(local);
         } catch(e) {}
     }
+    recordarLinks(adminStore.public_reports_config);
+    /* SIN LISTA DE FÁBRICA. Acá había cuatro grupos escritos con su token -GERENCIAL-Deam2026
+       y parecidos-, y este archivo lo puede leer cualquiera en deam1830.com: cualquiera podía
+       armarse esos links. Sin lista, la pantalla espera a la del servidor. */
     if (!adminStore.public_reports_config || !Array.isArray(adminStore.public_reports_config)) {
-        // Estructura por defecto inicial
-        adminStore.public_reports_config = [
-            {
-                id: 'grp_gerencial',
-                nombre: 'GERENCIAL',
-                token: 'GERENCIAL-Deam2026',
-                modulos: ['inventario', 'picking', 'packing', 'despacho', 'no_retail', 'recepcion', 'almacenaje', 'buffer', 'analisis_sku'],
-                reportesAlmacenaje: ['reporte_marcas', 'rendimiento_ops', 'produccion_hora', 'almacenado_semana', 'grafico_rendimiento'],
-                reportesBuffer: ['historial_buffer', 'analisis_buffer']
-            },
-            {
-                id: 'grp_analistas',
-                nombre: 'ANALISTAS',
-                token: 'ANALISTAS-Deam2026',
-                modulos: ['inventario', 'picking', 'packing', 'despacho', 'no_retail', 'recepcion', 'almacenaje', 'buffer', 'analisis_sku'],
-                reportesAlmacenaje: ['reporte_marcas', 'rendimiento_ops', 'produccion_hora', 'almacenado_semana', 'grafico_rendimiento'],
-                reportesBuffer: ['historial_buffer', 'analisis_buffer']
-            },
-            {
-                id: 'grp_supervisores',
-                nombre: 'SUPERVISORES',
-                token: 'SUPERVISORES-Deam2026',
-                modulos: ['inventario', 'picking', 'packing', 'despacho', 'no_retail', 'recepcion', 'almacenaje', 'buffer', 'analisis_sku'],
-                reportesAlmacenaje: ['reporte_marcas', 'rendimiento_ops', 'produccion_hora', 'almacenado_semana', 'grafico_rendimiento'],
-                reportesBuffer: ['historial_buffer', 'analisis_buffer']
-            },
-            {
-                id: 'grp_proveedores',
-                nombre: 'PROVEEDORES',
-                token: 'PROVEEDORES-Deam2026',
-                modulos: ['inventario', 'picking', 'packing', 'despacho', 'no_retail', 'recepcion'],
-                reportesAlmacenaje: [],
-                reportesBuffer: []
-            }
-        ];
+        adminStore.public_reports_config = [];
     }
     return adminStore.public_reports_config;
 };
 
+/** Guarda la lista. Devuelve true solo si el servidor la aceptó: desde el 18-sep-2026
+ *  hace falta una sesión de administrador, y la pantalla tiene que poder decirlo. */
 export const savePublicReportsConfig = async (data) => {
+    recordarLinks(data);
     adminStore.public_reports_config = data;
-    try {
-        localStorage.setItem('deam_public_reports_config', JSON.stringify(data));
-    } catch(e) {}
+    guardarCopiaLocal(data);
     return await save('public_reports_config', data, 'MASTER');
 };
 

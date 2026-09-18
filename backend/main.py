@@ -84,6 +84,9 @@ SINGLETON_AREAS = [
     # Ficha chica del Maestro (filas, fecha, quién lo subió). Se consulta para saber
     # si hay que bajar el archivo grande o alcanza con el que ya está en el navegador.
     'articulos_meta',
+    # Los grupos de los reportes públicos: una sola lista, la de ahora. Ver
+    # "LOS LINKS DE LOS REPORTES PÚBLICOS" más abajo.
+    'public_reports_config',
 ]
 
 
@@ -418,6 +421,123 @@ def limpiar_passwords_del_snapshot(ruta: str) -> bool:
     except Exception as e:
         print(f"[SEGURIDAD] No se pudo limpiar el snapshot de usuarios de {ruta}: {e}")
         return False
+
+
+# =============================================================================
+# LOS LINKS DE LOS REPORTES PÚBLICOS
+# -----------------------------------------------------------------------------
+# Daniel, 18-sep-2026: *"con el tema de seguridad, con el link que comparto, ¿está
+# bien, está hasheado?"*. No lo estaba, y protegía mucho menos de lo que parecía:
+#
+#   - El token se guardaba en claro, y `GET /logistics/public_reports_config` le
+#     entregaba la lista ENTERA de grupos con sus tokens a cualquiera, sin sesión.
+#   - La revisión la hacía el navegador del visitante: por eso la lista tenía que
+#     viajar entera hasta él.
+#   - Cuatro grupos usaban el token escrito en el JavaScript público
+#     (GERENCIAL-Deam2026 y parecidos): cualquiera podía armarse el link.
+#   - Cualquiera podía reescribir la lista: agregarse un grupo con todos los
+#     módulos, o borrar los de Daniel.
+#
+# AHORA:
+#   - Se guarda solo la HUELLA del token (SHA-256), nunca el token. Los tokens
+#     nuevos son aleatorios y largos (~190 bits), así que la huella no se puede
+#     revertir. El token en claro vive solo en el navegador del admin que lo generó.
+#   - La lista que entrega el servidor sale SIN tokens y sin huellas.
+#   - El visitante manda su token a `POST /api/reportes-publicos/acceso` y recibe
+#     solo los permisos de SU grupo, o un 403.
+#   - Cambiar la lista exige un administrador con la sesión iniciada.
+#   - Los links que ya se mandaron siguen andando: su huella es la de su token.
+#
+# LO QUE FALTA, dicho: los datos de los reportes se siguen pudiendo leer directo del
+# servidor sin ningún token (toda la plataforma lee así). Cerrar eso es otro trabajo.
+# =============================================================================
+AREA_REPORTES_PUBLICOS = 'public_reports_config'
+
+# LOS CUATRO TOKENS QUE ESTUVIERON ESCRITOS EN EL CÓDIGO PÚBLICO. Si un grupo sigue con
+# uno de estos, cualquiera que haya leído el código puede abrir su link: la lista lo
+# marca como inseguro para que se le genere uno nuevo. No se guardan acá, solo su huella.
+_HUELLAS_DE_FABRICA = {
+    'sha256$40de68548df5821c3002ee72265ff7956e891d5159fc72be8d2eef8b0613e1bc',   # GERENCIAL
+    'sha256$f0021012987fb2aeef72ab27b6eb3db18934f6ff341218ee266f77e74ad0ab38',   # ANALISTAS
+    'sha256$d0c580c76c27094172dc3c91d2437ded72cd5f701257d7829e0d5b7bb36c05b0',   # SUPERVISORES
+    'sha256$76f5b378d7d8fd79dee50425a64ed0251be6e2655d27b350e249e89d3b29f573',   # PROVEEDORES
+}
+
+
+def huella_token(token) -> str:
+    return 'sha256$' + hashlib.sha256(str(token).encode('utf-8')).hexdigest()
+
+
+def grupos_sin_secretos(grupos):
+    """La lista tal como la puede ver cualquiera: sin token y sin huella, y con la marca
+    de los que todavía usan un token que estuvo escrito en el código."""
+    if not isinstance(grupos, list):
+        return grupos
+    out = []
+    for g in grupos:
+        if not isinstance(g, dict):
+            continue
+        limpio = {k: v for k, v in g.items() if k not in ('token', 'token_hash')}
+        limpio['tiene_link'] = bool(g.get('token_hash') or g.get('token'))
+        huella = g.get('token_hash') or (huella_token(g['token']) if g.get('token') else '')
+        limpio['link_inseguro'] = huella in _HUELLAS_DE_FABRICA
+        out.append(limpio)
+    return out
+
+
+def grupos_para_guardar(nuevos, anteriores):
+    """Lo que se escribe en la base: el token que llega se convierte en huella y JAMÁS se
+    guarda en claro; el grupo que llega sin token conserva la huella que ya tenía -la
+    web ya no los recibe, así que al guardar no los puede mandar de vuelta-."""
+    previas = {}
+    for g in (anteriores or []):
+        if isinstance(g, dict) and g.get('id'):
+            previas[g['id']] = g.get('token_hash') or (huella_token(g['token']) if g.get('token') else None)
+    out = []
+    for g in (nuevos or []):
+        if not isinstance(g, dict):
+            continue
+        g = {k: v for k, v in g.items() if k not in ('tiene_link', 'link_inseguro')}
+        token = g.pop('token', None)
+        if token:
+            g['token_hash'] = huella_token(token)
+        elif not g.get('token_hash') and previas.get(g.get('id')):
+            g['token_hash'] = previas[g.get('id')]
+        out.append(g)
+    return out
+
+
+def _leer_grupos(cur):
+    fila = cur.execute("SELECT data_json FROM logistics_snapshots WHERE area_id = ? AND snapshot_date = 'MASTER'",
+                       (AREA_REPORTES_PUBLICOS,)).fetchone()
+    if not fila:
+        return []
+    try:
+        datos = json.loads(fila[0])
+    except Exception:
+        return []
+    return datos if isinstance(datos, list) else []
+
+
+def migrar_tokens_publicos(ruta: str) -> int:
+    """Pasa a huella los tokens de los reportes públicos que sigan en claro. Corre en
+    cada arranque; si ya está todo migrado no hace nada."""
+    try:
+        conn = sqlite3.connect(ruta)
+        cur = conn.cursor()
+        grupos = _leer_grupos(cur)
+        en_claro = sum(1 for g in grupos if isinstance(g, dict) and g.get('token'))
+        if en_claro:
+            cur.execute("UPDATE logistics_snapshots SET data_json = ?, updated_at = ? "
+                        "WHERE area_id = ? AND snapshot_date = 'MASTER'",
+                        (json.dumps(grupos_para_guardar(grupos, grupos)),
+                         ahora().strftime("%Y-%m-%d %H:%M:%S"), AREA_REPORTES_PUBLICOS))
+            conn.commit()
+        conn.close()
+        return en_claro
+    except Exception as e:
+        print(f"[SEGURIDAD] No se pudieron migrar los tokens de los reportes públicos de {ruta}: {e}")
+        return 0
 
 
 def hard_reset_if_full():
@@ -798,6 +918,10 @@ for _ruta_db in (DB_PATH, DB_PATH_BETA):
         if _n or _limpio:
             print(f"[SEGURIDAD] {_ruta_db}: {_n} contraseña(s) cifrada(s)"
                   + (", snapshot de usuarios limpiado" if _limpio else ""))
+        # Lo mismo con los tokens de los links públicos: ninguno queda en claro.
+        _nt = migrar_tokens_publicos(_ruta_db)
+        if _nt:
+            print(f"[SEGURIDAD] {_ruta_db}: {_nt} token(s) de reportes públicos pasados a huella")
 
 
 DIAS_QUE_SE_GUARDAN = 7
@@ -1512,6 +1636,36 @@ def versiones_de_areas():
         return {"status": "error", "message": str(e)}
 
 
+@app.post("/api/reportes-publicos/acceso")
+async def acceso_reporte_publico(request: Request):
+    """El visitante de un link público manda SU token y recibe SOLO lo de su grupo.
+
+    La revisión la hace el servidor comparando huellas: la lista de grupos ya no sale de
+    acá, así que nadie puede bajarla para sacar el link de otro. El token viaja en el
+    cuerpo y no en la dirección, para que no quede anotado en los registros.
+    """
+    try:
+        cuerpo = await request.json()
+    except Exception:
+        cuerpo = {}
+    token = str((cuerpo or {}).get('token') or '').strip() if isinstance(cuerpo, dict) else ''
+    if not token or len(token) > 200:
+        return JSONResponse(status_code=403, content={"status": "error", "message": "Link no valido."})
+    huella = huella_token(token)
+    conn = sqlite3.connect(db_path())
+    try:
+        grupos = _leer_grupos(conn.cursor())
+    finally:
+        conn.close()
+    for g in grupos:
+        if not isinstance(g, dict):
+            continue
+        guardada = g.get('token_hash') or (huella_token(g['token']) if g.get('token') else '')
+        if guardada and hmac.compare_digest(guardada, huella):
+            return {"status": "ok", "grupo": grupos_sin_secretos([g])[0]}
+    return JSONResponse(status_code=403, content={"status": "error", "message": "Link no valido o revocado."})
+
+
 @app.delete("/api/logistics/{area}/{snapshot_date}")
 def borrar_snapshot(area: str, snapshot_date: str, request: Request):
     """Borra UN dia de UN area. Para quitar una jornada mal metida -una fecha
@@ -1635,6 +1789,21 @@ def get_area_data(area: str, date: Optional[str] = None):
             conn.close()
             return {"area": "permissions", "data": data}
 
+        # LOS GRUPOS DE LOS REPORTES PÚBLICOS SALEN SIN TOKENS NI HUELLAS. Esta lectura
+        # es libre -la usa la pantalla de administración- y hasta el 18-sep-2026 le
+        # entregaba a cualquiera todos los links. Ver "LOS LINKS DE LOS REPORTES PÚBLICOS".
+        if area == AREA_REPORTES_PUBLICOS:
+            cursor.execute("SELECT data_json, updated_at FROM logistics_snapshots WHERE area_id = ? AND snapshot_date = 'MASTER'",
+                           (area,))
+            row = cursor.fetchone(); conn.close()
+            if not row:
+                return {"area": area, "data": []}
+            try:
+                grupos = json.loads(row[0])
+            except Exception:
+                grupos = []
+            return {"area": area, "data": grupos_sin_secretos(grupos), "updated_at": row[1]}
+
         # Lógica de búsqueda optimizada
         if area in SINGLETON_AREAS:
             cursor.execute("SELECT data_json, updated_at FROM logistics_snapshots WHERE area_id = ? AND snapshot_date = ?", (area, "MASTER"))
@@ -1723,6 +1892,25 @@ async def save_area_data(area: str, request: Request, date: Optional[str] = None
                         "status": "error",
                         "message": "La operacion dejaria la plataforma sin ningun administrador "
                                    "activo. Tiene que quedar al menos uno."})
+
+        # LOS GRUPOS DE LOS REPORTES PÚBLICOS: SOLO UN ADMIN, Y NUNCA UN TOKEN EN CLARO.
+        # Hasta el 18-sep-2026 cualquiera podía reescribir esta lista sin sesión:
+        # agregarse un grupo con todos los módulos, o borrar los de Daniel.
+        if area == AREA_REPORTES_PUBLICOS:
+            if not es_admin(request):
+                return JSONResponse(status_code=403, content={
+                    "status": "error",
+                    "message": "Solo un administrador con la sesion iniciada puede cambiar "
+                               "los grupos de los reportes publicos."})
+            if not isinstance(payload_data, list):
+                return JSONResponse(status_code=400, content={
+                    "status": "error", "message": "La lista de grupos tiene que ser una lista."})
+            _c = sqlite3.connect(db_path())
+            try:
+                _anteriores = _leer_grupos(_c.cursor())
+            finally:
+                _c.close()
+            payload_data = grupos_para_guardar(payload_data, _anteriores)
 
         passwords_recibidas = {}
         if area == 'users' and isinstance(payload_data, list):
@@ -1912,6 +2100,12 @@ async def restore_performance(request: Request):
 async def patch_area_data(area: str, request: Request, tareas: BackgroundTasks,
                           date: Optional[str] = None):
     try:
+        # Los grupos de los reportes públicos se guardan enteros por POST, que es donde
+        # se pide admin y se convierten los tokens en huella. Por acá no.
+        if area == AREA_REPORTES_PUBLICOS:
+            return JSONResponse(status_code=400, content={
+                "status": "error",
+                "message": "Los grupos de los reportes publicos se guardan con POST."})
         if area != 'users':
             _bloqueo = _control_escritura(request, area)
             if _bloqueo is not None:

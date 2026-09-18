@@ -11,26 +11,26 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=29.0827';
+} from '../services_v245/csvHub_v6.js?v=29.0828';
 
-import * as adminService from '../services_v245/adminService.js?v=29.0827';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0827';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0827';
-import { renderLayoutActivo } from './public_layout_activo.js?v=29.0827';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0827';
+import * as adminService from '../services_v245/adminService.js?v=29.0828';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0828';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0828';
+import { renderLayoutActivo } from './public_layout_activo.js?v=29.0828';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0828';
 /* EL CATALOGO COMPARTIDO con la matriz de permisos del tablero. Antes esta lista
    estaba escrita a mano acá Y allá, y cada reporte nuevo se quedaba fuera de las
    dos. */
 import { CATALOGO as CAT_PUB, buscarSub, permisosDe as permisosPub }
-    from '../services_v245/catalogoReportesPublicos.js?v=29.0827';
+    from '../services_v245/catalogoReportesPublicos.js?v=29.0828';
 /* Distribucion y Despacho Potencial los publica `robot/distribucion.py`: el
    enlace publico los lee del servidor igual que la plataforma. */
-import { traerAreaPublicada } from '../services_v245/csvHub_v6.js?v=29.0827';
-import { traerSellos, chipSello } from '../services_v245/selloService.js?v=29.0827';
+import { traerAreaPublicada } from '../services_v245/csvHub_v6.js?v=29.0828';
+import { traerSellos, chipSello } from '../services_v245/selloService.js?v=29.0828';
 /* EL REPORTE DE VERDAD, el mismo que dibuja la plataforma. Antes acá había una
    versión reducida y salía distinto; Daniel, 07-sep-2026: *"los reportes
    públicos deberían salir igual que los originales"*. */
-import * as distribucionReporte from '../reportes/distribucion.js?v=29.0827';
+import * as distribucionReporte from '../reportes/distribucion.js?v=29.0828';
 
 /**
  * El día operativo, no el del calendario.
@@ -200,8 +200,22 @@ async function init() {
    *    persona le salía ACCESO RESTRINGIDO. Se espera a que llegue: es lo que
    *    decide si el enlace vale o no.
    */
-  const configList = await adminService.cargarPublicReportsConfig() || [];
-  groupInfo = configList.find(g => g.token === token);
+  /*    AHORA LO REVISA EL SERVIDOR (18-sep-2026). Daniel: *"¿está bien, está
+   *    hasheado?"*. No lo estaba: esta página bajaba la lista ENTERA de grupos con
+   *    sus tokens y buscaba el suyo acá, en el navegador del visitante, así que
+   *    cualquiera que abriera un link podía sacar los de los demás. Ahora se manda
+   *    el token al servidor, que guarda solo su huella, y vuelve SOLO este grupo.
+   *
+   *    Si el servidor no contesta no se dice "revocado": se dice que no se pudo
+   *    verificar, que es lo que pasó.
+   */
+  const acceso = await pedirAcceso(token);
+  if (acceso.sinConexion) {
+    renderAccessDenied(app, 'No se pudo verificar el acceso: el servidor no respondió. '
+      + 'Revisa la conexión y vuelve a cargar la página.');
+    return;
+  }
+  groupInfo = acceso.grupo;
 
   if (!groupInfo) {
     renderAccessDenied(app);
@@ -251,6 +265,32 @@ async function init() {
 }
 
 // ============================================================
+// EL LINK LO REVISA EL SERVIDOR
+// ============================================================
+/* El token va en el CUERPO de la petición y no en la dirección, para que no quede
+   anotado en los registros del servidor. Devuelve {grupo} si vale, {grupo: null} si no,
+   y {sinConexion: true} si el servidor no contestó. */
+const API_ACCESO = 'https://logistics-backend-wv0x.onrender.com/api/reportes-publicos/acceso';
+
+async function pedirAcceso(token) {
+  if (!token) return { grupo: null };
+  try {
+    const r = await fetch(API_ACCESO, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    });
+    if (r.status === 403) return { grupo: null };
+    if (!r.ok) return { sinConexion: true };
+    const j = await r.json();
+    return { grupo: (j && j.grupo) || null };
+  } catch (e) {
+    console.warn('[Reportes] no se pudo verificar el link:', e && e.message);
+    return { sinConexion: true };
+  }
+}
+
+// ============================================================
 // PANTALLA DE ACCESO DENEGADO
 // ============================================================
 function renderAccessDenied(app, customMsg = null) {
@@ -296,7 +336,7 @@ function renderShell(app) {
     <div style="border-top:1px solid var(--border); background:var(--surface); padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.68rem; font-weight:600; letter-spacing:0.5px;">
       Creado por <span style="color:var(--primary); font-weight:700;">Daniel Ames</span>
       <span style="color:var(--border); margin:0 8px;">·</span>
-      <span style="color:var(--text-muted); font-weight:500;">v29.0827</span>
+      <span style="color:var(--text-muted); font-weight:500;">v29.0828</span>
     </div>`;
 
   buildTabNav();
