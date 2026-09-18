@@ -317,6 +317,7 @@ def leer_picking(base, guias):
     # en cada linea del mismo articulo -una por ubicacion, una por dia-: se toma una vez,
     # con max, que es la regla de distribucion.py. El prepack viene en cajas: a pares.
     orden_wms = {}
+    pk_art = collections.defaultdict(float)
     ult, leidos = None, 0
     for n in sorted(x for x in os.listdir(carpeta) if x.lower().endswith('.csv')):
         try:
@@ -339,11 +340,8 @@ def leer_picking(base, guias):
                     if o not in guias:
                         continue
                     sku = L(r[iA]).strip('"').strip()
-                    p = num(r[iQ]) * pares_de_la_caja(sku)
-                    picado[o] += p
-                    if pares_de_la_caja(sku) > 1:
-                        picado_pp[o] += p
                     k = (o, sku)
+                    pk_art[k] += num(r[iQ]) * pares_de_la_caja(sku)
                     orden_wms[k] = max(orden_wms.get(k, 0.0), num(r[iOr]) * pares_de_la_caja(sku))
                     h = cuando(r[iH])
                     if h and (ult is None or h > ult):
@@ -354,10 +352,21 @@ def leer_picking(base, guias):
         except OSError as e:
             log('%s: no se pudo leer (%s: %s)' % (n, type(e).__name__, str(e)[:80]), 'ERROR')
             FALLIDOS.append(n)
+    # UN ARTICULO NO SE PICA MAS DE LO QUE PEDIA LA ORDEN. Daniel, 18-sep-2026, al barrer
+    # los pedidos que pasaban del 100%: el picking a veces anota el mismo pick dos veces -en
+    # el coche PRE y en la caja, o un re-pick de lo mismo- y la guia 8007205 sumaba 137
+    # pares de una orden de 135. Por articulo, lo picado se corta en lo que pedia la orden.
+    for k, p in pk_art.items():
+        o, sku = k
+        pedia = orden_wms.get(k, 0.0)
+        q = min(p, pedia) if pedia > 0 else p
+        picado[o] += q
+        if pares_de_la_caja(sku) > 1:
+            picado_pp[o] += q
     por_orden = collections.defaultdict(float)
     for (o, sku), q in orden_wms.items():
         por_orden[o] += q
-    return picado, picado_pp, ult, leidos, por_orden
+    return picado, picado_pp, ult, leidos, por_orden, orden_wms
 
 
 # ══ 2b. EL TIPO DE LO QUE TODAVIA NO SE PICO ═════════════════════════════════
@@ -395,7 +404,7 @@ def leer_pendientes(base, sin_pick):
 
 # ══ 3. EL OBLPN: LA ULTIMA FOTO DE CADA PICK ═════════════════════════════════
 
-def leer_oblpn(base, guias):
+def leer_oblpn(base, guias, topes):
     carpeta = os.path.join(base, 'OBLPN Embalaje')
     archivos = []
     for n in os.listdir(carpeta):
@@ -444,25 +453,37 @@ def leer_oblpn(base, guias):
                     caja = pares_de_la_caja(c)
                     picks[pick][lpn] = (momento, r[iE].strip(), num(r[iQ]) * caja,
                                         lpn.startswith('PRE'), num(r[iQ]), caja > 1)
-    est = collections.defaultdict(collections.Counter)
-    otros = collections.Counter()
+    # UN ARTICULO NO SE EMBALA MAS DE LO QUE PEDIA LA ORDEN. El mismo pick aparece a veces
+    # en dos bultos reales vivos: la guia 7999159 tenia 1 unidad y figuraba en el bulto
+    # 508004072676 y otra vez como 508004072676-26747924, los dos Enviado. Por articulo se
+    # toma primero la foto mas nueva y se corta en lo que pedia la orden (`topes`, del
+    # picking); lo que no esta en el picking -las RA de donacion- no tiene tope.
+    por_art = collections.defaultdict(list)
     for pick, por_lpn in picks.items():
-        o = pick[0]
         vivos = [x for x in por_lpn.values() if x[1] != 'Cancelado' and x[2] > 0]
         reales = [x for x in vivos if not x[3]]
-        for momento, e, p, pre, cajas, es_pp in (reales if reales else vivos):
-            est[o]['tot'] += p
+        por_art[(pick[0], pick[1])].extend(reales if reales else vivos)
+    est = collections.defaultdict(collections.Counter)
+    otros = collections.Counter()
+    for (o, c), xs in por_art.items():
+        resto = topes.get((o, c)) or float('inf')
+        for momento, e, p, pre, cajas, es_pp in sorted(xs, key=lambda x: x[0], reverse=True):
+            if resto <= 0:
+                break
+            usar = min(p, resto)
+            resto -= usar
+            est[o]['tot'] += usar
             if es_pp:
-                est[o]['pp_pares'] += p
-                est[o]['pp_cajas'] += cajas
+                est[o]['pp_pares'] += usar
+                est[o]['pp_cajas'] += cajas * usar / p
             if e == 'Enviado':
-                est[o]['desp'] += p
+                est[o]['desp'] += usar
             elif e == 'Cargado':
-                est[o]['carg'] += p
+                est[o]['carg'] += usar
             elif e in PARADO:
-                est[o]['patio' if pre else 'stag'] += p
+                est[o]['patio' if pre else 'stag'] += usar
             else:
-                otros[e] += p
+                otros[e] += usar
     if otros:
         log('Estados del OBLPN sin columna: %s' % dict(otros), 'AVISO')
     return est, (archivos[-1][0] if archivos else None), len(archivos), len(picks)
@@ -478,14 +499,14 @@ def calcular(base):
     log('Correos: %d archivos, %d guias del %s al %s (%.0f s)'
         % (leidos, len(guias), DESDE, hasta, time.time() - t0))
 
-    picado, picado_pp, ult_pick, n_pick, orden_wms = leer_picking(base, guias)
+    picado, picado_pp, ult_pick, n_pick, orden_wms, orden_art = leer_picking(base, guias)
     log('Picking: %d archivos, %d guias con picking, ultimo pick %s (%.0f s)'
         % (n_pick, len(picado), ult_pick, time.time() - t0))
 
     sin_pick = {gid for gid, g in guias.items() if g['clase'] == 'CALZADO' and not picado.get(gid)}
     pend_pp, pend_tot = leer_pendientes(base, sin_pick)
 
-    est, ultimo_oblpn, n_oblpn, n_picks = leer_oblpn(base, guias)
+    est, ultimo_oblpn, n_oblpn, n_picks = leer_oblpn(base, guias, orden_art)
     log('OBLPN: %d archivos hasta el %s, %d picks seguidos (%.0f s)'
         % (n_oblpn, ultimo_oblpn, n_picks, time.time() - t0))
 
