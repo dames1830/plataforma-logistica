@@ -99,6 +99,7 @@ import shutil
 import subprocess
 import sys
 import traceback
+import unicodedata
 import urllib.parse
 import urllib.request
 from datetime import date, datetime
@@ -278,6 +279,100 @@ def fecha_del_nombre(nombre):
     return (mes, dia)
 
 
+def es_principal(nombre):
+    """¿Es el correo de siempre del dia, `Guías 17.09.xlsx`, o uno adicional?
+
+    UN DIA PUEDE TRAER MAS DE UN CORREO. El 17-sep-2026 comercial mando las guias de
+    una tienda nueva en un correo aparte -"B CARAZ guias 17.09.xlsx"-, y
+    `correo_guias.py` guarda el adicional con nombre propio para que no pise al de
+    siempre: `Guías 17.09 B CARAZ.xlsx`. Principal es el que, sacando la fecha y la
+    palabra guias, no dice nada mas. Misma regla que `correo_guias.nombre_del_archivo`.
+    """
+    base = os.path.splitext(nombre)[0]
+    m = re.search(r'(\d{1,2})[.\-](\d{1,2})(?!\d)', base)
+    if m:
+        base = base[:m.start()] + ' ' + base[m.end():]
+    base = unicodedata.normalize('NFD', base.lower())
+    base = ''.join(c for c in base if unicodedata.category(c) != 'Mn')
+    return not re.sub(r'guias?', ' ', base).strip(' ._-()')
+
+
+def archivos_de_correo():
+    """[((mes, dia), nombre)] de la carpeta, en el orden en que se leen.
+
+    POR FECHA Y, DENTRO DEL DIA, EL PRINCIPAL PRIMERO. Una guia que venga en los dos
+    correos del mismo dia cuenta una sola vez, la primera, y la primera es la del
+    correo de siempre. Por nombre a secas, `Guías 17.09 B CARAZ.xlsx` quedaba delante
+    de `Guías 17.09.xlsx`: el espacio ordena antes que el punto.
+    """
+    archivos = []
+    for n in os.listdir(CORREOS):
+        if n.startswith('~$') or not n.lower().endswith(('.xlsx', '.xls')):
+            continue
+        f = fecha_del_nombre(n)
+        if f:
+            archivos.append((f, n))
+    archivos.sort(key=lambda x: (x[0], 0 if es_principal(x[1]) else 1, x[1]))
+    return archivos
+
+
+# ══ LAS COLUMNAS DEL CORREO SE LEEN POR NOMBRE, NUNCA POR POSICION ═══════════════
+# Las once de siempre, en su orden. Asi se guarda cada fila de cada correo, venga como
+# venga, y todo lo que sigue -los cortes, el Correo de Hoy y el Excel- las lee de aca.
+#
+# POR QUE. Medido el 18-sep-2026 sobre los 95 correos guardados: la cabecera cambio SEIS
+# veces. El 02-09 trae CAD, PRIORIDAD y FECHAPR; el 18-06 trae la cantidad y el CD al
+# reves; y el de B CARAZ del 17-09 trae una columna DIS delante de todo. Leyendo por la
+# posicion del primer archivo, ese correo corria todo un lugar: la tienda salia "BA
+# 644", la prioridad "B CARAZ" y la cantidad era la palabra DESPACHAR.
+COLUMNAS = ['Cadena', 'TIEND', 'NOMBR', 'Prioridad', 'Etiqueta', 'FECHA', 'GUIA',
+            'ALMAC', 'Despachar', 'Suma de CANTI', 'CD']
+C_TIEND, C_NOMBR, C_PRIOR, C_ETIQ, C_GUIA, C_CANT = 1, 2, 3, 4, 6, 9
+
+
+def _col(t):
+    """Nombre de columna comparable: sin tildes, en mayusculas, solo letras y numeros."""
+    t = unicodedata.normalize('NFD', str(t or '').upper())
+    return ''.join(c for c in t if c.isalnum() and unicodedata.category(c) != 'Mn')
+
+
+def columnas_del_correo(cab):
+    """{posicion en COLUMNAS: posicion en ESTE archivo}. Primero el nombre exacto;
+    despues la cantidad por 'CANTI' ("Suma de Suma de CANTI"); y al final el comienzo
+    del nombre, que es como viene abreviado ("CAD" es Cadena, "FECHAPR" es FECHA). Una
+    columna que no es de las once -DIS, DIST- se ignora."""
+    norm = [_col(c) for c in cab]
+    out, usadas = {}, set()
+
+    def tomar(k, i):
+        out[k] = i
+        usadas.add(i)
+
+    for k, nombre in enumerate(COLUMNAS):
+        i = next((i for i, h in enumerate(norm) if i not in usadas and h == _col(nombre)), None)
+        if i is not None:
+            tomar(k, i)
+    if C_CANT not in out:
+        i = next((i for i, h in enumerate(norm) if i not in usadas and 'CANTI' in h), None)
+        if i is not None:
+            tomar(C_CANT, i)
+    for k, nombre in enumerate(COLUMNAS):
+        if k in out:
+            continue
+        obj = _col(nombre)
+        i = next((i for i, h in enumerate(norm) if i not in usadas and len(h) >= 3
+                  and (h.startswith(obj) or obj.startswith(h))), None)
+        if i is not None:
+            tomar(k, i)
+    return out
+
+
+def fila_del_correo(r, cols):
+    """La fila en el orden de COLUMNAS; lo que el archivo no trae queda en None."""
+    return [r[cols[k]] if k in cols and cols[k] < len(r) else None
+            for k in range(len(COLUMNAS))]
+
+
 def leer_correos():
     """Todas las guias que comercial mando alguna vez -> {guia: (fila, mes, dia)}.
 
@@ -288,20 +383,15 @@ def leer_correos():
     segunda y un dia entero se perdio sin avisar -15.276 guias en vez de 15.623-.
     Se busca la hoja cuya cabecera traiga la columna GUIA; la mas grande no sirve
     como criterio, porque las del 11/12/13-ago traen una segunda hoja "Tiendas".
+
+    CADA FILA SE GUARDA EN EL ORDEN DE `COLUMNAS`, leida por nombre: ver arriba.
     """
     if openpyxl is None:
         raise SystemExit('Falta openpyxl. Instalalo con:  pip install openpyxl')
     if not os.path.isdir(CORREOS):
         raise SystemExit('No existe la carpeta de correos: %s' % CORREOS)
 
-    archivos = []
-    for n in os.listdir(CORREOS):
-        if not n.lower().endswith(('.xlsx', '.xls')):
-            continue
-        f = fecha_del_nombre(n)
-        if f:
-            archivos.append((f, n))
-    archivos.sort()
+    archivos = archivos_de_correo()
 
     # LOS QUE SE PIDIERON DEJAR FUERA. Se descuentan del total ANTES de contar, para que
     # el aviso de "se reconocieron X de Y" siga cazando un formato de nombre nuevo.
@@ -313,7 +403,17 @@ def leer_correos():
             % (antes - len(archivos),
                ', '.join('%02d.%02d' % (d, m) for (m, d) in sorted(fuera))), 'AVISO')
 
-    guias, cabecera, iq_out, ig_out = {}, None, None, None
+    # LOS DIAS CON MAS DE UN CORREO, a la vista en el log: todos cuentan.
+    por_dia = collections.defaultdict(list)
+    for f, n in archivos:
+        por_dia[f].append(n)
+    for (m, d), ns in sorted(por_dia.items()):
+        if len(ns) > 1:
+            log('El %02d.%02d trae %d correos: %s' % (d, m, len(ns), ' + '.join(ns)))
+
+    cabecera = list(COLUMNAS)
+    cabecera[C_CANT] = 'CANTIDAD PENDIENTE'
+    guias = {}
     leidos = 0
     fuera_dt = [0]
     for (mes, dia), nombre in archivos:
@@ -330,29 +430,23 @@ def leer_correos():
                 cab = [str(c).strip() if c is not None else '' for c in next(it)]
             except StopIteration:
                 continue
-            if 'GUIA' not in cab:
+            cols = columnas_del_correo(cab)
+            if C_GUIA not in cols or C_CANT not in cols:
                 continue
-            ig = cab.index('GUIA')
-            iq = next((i for i, c in enumerate(cab) if 'CANTI' in c.upper()), None)
-            if iq is None:
-                continue
-            if cabecera is None:
-                cabecera, iq_out, ig_out = list(cab), iq, ig
-                cabecera[iq] = 'CANTIDAD PENDIENTE'
             # EL DOBLE TRAMO NO ES DESPACHO DEL CD Y NO ENTRA A NADA.
             # Daniel, 09-sep-2026: *"no estoy considerando doble tramo"*. Es un valor
             # de la columna Prioridad -etiqueta VARIOS-, y el WMS NUNCA lo abre como
             # orden: comprobado ese dia, las 418 guias de doble tramo del correo son
             # EXACTAMENTE las 418 que el WMS no tenia abiertas, mismo conjunto y cero
             # diferencias. Contandolas, el modulo decia 46.575 y comercial 38.142.
-            ip = cab.index('Prioridad') if 'Prioridad' in cab else None
             for r in it:
-                g = limpio(r[ig])
-                if ip is not None and str(r[ip] or '').strip().upper() == 'DOBLE TRAMO':
+                fila = fila_del_correo(r, cols)
+                g = limpio(fila[C_GUIA])
+                if str(fila[C_PRIOR] or '').strip().upper() == 'DOBLE TRAMO':
                     fuera_dt[0] += 1
                     continue
                 if g and g not in guias:
-                    guias[g] = (list(r), mes, dia)
+                    guias[g] = (fila, mes, dia)
             hallado = True
             break
         if hallado:
@@ -370,7 +464,7 @@ def leer_correos():
             % (leidos, len(archivos)), 'AVISO')
     log('Correos leidos: %d archivos, %s guias  (%s filas de DOBLE TRAMO fuera)'
         % (leidos, format(len(guias), ',d'), format(fuera_dt[0], ',d')))
-    return guias, cabecera, iq_out, ig_out
+    return guias, cabecera, C_CANT, C_GUIA
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -863,30 +957,22 @@ def guias_repetidas(hoy_d, guias, abierto_de):
     CALZADO O NO, DE LA ETIQUETA DEL CORREO. Estas guias no tienen lineas abiertas
     en el WMS, asi que no hay SKU con que preguntarle al Maestro. La etiqueta del
     correo -CALZADO contra el resto- es la unica fuente, y el cuadro lo dice.
+
+    HOY PUEDEN SER VARIOS CORREOS, y se leen todos: el de siempre y, por ejemplo, el
+    de una tienda nueva (`Guías 17.09 B CARAZ.xlsx`). Antes se tomaba el primer
+    archivo del dia que devolviera la carpeta y el otro no existia. Una guia que ya
+    vino en un correo anterior de HOY no se vuelve a contar.
     """
     vacia = dict([(k, {'guias': 0, 'und': 0})
                   for k in ('trae', 'dobleTramo', 'repetidas', 'nuevo')]
                  + [('etiquetas', [])])
     if openpyxl is None:
         return [], vacia
-    archivo = None
     try:
-        for n in os.listdir(CORREOS):
-            if not n.lower().endswith(('.xlsx', '.xls')):
-                continue
-            f = fecha_del_nombre(n)
-            if f == (hoy_d.month, hoy_d.day):
-                archivo = os.path.join(CORREOS, n)
-                break
+        de_hoy = [n for f, n in archivos_de_correo() if f == (hoy_d.month, hoy_d.day)]
     except Exception:
         return [], vacia
-    if not archivo:
-        return [], vacia
-
-    try:
-        wb = openpyxl.load_workbook(archivo, read_only=True, data_only=True)
-    except Exception as e:
-        log('No se pudo releer el correo de hoy (%s)' % type(e).__name__, 'AVISO')
+    if not de_hoy:
         return [], vacia
 
     filas = []
@@ -901,70 +987,82 @@ def guias_repetidas(hoy_d, guias, abierto_de):
     # justo debajo de la cascada. Sale de la etiqueta y no del Maestro porque es
     # el reparto que hace comercial, y tiene que sumar los mismos 38.142.
     etiq = collections.defaultdict(lambda: [0, 0.0])
-    for ws in wb.worksheets:
-        it = ws.iter_rows(values_only=True)
+    ya_hoy = set()          # las guias de los correos de HOY que ya se leyeron
+    dobles = 0
+    for nombre in de_hoy:
         try:
-            cab = [str(c).strip() if c is not None else '' for c in next(it)]
-        except StopIteration:
+            wb = openpyxl.load_workbook(os.path.join(CORREOS, nombre),
+                                        read_only=True, data_only=True)
+        except Exception as e:
+            log('No se pudo releer el correo de hoy %s (%s)'
+                % (nombre, type(e).__name__), 'AVISO')
             continue
-        if 'GUIA' not in cab:
-            continue
-        ig = cab.index('GUIA')
-        iq = next((i for i, c in enumerate(cab) if 'CANTI' in c.upper()), None)
-        if iq is None:
-            continue
-        ip = cab.index('Prioridad') if 'Prioridad' in cab else None
-        ie = cab.index('Etiqueta') if 'Etiqueta' in cab else None
-        it_ = cab.index('TIEND') if 'TIEND' in cab else None
-        inm = cab.index('NOMBR') if 'NOMBR' in cab else None
-        for r in it:
-            g = limpio(r[ig] if ig < len(r) else None)
-            if not g:
-                continue
+        de_este = set()
+        for ws in wb.worksheets:
+            it = ws.iter_rows(values_only=True)
             try:
-                q = float(str(r[iq]).replace(',', '') or 0)
-            except Exception:
-                q = 0.0
-            casc['trae'][0] += 1
-            casc['trae'][1] += q
-            pr = str(r[ip] or '').strip() if ip is not None and ip < len(r) else ''
-            if pr.upper() == 'DOBLE TRAMO':
-                casc['dobleTramo'][0] += 1
-                casc['dobleTramo'][1] += q
+                cab = [str(c).strip() if c is not None else '' for c in next(it)]
+            except StopIteration:
                 continue
-            if g not in guias:
-                # No cruzo contra ningun correo leido: no deberia pasar, pero si
-                # pasa no se la come el silencio.
+            cols = columnas_del_correo(cab)
+            if C_GUIA not in cols or C_CANT not in cols:
                 continue
-            _f, mes, dia = guias[g]
-            et = str(r[ie] or '').strip().upper() if ie is not None and ie < len(r) else ''
-            if (mes, dia) == (hoy_d.month, hoy_d.day):
-                casc['nuevo'][0] += 1
-                casc['nuevo'][1] += q
-                e = et or '(sin etiqueta)'
-                etiq[e][0] += 1
-                etiq[e][1] += q
-                continue          # nacio hoy: no es repetida
-            casc['repetidas'][0] += 1
-            casc['repetidas'][1] += q
-            tienda = ''
-            if it_ is not None and inm is not None:
-                tienda = ('%s %s' % (str(r[it_] or '').strip(),
-                                     str(r[inm] or '').strip())).strip()
-            filas.append({
-                'guia': g,
-                'tienda': tienda or '(sin tienda)',
-                'prioridad': pr or '(sin prioridad)',
-                'tipo': 'Calzado' if et == 'CALZADO' else 'No calzado',
-                'pidio': int(round(q)),
-                'desde': '%02d-%02d' % (dia, mes),
-                'wms': int(round(abierto_de.get(g, 0.0))),
-            })
-        break
-    try:
-        wb.close()
-    except Exception:
-        pass
+            for r in it:
+                fila = fila_del_correo(r, cols)
+                g = limpio(fila[C_GUIA])
+                if not g:
+                    continue
+                if g in ya_hoy:
+                    dobles += 1
+                    continue
+                de_este.add(g)
+                try:
+                    q = float(str(fila[C_CANT]).replace(',', '') or 0)
+                except Exception:
+                    q = 0.0
+                casc['trae'][0] += 1
+                casc['trae'][1] += q
+                pr = str(fila[C_PRIOR] or '').strip()
+                if pr.upper() == 'DOBLE TRAMO':
+                    casc['dobleTramo'][0] += 1
+                    casc['dobleTramo'][1] += q
+                    continue
+                if g not in guias:
+                    # No cruzo contra ningun correo leido: no deberia pasar, pero si
+                    # pasa no se la come el silencio.
+                    continue
+                _f, mes, dia = guias[g]
+                et = str(fila[C_ETIQ] or '').strip().upper()
+                if (mes, dia) == (hoy_d.month, hoy_d.day):
+                    casc['nuevo'][0] += 1
+                    casc['nuevo'][1] += q
+                    e = et or '(sin etiqueta)'
+                    etiq[e][0] += 1
+                    etiq[e][1] += q
+                    continue          # nacio hoy: no es repetida
+                casc['repetidas'][0] += 1
+                casc['repetidas'][1] += q
+                tienda = ('%s %s' % (str(fila[C_TIEND] or '').strip(),
+                                     str(fila[C_NOMBR] or '').strip())).strip()
+                filas.append({
+                    'guia': g,
+                    'tienda': tienda or '(sin tienda)',
+                    'prioridad': pr or '(sin prioridad)',
+                    'tipo': 'Calzado' if et == 'CALZADO' else 'No calzado',
+                    'pidio': int(round(q)),
+                    'desde': '%02d-%02d' % (dia, mes),
+                    'wms': int(round(abierto_de.get(g, 0.0))),
+                })
+            break
+        ya_hoy |= de_este
+        try:
+            wb.close()
+        except Exception:
+            pass
+    if len(de_hoy) > 1:
+        log('Los correos de hoy son %d (%s); %d filas de guias que ya venian en un '
+            'correo anterior de hoy no se cuentan dos veces'
+            % (len(de_hoy), ' + '.join(de_hoy), dobles))
     filas.sort(key=lambda x: -x['pidio'])
     cascada = dict((k, {'guias': v[0], 'und': int(round(v[1]))})
                    for k, v in casc.items())
