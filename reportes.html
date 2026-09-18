@@ -1,5 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<!-- data-tema="pbi": esta página es CLARA. No carga temas.css, así que el atributo no cambia
+     nada propio; lo leen los módulos que se comparten con la web para elegir sus colores de
+     tema claro (Distribución oscurece sus acentos con él). Sin él tomaban los del tema oscuro
+     y sobre el blanco no se leían. 18-sep-2026. -->
+<html lang="es" data-tema="pbi">
 <head>
   <!-- El iconito de la pestaña. En SVG porque escala solo: nitido en los 16px de la
        pestaña y en los 180 de un acceso directo del celular. Declararlo evita, ademas,
@@ -56,7 +60,7 @@
 </script>
 
   <!-- ENTORNO: decide produccion vs pruebas. DEBE ir antes que cualquier otro script. -->
-  <script src="js/env.js?v=29.0829"></script>
+  <script src="js/env.js?v=29.0830"></script>
 
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -82,7 +86,19 @@
       --text-strong: #1C2B3A;
       --text-main: #4A4540;
       --text-soft: #6B655F;
-      --danger-soft: #FBE9E7;
+      /* Es un color de LETRA, no de fondo: Distribución pinta con él las cifras
+         en rojo y los días de atraso. Estaba en #FBE9E7 (rosado casi blanco) y
+         esos números no se veían. Va el de la web en su tema claro. */
+      --danger-soft: #C0454F;
+      /* LOS COLORES DE LAS LETRAS DEL LAYOUT, con el mismo nombre que en la web.
+         Daniel, 18-sep-2026: "revisa las letras que no se notan". Esta página
+         tenía escritos a mano los colores del tema OSCURO de la plataforma
+         (#3b82f6, #10b981, #8b5cf6) y sobre este fondo claro se leían poco.
+         Van un tono más oscuros, de la misma familia que los cuadros del mapa,
+         como hace la web en sus temas claros. */
+      --blue: #2563EB;
+      --success-alt: #047857;
+      --violet: #7C3AED;
       /* Los tríos van en RGB porque se usan dentro de rgba() para los velos. */
       --ink-rgb: 28, 43, 58;
       --warning-rgb: 180, 83, 9;
@@ -94,7 +110,14 @@
       --primary: #1C2B3A;
       --accent: #B45309;
       --text: #1C2B3A;
-      --text-muted: #9C9590;
+      /* Era #9C9590: con 2,6 a 1 de contraste, los rótulos grises ("Ubicaciones
+         vacías", "Publicado", los números de fila) casi no se veían. Este llega
+         a 4,5 a 1 sobre el blanco y sobre el crema, y sigue un pelo más claro
+         que --text-soft para que se note cuál texto es secundario.
+         OJO: el mismo valor va escrito a mano en reportes_publicos.js y en
+         TEMA_CLARO de marcas.js (los gráficos no leen variables). Si se cambia
+         acá, cambiarlo allá también. */
+      --text-muted: #716A64;
       --text-body: #4A4540;
       --font: 'Inter', sans-serif;
       --font-brand: 'Outfit', sans-serif;
@@ -317,6 +340,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-  <script type="module" src="js/views/reportes_publicos.js?v=29.0829"></script>
+  <script type="module" src="js/views/reportes_publicos.js?v=29.0830"></script>
 </body>
 </html>

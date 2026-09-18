@@ -11,26 +11,26 @@ import {
   dataStore, initPersistentData, fetchKPIDates,
   loadKPIResultsRange, fetchReservaHistory,
   getCol, updateBufferHistoryRecord, deleteBufferHistoryRecord
-} from '../services_v245/csvHub_v6.js?v=29.0829';
+} from '../services_v245/csvHub_v6.js?v=29.0830';
 
-import * as adminService from '../services_v245/adminService.js?v=29.0829';
-import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0829';
-import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0829';
-import { renderLayoutActivo } from './public_layout_activo.js?v=29.0829';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0829';
+import * as adminService from '../services_v245/adminService.js?v=29.0830';
+import { marcaNormalizada, marcaCorta, rotuloRango, selectorRango, diaOperativoDeTarea as diaOperativoCompartido } from '../services_v245/reportesComunes.js?v=29.0830';
+import { datosMarcas, filasMarcas, cabeceraMarcas, armarTurnoDe, TEMA_CLARO } from '../reportes/marcas.js?v=29.0830';
+import { renderLayoutActivo } from './public_layout_activo.js?v=29.0830';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0830';
 /* EL CATALOGO COMPARTIDO con la matriz de permisos del tablero. Antes esta lista
    estaba escrita a mano acá Y allá, y cada reporte nuevo se quedaba fuera de las
    dos. */
 import { CATALOGO as CAT_PUB, buscarSub, permisosDe as permisosPub }
-    from '../services_v245/catalogoReportesPublicos.js?v=29.0829';
+    from '../services_v245/catalogoReportesPublicos.js?v=29.0830';
 /* Distribucion y Despacho Potencial los publica `robot/distribucion.py`: el
    enlace publico los lee del servidor igual que la plataforma. */
-import { traerAreaPublicada } from '../services_v245/csvHub_v6.js?v=29.0829';
-import { traerSellos, chipSello } from '../services_v245/selloService.js?v=29.0829';
+import { traerAreaPublicada } from '../services_v245/csvHub_v6.js?v=29.0830';
+import { traerSellos, chipSello } from '../services_v245/selloService.js?v=29.0830';
 /* EL REPORTE DE VERDAD, el mismo que dibuja la plataforma. Antes acá había una
    versión reducida y salía distinto; Daniel, 07-sep-2026: *"los reportes
    públicos deberían salir igual que los originales"*. */
-import * as distribucionReporte from '../reportes/distribucion.js?v=29.0829';
+import * as distribucionReporte from '../reportes/distribucion.js?v=29.0830';
 
 /**
  * El día operativo, no el del calendario.
@@ -56,7 +56,7 @@ const RANGO_CLARO = {
     fondo:  '#F4F1EC',
     borde:  '#DDD8CF',
     texto:  '#1C2B3A',
-    rotulo: '#7A736E',
+    rotulo: '#716A64',
     esquema: 'light'
 };
 
@@ -124,7 +124,7 @@ function showPremiumAlert(title, message, type = 'info') {
     ">
       <div style="font-size:2.5rem; margin-bottom:0.8rem;">${c.icon}</div>
       <h3 style="margin:0 0 0.5rem; color:#1C2B3A; font-size:1.05rem; font-weight:800; font-family:'Outfit',sans-serif;">${title}</h3>
-      <p style="margin:0 0 1.4rem; color:#9C9590; font-size:0.82rem; line-height:1.55;">${message}</p>
+      <p style="margin:0 0 1.4rem; color:#716A64; font-size:0.82rem; line-height:1.55;">${message}</p>
       <button style="
         padding:0.6rem 2rem; border-radius:6px;
         background:${c.bg}; border:1px solid ${c.border}55;
@@ -336,7 +336,7 @@ function renderShell(app) {
     <div style="border-top:1px solid var(--border); background:var(--surface); padding:0.75rem 1.5rem; text-align:center; color:var(--text-muted); font-size:0.68rem; font-weight:600; letter-spacing:0.5px;">
       Creado por <span style="color:var(--primary); font-weight:700;">Daniel Ames</span>
       <span style="color:var(--border); margin:0 8px;">·</span>
-      <span style="color:var(--text-muted); font-weight:500;">v29.0829</span>
+      <span style="color:var(--text-muted); font-weight:500;">v29.0830</span>
     </div>`;
 
   buildTabNav();
@@ -665,12 +665,12 @@ function renderMarcasReport() {
                             <h3 style="color:#1C2B3A; font-weight:700; margin:0; font-size:0.8rem; letter-spacing:1px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
                                 REPORTE ALMACENAJE - MARCAS
                             </h3>
-                            <div style="font-size:0.68rem; color:#9C9590; font-weight:600; letter-spacing:0.3px;">
-Período: ${rotuloRango(window.__repMarcasStart, window.__repMarcasEnd, '#9C9590')}
+                            <div style="font-size:0.68rem; color:#716A64; font-weight:600; letter-spacing:0.3px;">
+Período: ${rotuloRango(window.__repMarcasStart, window.__repMarcasEnd, '#716A64')}
                             </div>
                         </div>
                         ${selectorRango(window.__repMarcasStart, window.__repMarcasEnd, 'window.setRepMarcasRange', RANGO_CLARO)}
-                        <button onclick="window.__refreshMarcasReport && window.__refreshMarcasReport()" title="Actualizar Reporte" style="background:none; border:none; color:#9C9590; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.color='#B45309'" onmouseout="this.style.color='#9C9590'">
+                        <button onclick="window.__refreshMarcasReport && window.__refreshMarcasReport()" title="Actualizar Reporte" style="background:none; border:none; color:#716A64; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.color='#B45309'" onmouseout="this.style.color='#716A64'">
                             🔄
                         </button>
                     </div>
@@ -694,12 +694,12 @@ Período: ${rotuloRango(window.__repMarcasStart, window.__repMarcasEnd, '#9C9590
                             <h3 style="color:#1C2B3A; font-weight:700; margin:0; font-size:0.8rem; letter-spacing:1px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
                                 REPORTE ALMACENAJE - GENDER RIMS
                             </h3>
-                            <div style="font-size:0.68rem; color:#9C9590; font-weight:600; letter-spacing:0.3px;">
-Período: ${rotuloRango(window.__repGenderStart, window.__repGenderEnd, '#9C9590')}
+                            <div style="font-size:0.68rem; color:#716A64; font-weight:600; letter-spacing:0.3px;">
+Período: ${rotuloRango(window.__repGenderStart, window.__repGenderEnd, '#716A64')}
                             </div>
                         </div>
                         ${selectorRango(window.__repGenderStart, window.__repGenderEnd, 'window.setRepGenderRange', RANGO_CLARO)}
-                        <button onclick="window.__refreshMarcasReport && window.__refreshMarcasReport()" title="Actualizar Reporte" style="background:none; border:none; color:#9C9590; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.color='#B45309'" onmouseout="this.style.color='#9C9590'">
+                        <button onclick="window.__refreshMarcasReport && window.__refreshMarcasReport()" title="Actualizar Reporte" style="background:none; border:none; color:#716A64; width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1rem; transition:all 0.2s;" onmouseover="this.style.color='#B45309'" onmouseout="this.style.color='#716A64'">
                             🔄
                         </button>
                     </div>
@@ -777,7 +777,7 @@ Período: ${rotuloRango(window.__repGenderStart, window.__repGenderEnd, '#9C9590
                                         });
                                     });
                                     const areas = Object.keys(genderGroups).sort((a, b) => b.localeCompare(a));
-                                    if (areas.length === 0) return `<tr><td colspan="6" style="padding:4rem; text-align:center; color:#9C9590; font-weight:600;">No hay datos de almacén para mostrar en esta selección.</td></tr>`;
+                                    if (areas.length === 0) return `<tr><td colspan="6" style="padding:4rem; text-align:center; color:#716A64; font-weight:600;">No hay datos de almacén para mostrar en esta selección.</td></tr>`;
                                     let genderTableRows = '';
                                     let grandBuffer = 0, grandAvance = 0;
                                     areas.forEach(area => {
@@ -789,7 +789,7 @@ Período: ${rotuloRango(window.__repGenderStart, window.__repGenderEnd, '#9C9590
                                             areaBufferSum += data.buffer; areaAvanceSum += data.avance;
                                             grandBuffer += data.buffer; grandAvance += data.avance;
                                             genderTableRows += `<tr style="border-bottom:1px solid #EEE9E3; background:#fff;">
-                                                <td style="padding:5px 6px; color:#9C9590; font-size:0.78rem; font-weight:600;">${area}</td>
+                                                <td style="padding:5px 6px; color:#716A64; font-size:0.78rem; font-weight:600;">${area}</td>
                                                 <td style="padding:5px 6px;"><b style="color:#1C2B3A; font-weight:800; font-size:0.8rem; font-family:'Outfit',sans-serif;">${gender}</b></td>
                                                 <td style="padding:5px 6px; text-align:center; font-weight:700; color:#1C2B3A; font-size:0.8rem;">${data.buffer.toLocaleString('es-PE')}</td>
                                                 <td style="padding:5px 6px; text-align:center; font-weight:700; color:#1C2B3A; font-size:0.8rem;">${data.avance.toLocaleString('es-PE')}</td>
@@ -836,7 +836,7 @@ function renderRendimientoOperarios() {
                         <h3 style="color:#1C2B3A; font-weight:700; margin:0; font-size:0.8rem; letter-spacing:1px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
                             RENDIMIENTO DE OPERARIOS
                         </h3>
-                        <div style="font-size:0.68rem; color:#9C9590; font-weight:600; letter-spacing:0.3px;">
+                        <div style="font-size:0.68rem; color:#716A64; font-weight:600; letter-spacing:0.3px;">
                             MEDICIÓN DE TAREAS FINALIZADAS
                         </div>
                     </div>
@@ -1008,7 +1008,7 @@ function renderRendimientoOperarios() {
                                 if (sortedGroupRows.length === 0) {
                                     window.__perfTotalPages = 0;
                                     window.__perfTotalRows = 0;
-                                    return `<tr><td colspan="10" style="padding:3rem; text-align:center; color:rgba(0, 229, 255, 0.4); font-weight:700;">No hay datos de desempeño para mostrar en este periodo.</td></tr>`;
+                                    return `<tr><td colspan="10" style="padding:3rem; text-align:center; color:#716A64; font-weight:700;">No hay datos de desempeño para mostrar en este periodo.</td></tr>`;
                                 }
 
                                 if (!window.__perfSetPage) window.__perfSetPage = (p) => { const _sy=window.scrollY; window.__perfPage=p; if(window.renderAlmacenajeTareas) window.renderAlmacenajeTareas(container); else renderAlmacenajeModule(); requestAnimationFrame(()=>window.scrollTo({top:_sy,behavior:'instant'})); };
@@ -1068,8 +1068,8 @@ function renderRendimientoOperarios() {
                                             <td style="padding:6px 8px; text-align:center; font-weight:700; color:#1C2B3A;">${row.operators.size}</td>
                                             <td style="padding:6px 8px; text-align:center; font-weight:700; color:#1C2B3A;">${row.totalQty.toLocaleString('es-PE')}</td>
                                             <td style="padding:6px 8px; text-align:center; font-weight:700; color:#B45309;">${row.taskCount}</td>
-                                            <td style="padding:6px 8px; text-align:center; color:#9C9590; font-size:0.75rem;">${startStr}</td>
-                                            <td style="padding:6px 8px; text-align:center; color:#9C9590; font-size:0.75rem;">${endStr}</td>
+                                            <td style="padding:6px 8px; text-align:center; color:#716A64; font-size:0.75rem;">${startStr}</td>
+                                            <td style="padding:6px 8px; text-align:center; color:#716A64; font-size:0.75rem;">${endStr}</td>
                                             <td style="padding:6px 8px; text-align:center; color:#4A4540; font-weight:700;">${durationStr}</td>
                                             <td style="padding:6px 8px; text-align:center; color:#1A6336; font-weight:700;">${qtyPerHourStr}</td>
                                             <td style="padding:6px 8px; text-align:center; font-weight:700; color:#B45309;">${avgQty.toLocaleString('es-PE')}</td>
@@ -1090,7 +1090,7 @@ function renderRendimientoOperarios() {
                         <button onclick="window.__perfSetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${btnStyle(false,cp===0)}">← Ant</button>
                         ${pages.map(p=>`<button onclick="window.__perfSetPage(${p})" style="${btnStyle(p===cp,false)}">${p+1}</button>`).join('')}
                         <button onclick="window.__perfSetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${btnStyle(false,cp===tp-1)}">Sig →</button>
-                        <span style="font-size:0.68rem; color:#9C9590; margin-left:6px;">Pág ${cp+1} / ${tp} (${window.__perfTotalRows || 0} registros)</span>
+                        <span style="font-size:0.68rem; color:#716A64; margin-left:6px;">Pág ${cp+1} / ${tp} (${window.__perfTotalRows || 0} registros)</span>
                     </div>`;
                 })()}
             </div>`;
@@ -1154,7 +1154,7 @@ const renderHourlyProductionReport = (tasksList) => {
                 <h3 style="color:#1C2B3A; font-weight:700; margin:0; font-size:0.8rem; letter-spacing:1px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
                     REPORTE DE PRODUCCIÓN POR HORA
                 </h3>
-                <div style="font-size:0.68rem; color:#9C9590; font-weight:600; letter-spacing:0.3px;">
+                <div style="font-size:0.68rem; color:#716A64; font-weight:600; letter-spacing:0.3px;">
                     CANTIDAD DE UNIDADES PROCESADAS POR RANGO HORARIO (TAREA FINALIZADA)
                 </div>
             </div>
@@ -1168,7 +1168,7 @@ const renderHourlyProductionReport = (tasksList) => {
                         </tr>
                     </thead>
                     <tbody>
-                        ${pagedActiveDates.length === 0 ? `<tr><td colspan="${targetHours.length + 2}" style="padding:3rem; text-align:center; color:#9C9590; font-weight:600;">No hay producción por hora registrada.</td></tr>` : pagedActiveDates.map(dateKey => {
+                        ${pagedActiveDates.length === 0 ? `<tr><td colspan="${targetHours.length + 2}" style="padding:3rem; text-align:center; color:#716A64; font-weight:600;">No hay producción por hora registrada.</td></tr>` : pagedActiveDates.map(dateKey => {
                             const rowData = hourlyData[dateKey];
                             const rowTotal = targetHours.reduce((sum, hr) => sum + rowData[hr], 0);
                             return `
@@ -1195,7 +1195,7 @@ const renderHourlyProductionReport = (tasksList) => {
                     <button onclick="window.__hourlySetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${btnStyle(false,cp===0)}">← Ant</button>
                     ${pages.map(p=>`<button onclick="window.__hourlySetPage(${p})" style="${btnStyle(p===cp,false)}">${p+1}</button>`).join('')}
                     <button onclick="window.__hourlySetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${btnStyle(false,cp===tp-1)}">Sig →</button>
-                    <span style="font-size:0.68rem; color:#9C9590; margin-left:6px;">Pág ${cp+1} / ${tp} (${window.__hourlyTotalRows || 0} registros)</span>
+                    <span style="font-size:0.68rem; color:#716A64; margin-left:6px;">Pág ${cp+1} / ${tp} (${window.__hourlyTotalRows || 0} registros)</span>
                 </div>`;
             })()}
         </div>
@@ -1337,7 +1337,7 @@ const renderWeeklyStorageReport = (tasksList) => {
                 <h3 style="color:#1C2B3A; font-weight:700; margin:0; font-size:0.8rem; letter-spacing:1px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
                     REPORTE DE ALMACENADO POR SEMANA Y MARCA
                 </h3>
-                <div style="font-size:0.68rem; color:#9C9590; font-weight:600; letter-spacing:0.3px;">
+                <div style="font-size:0.68rem; color:#716A64; font-weight:600; letter-spacing:0.3px;">
                     DISTRIBUCIÓN DE CANTIDADES ALMACENADAS POR SEMANA E ISO Y MARCAS PRINCIPALES (HAGA CLIC EN UNA SEMANA PARA EXPANDIR POR GÉNERO)
                 </div>
             </div>
@@ -1351,7 +1351,7 @@ const renderWeeklyStorageReport = (tasksList) => {
                         </tr>
                     </thead>
                     <tbody>
-                        ${pagedSortedWeeks.length === 0 ? `<tr><td colspan="${sortedBrands.length + 2}" style="padding:3rem; text-align:center; color:#9C9590; font-weight:600;">No hay datos semanales registrados.</td></tr>` : pagedSortedWeeks.map(w => {
+                        ${pagedSortedWeeks.length === 0 ? `<tr><td colspan="${sortedBrands.length + 2}" style="padding:3rem; text-align:center; color:#716A64; font-weight:600;">No hay datos semanales registrados.</td></tr>` : pagedSortedWeeks.map(w => {
                             const rowData = weeklyBrandData[w];
                             const rowTotal = sortedBrands.reduce((sum, b) => sum + (rowData[b] || 0), 0);
                             const isExpanded = window.__expandedStorageReportWeeks && window.__expandedStorageReportWeeks.includes(w);
@@ -1361,7 +1361,7 @@ const renderWeeklyStorageReport = (tasksList) => {
                                 const genderRowTotal = sortedBrands.reduce((sum, b) => sum + (genderData[b] || 0), 0);
                                 return `
                                     <tr style="background:#F4F1EC; border-bottom:1px solid #EEE9E3; font-size:0.74rem;">
-                                        <td style="padding:5px 8px 5px 24px; color:#9C9590; font-weight:600; font-style:italic; white-space:nowrap;">${gender}</td>
+                                        <td style="padding:5px 8px 5px 24px; color:#716A64; font-weight:600; font-style:italic; white-space:nowrap;">${gender}</td>
                                         ${sortedBrands.map(b => {
                                             const qty = genderData[b] || 0;
                                             return `<td style="padding:5px 8px; text-align:center; color:#4A4540;">${qty > 0 ? qty.toLocaleString('es-PE') : '-'}</td>`;
@@ -1409,7 +1409,7 @@ const renderWeeklyStorageReport = (tasksList) => {
                     <button onclick="window.__weeklySetPage(${Math.max(0,cp-1)})" ${cp===0?'disabled':''} style="${btnStyle(false,cp===0)}">← Ant</button>
                     ${pages.map(p=>`<button onclick="window.__weeklySetPage(${p})" style="${btnStyle(p===cp,false)}">${p+1}</button>`).join('')}
                     <button onclick="window.__weeklySetPage(${Math.min(tp-1,cp+1)})" ${cp===tp-1?'disabled':''} style="${btnStyle(false,cp===tp-1)}">Sig →</button>
-                    <span style="font-size:0.68rem; color:#9C9590; margin-left:6px;">Pág ${cp+1} / ${tp} (${window.__weeklyTotalRows || 0} registros)</span>
+                    <span style="font-size:0.68rem; color:#716A64; margin-left:6px;">Pág ${cp+1} / ${tp} (${window.__weeklyTotalRows || 0} registros)</span>
                 </div>`;
             })()}
         </div>
@@ -1743,7 +1743,7 @@ const renderWeeklyDailyChartSection = (tasksList) => {
                                 borderColor: '#DDD8CF'
                             },
                             ticks: {
-                                color: '#9C9590',
+                                color: '#716A64',
                                 font: { family: "'Inter', sans-serif", weight: '600' }
                             }
                         },
@@ -1753,7 +1753,7 @@ const renderWeeklyDailyChartSection = (tasksList) => {
                                 borderColor: '#DDD8CF'
                             },
                             ticks: {
-                                color: '#9C9590',
+                                color: '#716A64',
                                 font: { family: "'Inter', sans-serif", weight: '600' }
                             },
                             beginAtZero: true
@@ -1772,7 +1772,7 @@ const renderWeeklyDailyChartSection = (tasksList) => {
                     <h3 style="color:#1C2B3A; font-weight:700; margin:0; font-size:0.8rem; letter-spacing:1px; text-transform:uppercase; font-family:'Outfit', sans-serif;">
                         GRÁFICO DE RENDIMIENTO SEMANA Y DÍA
                     </h3>
-                    <div style="font-size:0.68rem; color:#9C9590; font-weight:600; letter-spacing:0.3px;">
+                    <div style="font-size:0.68rem; color:#716A64; font-weight:600; letter-spacing:0.3px;">
                         TENDENCIAS DIARIAS COMPARADAS POR SEMANAS (LUNES A SÁBADO)
                     </div>
                 </div>
@@ -2116,7 +2116,7 @@ async function renderHistorialBuffer() {
                 }
             } catch(e) {
                 console.error('[BH] Error agrupando temporadas:', e);
-                tbodyTemp.innerHTML = `<tr><td colspan="2" style="padding:2rem; text-align:center; color:#ef4444;">Error al analizar temporadas.</td></tr>`;
+                tbodyTemp.innerHTML = `<tr><td colspan="2" style="padding:2rem; text-align:center; color:#991B1B;">Error al analizar temporadas.</td></tr>`;
             }
         }
     };
@@ -2183,7 +2183,7 @@ async function renderHistorialBuffer() {
             ">
                 <div style="font-size:2.5rem; margin-bottom:0.8rem;">🗑️</div>
                 <h3 style="margin:0 0 0.5rem 0; color:#1C2B3A; font-size:1.05rem; font-weight:700; font-family:'Outfit',sans-serif;">Eliminar Registro</h3>
-                <p style="margin:0 0 1.6rem 0; color:#9C9590; font-size:0.82rem; line-height:1.55;">¿Estás seguro de que deseas eliminar este registro del historial? Esta acción no se puede deshacer.</p>
+                <p style="margin:0 0 1.6rem 0; color:#716A64; font-size:0.82rem; line-height:1.55;">¿Estás seguro de que deseas eliminar este registro del historial? Esta acción no se puede deshacer.</p>
                 <div style="display:flex; gap:0.8rem; justify-content:center;">
                     <button id="modal_hist_cancel" style="
                         flex:1; padding:0.6rem 1rem; border-radius:5px;
@@ -2321,7 +2321,7 @@ async function renderHistorialBuffer() {
                             </tr>
                         `).join('') : `
                             <tr>
-                                <td colspan="3" style="padding:2rem; text-align:center; color:#9C9590; font-style:italic;">No hay datos para procesar en este reporte.</td>
+                                <td colspan="3" style="padding:2rem; text-align:center; color:#716A64; font-style:italic;">No hay datos para procesar en este reporte.</td>
                             </tr>
                         `}
                     </tbody>
@@ -2344,7 +2344,7 @@ async function renderAnalisisBuffer() {
   } catch(e) { console.warn(e); }
 
   if (!data) {
-     container.innerHTML = `<div style="padding:2rem; color:#ef4444; text-align:center;">Error al cargar datos del buffer o no hay datos recientes.</div>`;
+     container.innerHTML = `<div style="padding:2rem; color:#991B1B; text-align:center;">Error al cargar datos del buffer o no hay datos recientes.</div>`;
      return;
   }
 
@@ -2377,7 +2377,7 @@ async function renderAnalisisBuffer() {
                     <thead><tr style="background:#1C2B3A; color:#fff;"><th style="padding:0.5rem 1rem; text-align:left;">FUENTE</th><th style="padding:0.5rem 1rem; text-align:left;">TIPO</th><th style="padding:0.5rem 1rem; text-align:center;">PALETAS</th><th style="padding:0.5rem 1rem; text-align:center;">SKU</th><th style="padding:0.5rem 1rem; text-align:center;">PAR/CAJA</th></tr></thead>
                     <tbody>${data.resumenSKU.map(r => `<tr style="border-bottom:1px solid #EEE9E3; ${r.fuente.includes('TOTAL') ? 'background:#F4F1EC; font-weight:700;' : 'background:#fff;'}">
                         <td style="padding:0.5rem 1rem; color:#1C2B3A; font-weight:700;">${r.fuente}</td>
-                        <td style="padding:0.5rem 1rem; color:#9C9590;">${r.tipo}</td>
+                        <td style="padding:0.5rem 1rem; color:#716A64;">${r.tipo}</td>
                         <td style="padding:0.5rem 1rem; text-align:center; color:#4A4540;">${r.paletas}</td>
                         <td style="padding:0.5rem 1rem; text-align:center; color:#4A4540;">${r.skus}</td>
                         <td style="padding:0.5rem 1rem; text-align:center; color:#1A6336; font-weight:700;">${Number(r.parcaja).toLocaleString('es-PE')}</td>
@@ -2389,15 +2389,15 @@ async function renderAnalisisBuffer() {
                 <div style="padding:0.5rem 0.8rem; background:#1C2B3A; border-left:3px solid #991B1B;"><h3 style="color:#fff; font-weight:700; margin:0; font-size:0.78rem; letter-spacing:1px; white-space:nowrap; text-transform:uppercase;">RESUMEN 7. SIN STOCK ${tsHtml}</h3></div>
                 <div style="display:flex; justify-content:space-around; padding:1.2rem; color:#4A4540;">
                     <div style="text-align:center;">
-                        <div style="font-size:0.68rem; color:#9C9590; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad Artículos</div>
+                        <div style="font-size:0.68rem; color:#716A64; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad Artículos</div>
                         <div style="font-size:1.6rem; font-weight:700; color:#1C2B3A; font-variant-numeric:tabular-nums;">${(data.sinStockSummary.articulos || 0).toLocaleString('es-PE')}</div>
                     </div>
                     <div style="text-align:center; border-left:1px solid #DDD8CF; padding-left:0.5rem;">
-                        <div style="font-size:0.68rem; color:#9C9590; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad SKUs</div>
+                        <div style="font-size:0.68rem; color:#716A64; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad SKUs</div>
                         <div style="font-size:1.6rem; font-weight:700; color:#1C2B3A; font-variant-numeric:tabular-nums;">${(data.sinStockSummary.skus || 0).toLocaleString('es-PE')}</div>
                     </div>
                     <div style="text-align:center; border-left:1px solid #DDD8CF; padding-left:0.5rem;">
-                        <div style="font-size:0.68rem; color:#9C9590; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad Unidades (RQ)</div>
+                        <div style="font-size:0.68rem; color:#716A64; text-transform:uppercase; margin-bottom:0.3rem;">Cantidad Unidades (RQ)</div>
                         <div style="font-size:1.6rem; font-weight:700; color:#991B1B; font-variant-numeric:tabular-nums;">${(data.sinStockSummary.qty || 0).toLocaleString('es-PE')}</div>
                     </div>
                 </div>
@@ -2450,11 +2450,14 @@ async function renderInventarioModule() {
   }
 }
 
+/* El título iba en blanco (#fff) y el texto en gris claro: eran los colores del tema
+   oscuro de la plataforma, y sobre el panel blanco de esta página el título no se
+   veía. Van los de esta página. Ver --text-muted en reportes.html (18-sep-2026). */
 function renderUnderConstruction(container, moduleName) {
   container.innerHTML = `
-    <div class="glass-panel" style="padding:4rem; text-align:center; color:#94a3b8; border:1px dashed var(--border);">
+    <div class="glass-panel" style="padding:4rem; text-align:center; color:var(--text-muted); border:1px dashed var(--border);">
       <div style="font-size:3rem; margin-bottom:1rem; opacity:0.3;">🏗️</div>
-      <h3 style="color:#fff; margin-bottom:0.5rem;">Reporte en Migración</h3>
+      <h3 style="color:var(--text-strong); margin-bottom:0.5rem;">Reporte en Migración</h3>
       <p style="font-size:0.9rem;">El sub-módulo seleccionado de <b>${moduleName}</b> se encuentra en proceso de adaptación para la vista pública.<br>Estará disponible muy pronto.</p>
     </div>
   `;

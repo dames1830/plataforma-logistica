@@ -12,8 +12,8 @@
  *
  * Para agregar una columna se toca acá y aparece en los dos.
  */
-import { marcaNormalizada, marcaCorta, jornadaDelTrabajo } from '../services_v245/reportesComunes.js?v=29.0829';
-import * as jornadaService from '../services_v245/jornadaService.js?v=29.0829';
+import { marcaNormalizada, marcaCorta, jornadaDelTrabajo } from '../services_v245/reportesComunes.js?v=29.0830';
+import * as jornadaService from '../services_v245/jornadaService.js?v=29.0830';
 
 /** Las columnas del reporte. Agregar una acá la agrega en las dos pantallas. */
 export const COLUMNAS = [
@@ -197,9 +197,9 @@ export const TEMA_CLARO = {
     cabeceraColorea: false,
     cabecera: 'background:#1C2B3A; color:#fff; text-transform:uppercase; font-size:var(--t-xs); font-weight:700; letter-spacing:0.04em;',
     fila: 'border-bottom:1px solid #EEE9E3; background:#fff;',
-    area: '#9C9590', marca: '#1C2B3A', marcaPeso: '700',
+    area: '#716A64', marca: '#1C2B3A', marcaPeso: '700',
     valor: '#1C2B3A', dia: '#B45309', noche: '#4A4540', pend: '#B45309', pendPeso: '700',
-    vacio: 'padding:4rem; text-align:center; color:#9C9590; font-weight:700;',
+    vacio: 'padding:4rem; text-align:center; color:#716A64; font-weight:700;',
     pct: semaforo('#ef4444', '#fbbf24', '#22c55e'),
     totalArea: {
         fila: 'background:#F4F1EC; border-top:1px solid #DDD8CF; border-bottom:1px solid #DDD8CF; font-weight:700;',

@@ -1,6 +1,14 @@
 // Las columnas bloqueadas y la forma real de cada zona salen de la misma configuración que
 // usan las tareas. El reporte público tenía su propia copia escrita a mano y por eso seguía
 // mostrando como ubicaciones vacías columnas que ya no existen.
+//
+// LAS LETRAS, COMO EN LA WEB (18-sep-2026). Daniel: "revisa las letras que no se notan".
+// Esta pantalla es una copia vieja de la de la web y se quedó con letras de 8 a 11 px y con
+// los colores del tema oscuro escritos a mano. Ahora cada letra usa el tamaño que tiene en
+// la web y ninguna baja de 12 px (--t-xs, el mínimo de allá), salvo los rótulos de arriba
+// de cada columna (ver ahí por qué). Los colores van con el mismo nombre que en la web
+// (--blue, --danger, --success-alt, --violet, --text-muted), puestos en reportes.html
+// para el fondo claro de esta página.
 import * as zonasService from '../services_v245/zonasService.js';
 
 let currentLayoutZona = 'SEL';
@@ -429,6 +437,9 @@ export const renderLayoutActivo = async (container) => {
                   const f = zonasService.franjaDeColumna(currentLayoutZona, c);
                   const d = FR[f] || FR.ninguna;
                   const vale = !bloq && f !== 'ninguna';
+                  /* 8 px A PROPÓSITO, aunque el resto no baja de 12: la columna mide 40 px y en 12
+                     "ANTERIOR" pide 62 y "ACTUAL" 50, así que se cortaban. En 8 entran (ANTERIOR pide 41:
+                     un píxel de más, no se nota). */
                   gridHtml += `<div title="${escP(d.etiqueta)}" style="${anchoDe(c)}
                       height:15px; line-height:15px; box-sizing:border-box; border-radius:4px 4px 0 0;
                       background:${vale ? d.color : 'rgba(0,0,0,0.06)'}; text-align:center;
@@ -492,7 +503,7 @@ export const renderLayoutActivo = async (container) => {
                       
                       tooltipHTML = `<b>${zonaLabel} ${String(c).padStart(2,'0')} - Cuerpo ${logicalR}</b><br/>
                                      Total Unid: ${cellData.totalQty}<br/>
-                                     SKUs: ${cellData.skus.length}<br/><hr style='border-color:rgba(255,255,255,0.1); margin:4px 0;'/>`;
+                                     SKUs: ${cellData.skus.length}<br/><hr style='border-color:rgba(var(--ink-rgb), 0.1); margin:4px 0;'/>`;
                       fullTooltipHTML = tooltipHTML;
                       cellData.skus.forEach((s, idx) => {
                           const s7 = s.sku.substring(0, 7);
@@ -524,13 +535,13 @@ export const renderLayoutActivo = async (container) => {
                       </div>
                   `;
               }
-              gridHtml += `<div style="text-align:center; font-size:0.68rem; color:#1C2B3A; font-weight:700; margin-top:8px;">${String(c).padStart(2,'0')}</div>`;
+              gridHtml += `<div style="text-align:center; font-size:var(--t-sm); color:#1C2B3A; font-weight:700; margin-top:8px;">${String(c).padStart(2,'0')}</div>`;
               if (hayVariasMarcas) {
                   const d = duenoDe(c);
                   gridHtml += `<div style="height:4px; border-radius:2px; margin-top:5px;
                       background:${d ? d.color : 'rgba(0,0,0,0.08)'};"></div>`;
                   gridHtml += `<div title="${d ? escP(d.marca) : ''}" style="text-align:center;
-                      font-size:9.5px; font-weight:900; margin-top:3px; letter-spacing:0.3px;
+                      font-size:var(--t-xs); font-weight:900; margin-top:3px; letter-spacing:0.3px;
                       color:${d ? d.color : 'rgba(0,0,0,0.25)'};">${d ? escP(d.sigla) : ''}</div>`;
               }
               gridHtml += `</div>`;
@@ -587,11 +598,11 @@ export const renderLayoutActivo = async (container) => {
                           <h3 style="color:#1C2B3A; margin:0; font-size:1.2rem; display:flex; align-items:center; gap:10px;">
                               <span style="font-size:1.5rem;">🗺️</span>
                               ${isReserva ? `LAYOUT RESERVA - ${brandTitle}` : `LAYOUT ${zonaLabel} - ${brandTitle}`}
-                              ${isGlobal ? '<span style="font-size:0.65rem; background:rgba(180,83,9,0.1); color:#B45309; border:1px solid rgba(180,83,9,0.4); padding:2px 8px; border-radius:3px; font-weight:800; letter-spacing:1px;">GLOBAL</span>' : ''}
-                              ${(!isReserva && window.__verLayoutAnterior) ? '<span style="font-size:0.65rem; background:rgba(180,83,9,0.1); color:#B45309; border:1px solid rgba(180,83,9,0.4); padding:2px 8px; border-radius:3px; font-weight:800; letter-spacing:1px;">VERSIÓN ANTERIOR</span>' : ''}
+                              ${isGlobal ? '<span style="font-size:var(--t-xs); background:rgba(180,83,9,0.1); color:#B45309; border:1px solid rgba(180,83,9,0.4); padding:2px 8px; border-radius:3px; font-weight:800; letter-spacing:1px;">GLOBAL</span>' : ''}
+                              ${(!isReserva && window.__verLayoutAnterior) ? '<span style="font-size:var(--t-xs); background:rgba(180,83,9,0.1); color:#B45309; border:1px solid rgba(180,83,9,0.4); padding:2px 8px; border-radius:3px; font-weight:800; letter-spacing:1px;">VERSIÓN ANTERIOR</span>' : ''}
                           </h3>
                           <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
-                              <div style="text-align:right; font-size:0.8rem; color:#9C9590; font-weight:600; border:1px solid #DDD8CF; padding:4px 10px; border-radius:4px; background:#F4F1EC;">
+                              <div style="text-align:right; font-size:0.8rem; color:var(--text-muted); font-weight:600; border:1px solid #DDD8CF; padding:4px 10px; border-radius:4px; background:#F4F1EC;">
                                   🕒 ${timestampStr}
                               </div>
                               ${btnVerVersion}
@@ -608,7 +619,7 @@ export const renderLayoutActivo = async (container) => {
                       </div>
                       
                       <div style="display:flex; gap:10px;">
-                          <div style="display:flex; flex-direction:column; gap:2px; padding-right:5px; font-size:0.65rem; color:var(--text-muted); font-weight:800; text-align:right; padding-top:1px;">
+                          <div style="display:flex; flex-direction:column; gap:2px; padding-right:5px; font-size:var(--t-xs); color:var(--text-muted); font-weight:800; text-align:right; padding-top:1px;">
                               ${Array.from({length:maxRows}, (_,i) => maxRows-i).map(n => `<div style="height:15px; display:flex; align-items:center; justify-content:flex-end;">${n}</div>`).join('')}
                           </div>
                           ${gridHtml}
@@ -635,9 +646,9 @@ export const renderLayoutActivo = async (container) => {
                                       <div style="width:${percArtAnterior}%; background:#ef4444; height:100%; transition:width 1s ease;"></div>
                                   </div>
                                   
-                                  <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:800;">
-                                      <span style="color:#3b82f6; display:flex; align-items:center; gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:#3b82f6;"></div> Actual ${percArtActual}%</span>
-                                      <span style="color:#ef4444; display:flex; align-items:center; gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:#ef4444;"></div> Anterior ${percArtAnterior}%</span>
+                                  <div style="display:flex; justify-content:space-between; font-size:var(--t-xs); font-weight:800;">
+                                      <span style="color:var(--blue); display:flex; align-items:center; gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:#3b82f6;"></div> Actual ${percArtActual}%</span>
+                                      <span style="color:var(--danger); display:flex; align-items:center; gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:#ef4444;"></div> Anterior ${percArtAnterior}%</span>
                                   </div>
                               </div>
                               
@@ -652,9 +663,9 @@ export const renderLayoutActivo = async (container) => {
                                       <div style="width:${percUnidAnterior}%; background:#ef4444; height:100%; transition:width 1s ease;"></div>
                                   </div>
                                   
-                                  <div style="display:flex; justify-content:space-between; font-size:0.7rem; font-weight:800;">
-                                      <span style="color:#3b82f6; display:flex; align-items:center; gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:#3b82f6;"></div> Actual ${percUnidActual}%</span>
-                                      <span style="color:#ef4444; display:flex; align-items:center; gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:#ef4444;"></div> Anterior ${percUnidAnterior}%</span>
+                                  <div style="display:flex; justify-content:space-between; font-size:var(--t-xs); font-weight:800;">
+                                      <span style="color:var(--blue); display:flex; align-items:center; gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:#3b82f6;"></div> Actual ${percUnidActual}%</span>
+                                      <span style="color:var(--danger); display:flex; align-items:center; gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:#ef4444;"></div> Anterior ${percUnidAnterior}%</span>
                                   </div>
                               </div>
                               
@@ -680,7 +691,7 @@ export const renderLayoutActivo = async (container) => {
                               <h4 style="color:#1C2B3A; font-weight:800; border-bottom:1px solid #DDD8CF; padding-bottom:8px; margin-bottom:10px; font-size:0.95rem;">🎯 CUMPLIMIENTO POR TEMPORADA ${zonaLabel}</h4>
                               
                               <div style="background:rgba(59,130,246,0.1); border-left:3px solid #3b82f6; padding:10px; margin-bottom:15px; border-radius:4px;">
-                                  <div style="display:flex; justify-content:space-between; font-weight:800; color:#3b82f6; margin-bottom:8px; font-size:0.95rem;">
+                                  <div style="display:flex; justify-content:space-between; font-weight:800; color:var(--blue); margin-bottom:8px; font-size:0.95rem;">
                                       <span>T. Actual</span>
                                       <span>${actualPerc}%</span>
                                   </div>
@@ -694,12 +705,12 @@ export const renderLayoutActivo = async (container) => {
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
                                       <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Unidades >= 20 que NO están en SEL 6-13')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
-                                      <span style="color:#ef4444;">${stats['ACTUAL'].bad_placed.toLocaleString('es-PE')} mal ubicadas</span>
+                                      <span style="color:var(--danger);">${stats['ACTUAL'].bad_placed.toLocaleString('es-PE')} mal ubicadas</span>
                                   </div>
                               </div>
 
                               <div style="background:rgba(239,68,68,0.1); border-left:3px solid #ef4444; padding:10px; border-radius:4px;">
-                                  <div style="display:flex; justify-content:space-between; font-weight:800; color:#ef4444; margin-bottom:8px; font-size:0.95rem;">
+                                  <div style="display:flex; justify-content:space-between; font-weight:800; color:var(--danger); margin-bottom:8px; font-size:0.95rem;">
                                       <span>T. Anterior</span>
                                       <span>${anteriorPerc}%</span>
                                   </div>
@@ -713,12 +724,12 @@ export const renderLayoutActivo = async (container) => {
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
                                       <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Unidades >= 20 que NO están en SEL 3-5')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
-                                      <span style="color:#ef4444;">${stats['ANTERIOR'].bad_placed.toLocaleString('es-PE')} mal ubicadas</span>
+                                      <span style="color:var(--danger);">${stats['ANTERIOR'].bad_placed.toLocaleString('es-PE')} mal ubicadas</span>
                                   </div>
                               </div>
 
                               <div style="background:rgba(139,92,246,0.1); border-left:3px solid #8b5cf6; padding:10px; border-radius:4px; margin-top:15px;">
-                                  <div style="display:flex; justify-content:space-between; font-weight:800; color:#8b5cf6; margin-bottom:8px; font-size:0.95rem;">
+                                  <div style="display:flex; justify-content:space-between; font-weight:800; color:var(--violet); margin-bottom:8px; font-size:0.95rem;">
                                       <span>TOTAL GENERAL</span>
                                       <span>${generalPerc}%</span>
                                   </div>
@@ -732,7 +743,7 @@ export const renderLayoutActivo = async (container) => {
                                   </div>
                                   <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted);">
                                       <span style="cursor:help;" onmouseover="window.showTooltip(event, 'Desviación general total')" onmouseout="window.hideTooltip()">Desviación (>20u) ℹ️</span>
-                                      <span style="color:#ef4444;">${statsGeneral.bad_placed.toLocaleString('es-PE')} mal ubicadas</span>
+                                      <span style="color:var(--danger);">${statsGeneral.bad_placed.toLocaleString('es-PE')} mal ubicadas</span>
                                   </div>
                               </div>
                           </div>
@@ -754,10 +765,10 @@ export const renderLayoutActivo = async (container) => {
                                       </svg>
                                       <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
                                           <span style="font-size:1.2rem; font-weight:800; color:#1C2B3A;">${actualPerc}%</span>
-                                          <span style="font-size:0.55rem; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Avance</span>
+                                          <span style="font-size:var(--t-xs); color:var(--text-muted); font-weight:800; text-transform:uppercase;">Avance</span>
                                       </div>
                                   </div>
-                                  <div style="margin-top:10px; font-size:0.75rem; font-weight:800; color:#3b82f6;">T. ACTUAL</div>
+                                  <div style="margin-top:10px; font-size:0.75rem; font-weight:800; color:var(--blue);">T. ACTUAL</div>
                               </div>
 
                               <div style="display:flex; flex-direction:column; align-items:center;">
@@ -769,10 +780,10 @@ export const renderLayoutActivo = async (container) => {
                                       </svg>
                                       <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
                                           <span style="font-size:1.2rem; font-weight:800; color:#1C2B3A;">${anteriorPerc}%</span>
-                                          <span style="font-size:0.55rem; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Avance</span>
+                                          <span style="font-size:var(--t-xs); color:var(--text-muted); font-weight:800; text-transform:uppercase;">Avance</span>
                                       </div>
                                   </div>
-                                  <div style="margin-top:10px; font-size:0.75rem; font-weight:800; color:#10b981;">T. ANTERIOR</div>
+                                  <div style="margin-top:10px; font-size:0.75rem; font-weight:800; color:var(--success-alt);">T. ANTERIOR</div>
                               </div>
 
                               <div style="display:flex; flex-direction:column; align-items:center;">
@@ -784,15 +795,15 @@ export const renderLayoutActivo = async (container) => {
                                       </svg>
                                       <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center;">
                                           <span style="font-size:1.2rem; font-weight:800; color:#1C2B3A;">${generalPerc}%</span>
-                                          <span style="font-size:0.55rem; color:var(--text-muted); font-weight:700; text-transform:uppercase;">Avance</span>
+                                          <span style="font-size:var(--t-xs); color:var(--text-muted); font-weight:800; text-transform:uppercase;">Avance</span>
                                       </div>
                                   </div>
-                                  <div style="margin-top:10px; font-size:0.75rem; font-weight:800; color:#8b5cf6;">GENERAL</div>
+                                  <div style="margin-top:10px; font-size:0.75rem; font-weight:800; color:var(--violet);">GENERAL</div>
                               </div>
 
                           </div>
                           
-                          <div style="display:flex; justify-content:center; gap:15px; margin-top:15px; font-size:0.7rem; font-weight:800; color:var(--text-muted);">
+                          <div style="display:flex; justify-content:center; gap:15px; margin-top:15px; font-size:var(--t-xs); font-weight:800; color:var(--text-muted);">
                               <div style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; border-radius:50%; background:#ef4444;"></div> Desviación</div>
                               <div style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; border-radius:50%; background:#3b82f6;"></div> T. Actual</div>
                               <div style="display:flex; align-items:center; gap:5px;"><div style="width:10px; height:10px; border-radius:50%; background:#10b981;"></div> T. Anterior</div>
@@ -832,7 +843,7 @@ window.showCellModal = function(htmlContent) {
     const modalHtml = `
         <div id="custom-cell-modal-overlay" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); z-index:99999; display:flex; justify-content:center; align-items:center;">
             <div style="background:#FFFFFF; border:1px solid #DDD8CF; border-radius:6px; padding:20px; min-width:300px; max-width:90vw; max-height:80vh; overflow-y:auto; box-shadow:0 4px 16px rgba(28,43,58,0.12); position:relative;">
-                <button onclick="document.getElementById('custom-cell-modal-overlay').remove()" style="position:absolute; top:10px; right:10px; background:transparent; border:none; color:#9C9590; font-size:1.5rem; cursor:pointer; line-height:1;">&times;</button>
+                <button onclick="document.getElementById('custom-cell-modal-overlay').remove()" style="position:absolute; top:10px; right:10px; background:transparent; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer; line-height:1;">&times;</button>
                 <div style="color:#1C2B3A; font-family:sans-serif; line-height:1.5; margin-top:10px;">
                     ${htmlContent}
                 </div>
