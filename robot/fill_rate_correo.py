@@ -283,8 +283,14 @@ def armar_guias(correos, hasta):
     las filas de los dos le doblaria lo solicitado a esa guia. Cuenta el primer archivo
     donde aparece (por fecha y despues por nombre); con un archivo por dia da lo mismo
     que la maqueta."""
+    # DENTRO DEL DIA, PRIMERO EL CORREO DE SIEMPRE -el que se llama solo "Guias DD.MM"- y
+    # despues el adicional ("Guias 17.09 B CARAZ", "Guias 17.09 (2)"), igual que los demas
+    # robots desde el 18-sep: una guia repetida en los dos se atribuye al de siempre.
+    def orden(x):
+        extra = not re.match(r'^\S+ \d{2}[.\-]\d{2}\.xlsx$', x['archivo'], re.I)
+        return (x['fecha'], extra, x['archivo'])
     primera = {}
-    for r in sorted(correos, key=lambda x: (x['fecha'], x['archivo'])):
+    for r in sorted(correos, key=orden):
         primera.setdefault(r['guia'], (r['fecha'], r['archivo']))
     guias = {}
     for r in correos:
