@@ -41,11 +41,11 @@
     };
   })();
 </script>
-<script src="../js/env.js?v=29.0826"></script>
+<script src="../js/env.js?v=29.0827"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-<link rel="stylesheet" href="../css/main.css?v=29.0826">
-<link rel="stylesheet" href="../css/temas.css?v=29.0826">
-<link rel="stylesheet" href="../css/componentes.css?v=29.0826">
+<link rel="stylesheet" href="../css/main.css?v=29.0827">
+<link rel="stylesheet" href="../css/temas.css?v=29.0827">
+<link rel="stylesheet" href="../css/componentes.css?v=29.0827">
 <style>
   body { background: var(--bg-dark); color: var(--text-pale); padding: 16px 24px 80px; margin: 0; display:block; }
   .pr-barra { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 18px; padding:10px 12px;
@@ -78,10 +78,10 @@ document.querySelectorAll('[data-tema]').forEach(b => b.onclick = () => {
   document.documentElement.setAttribute('data-tema', b.dataset.tema);
 });
 
-const { montarProduccionHora } = await import('../js/reportes/produccion_hora.js?v=29.0826');
-const { montarFillRate } = await import('../js/reportes/fill_rate.js?v=29.0826');
-const { observarTablas } = await import('../js/services_v245/tablasOrdenables.js?v=29.0826');
-const jornada = await import('../js/services_v245/jornadaService.js?v=29.0826');
+const { montarProduccionHora } = await import('../js/reportes/produccion_hora.js?v=29.0827');
+const { montarFillRate } = await import('../js/reportes/fill_rate.js?v=29.0827');
+const { observarTablas } = await import('../js/services_v245/tablasOrdenables.js?v=29.0827');
+const jornada = await import('../js/services_v245/jornadaService.js?v=29.0827');
 // Como en la plataforma: el observador que ordena cualquier tabla está prendido.
 observarTablas(document.body);
 

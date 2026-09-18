@@ -175,6 +175,17 @@ export const permisosDe = (g) => {
         if (!m.campoViejo) continue;
         for (const id of (g && g[m.campoViejo]) || []) subs.add(id);
     }
+    /* UN REPORTE MARCADO AUTORIZA SU MÓDULO. Daniel, 18-sep-2026, dándole a
+       SUPERVISORES solo el Layout: *"solo quiero dar acceso al layout"*. Marcó
+       "Layout Activo" y el enlace salía ACCESO RESTRINGIDO, porque el módulo
+       Análisis SKU no estaba tildado y la página pública solo abre los módulos
+       tildados. Autorizar un reporte sin su módulo no tiene otra lectura: el
+       módulo va con él. Lo usan la página pública, la matriz y la cuenta de la
+       tabla, así que los tres dicen lo mismo. */
+    for (const id of subs) {
+        const s = buscarSub(id);
+        if (s) modulos.add(s.modulo);
+    }
     return { modulos, subs };
 };
 

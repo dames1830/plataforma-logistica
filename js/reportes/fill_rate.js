@@ -39,9 +39,9 @@
  *          f: [[fecha, [[tienda, [[pedido, prioridad, tipo, sol, pic, stag, carg, desp]]]]]],
  *          guias, generado, ultimo_oblpn, ultimo_pick}
  */
-import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0826';
-import { icono } from '../services_v245/iconos.js?v=29.0826';
-import { n as nfmt, dec } from '../services_v245/formato.js?v=29.0826';
+import { selectorRango } from '../services_v245/reportesComunes.js?v=29.0827';
+import { icono } from '../services_v245/iconos.js?v=29.0827';
+import { n as nfmt, dec } from '../services_v245/formato.js?v=29.0827';
 
 /* LAS SEIS CÁPSULAS, en el orden que dictó Daniel el 17-sep-2026. El tipo de cada guía
    viene en g[2]: 0 SOLID, 1 PREPACK, 2 NO CALZADO, 3 INSUMOS. */
