@@ -27,7 +27,8 @@ ir pegado a cualquier hora libre.
     scraping Stock/Picking/Picking D-M.csv           lo picado del dia
     scraping Stock/Detalle Orden/*.csv               lo que se pidio
     scraping Stock/OBLPN Embalaje/OBLPN *.csv        los bultos: TODOS los dias
-    scraping Stock/Correos Picking/Guias DD.MM.xlsx  lo que mando comercial
+    scraping Stock/Correos Picking/Guias DD.MM*.xlsx lo que mando comercial (todos
+                                                     los correos del ultimo dia)
     el Maestro de Articulos de la web                el gender de cada articulo
     Proyecto web Logistico/RUTAS -  TURNOS.xlsx      que destino es tienda
 
@@ -692,8 +693,35 @@ def varados(archivos, gen, TIENDAS, hoy):
 
 
 # ══ 4. EL POTENCIAL DE DESPACHO ═══════════════════════════════════════════════
-def ultimo_correo(ss):
-    """El correo de comercial mas reciente que haya en disco.
+def fecha_del_correo(ruta):
+    """La fecha del correo: el DD.MM del nombre, con el año de cuando se guardo.
+
+       Un correo de diciembre guardado en enero cae en el año anterior."""
+    m = re.search(r'(\d{2})[.\-](\d{2})(?!\d)', os.path.basename(ruta))
+    if not m:
+        return None
+    guardado = datetime.date.fromtimestamp(os.path.getmtime(ruta))
+    try:
+        f = datetime.date(guardado.year, int(m.group(2)), int(m.group(1)))
+        if f > guardado + datetime.timedelta(days=7):
+            f = datetime.date(guardado.year - 1, f.month, f.day)
+        return f
+    except ValueError:
+        return None
+
+
+def es_principal(nombre):
+    """`Guías 17.09.xlsx` es el correo de siempre; `Guías 17.09 B CARAZ.xlsx`, uno
+       adicional del mismo dia. Misma regla que `armar_pendiente.es_principal`."""
+    base = os.path.splitext(nombre)[0]
+    m = re.search(r'(\d{1,2})[.\-](\d{1,2})(?!\d)', base)
+    if m:
+        base = base[:m.start()] + ' ' + base[m.end():]
+    return not re.sub(r'gu.as?', ' ', base.lower()).strip(' ._-()')
+
+
+def correos_del_ultimo_dia(ss):
+    """(fecha, [rutas]): TODOS los correos del dia mas reciente, el de siempre primero.
 
        ANTES SE PEDIA EL DEL DIA DEL OBLPN y por eso nunca se encontraba: el
        OBLPN va uno o dos dias atras -se baja a las 08:30 del dia siguiente- y
@@ -701,65 +729,130 @@ def ultimo_correo(ss):
        buscaba un correo que no existe. Resultado: desde que nacio el robot, el
        potencial salio siempre sin la parte del correo.
 
-       Se toma el ultimo, que es lo que el reporte quiere decir: lo que comercial
-       ACABA DE MANDAR a picar."""
+       Se toma el ultimo dia, que es lo que el reporte quiere decir: lo que
+       comercial ACABA DE MANDAR a picar.
+
+       Y ES EL ULTIMO DIA, NO EL ULTIMO ARCHIVO. Desde el 17-sep-2026 un dia puede
+       traer mas de un correo -el de siempre y, por ejemplo, el de una tienda nueva,
+       `Guías 17.09 B CARAZ.xlsx`-. Con "el archivo mas nuevo" el potencial se habria
+       quedado con las 5 guias de la tienda nueva y sin las 800 del correo de
+       siempre."""
     carp = os.path.join(ss, 'Correos Picking')
     if not os.path.isdir(carp):
-        return None
-    hay = [os.path.join(carp, n) for n in os.listdir(carp)
-           if n.lower().startswith('gu') and n.lower().endswith('.xlsx')
-           and not n.startswith('~$')]
+        return None, []
+    hay = []
+    for n in os.listdir(carp):
+        if n.startswith('~$') or not n.lower().endswith('.xlsx'):
+            continue
+        ruta = os.path.join(carp, n)
+        f = fecha_del_correo(ruta)
+        if f:
+            hay.append((f, ruta))
     if not hay:
-        return None
-    return max(hay, key=os.path.getmtime)
+        return None, []
+    ultimo = max(f for f, _ in hay)
+    rutas = [r for f, r in hay if f == ultimo]
+    rutas.sort(key=lambda r: (0 if es_principal(os.path.basename(r)) else 1,
+                              os.path.basename(r)))
+    return ultimo, rutas
 
 
-def potencial(ss, arch, gen, TIENDAS, porTienda, detTienda, en_bulto):
+def nombres(rutas):
+    return ' + '.join(os.path.basename(r) for r in rutas)
+
+
+def potencial(ss, archivos, gen, TIENDAS, porTienda, detTienda, en_bulto):
     """patio + staging + lo que comercial acaba de mandar a picar.
 
        OJO CON SUMARLOS A CIEGAS: parte del correo YA se pico, y eso ya esta
        contado en patio o en staging. La guia que aparece en un bulto no se
-       vuelve a sumar."""
+       vuelve a sumar.
+
+       TODOS LOS CORREOS DEL DIA, y una guia que venga en dos cuenta una vez. Cada
+       uno se lee buscando la hoja que tenga GUIA -la buena no siempre es la
+       primera- y las columnas por su nombre: el de B CARAZ trae una columna DIS
+       delante de todo."""
     pisa = collections.Counter()
-    if not arch or not os.path.exists(arch):
+    if not archivos:
         log('OJO: no hay correo de comercial; el potencial sale solo con patio '
             'y staging.', 'AVISO')
-    else:
+        return armar_filas_potencial(porTienda, detTienda, TIENDAS)
+    # LA TIENDA QUE NO ESTA EN EL MAESTRO DE RUTAS NO SE TIRA EN SILENCIO. El
+    # potencial es por tienda del maestro, y una tienda nueva todavia no esta: el
+    # 17-sep-2026 era B CARAZ (50644), con 3.910 unidades en el correo.
+    sin_maestro = collections.Counter()
+    ya = set()                    # guias de los correos del dia ya leidos
+    for i, arch in enumerate(archivos):
         log('correo de comercial: %s (%s)'
             % (os.path.basename(arch),
                datetime.datetime.fromtimestamp(
                    os.path.getmtime(arch)).strftime('%d-%m %H:%M')))
-        dst = os.path.join(TEMP, '_correo.xlsx')
+        dst = os.path.join(TEMP, '_correo_%d.xlsx' % i)
         shutil.copy2(arch, dst)
         wb = openpyxl.load_workbook(dst, read_only=True, data_only=True)
-        ws = wb[wb.sheetnames[0]]
-        h = None
-        for row in ws.iter_rows(values_only=True):
-            if h is None:
-                h = [str(c or '').strip().upper() for c in row]
-                iT = h.index('TIEND')
-                iE = [i for i, x in enumerate(h) if x.startswith('ETIQUET')][0]
-                iQ = [i for i, x in enumerate(h) if x.startswith('SUMA')][0]
-                iG = [i for i, x in enumerate(h) if x.startswith('GUIA')][0]
+        de_este, leida = set(), False
+        for ws in wb.worksheets:
+            filas = ws.iter_rows(values_only=True)
+            try:
+                h = [str(c or '').strip().upper() for c in next(filas)]
+            except StopIteration:
                 continue
-            if row[iT] is None:
+            iG = next((i for i, x in enumerate(h) if x == 'GUIA'), None)
+            if iG is None:
+                iG = next((i for i, x in enumerate(h) if x.startswith('GUIA')), None)
+            iT = next((i for i, x in enumerate(h) if x.startswith('TIEND')), None)
+            iE = next((i for i, x in enumerate(h) if x.startswith('ETIQUET')), None)
+            iQ = next((i for i, x in enumerate(h) if 'CANTI' in x), None)
+            if iG is None:
                 continue
-            # AL CODIGO DE TIENDA DEL CORREO SE LE PONE 50 DELANTE
-            d = '50' + str(row[iT]).strip().split('.')[0].zfill(3)
-            if d not in TIENDAS:
-                continue
-            q = float(row[iQ] or 0)
-            g = 'F' if str(row[iE] or '').strip().upper() == 'CALZADO' else 'N'
-            guia = str(row[iG] or '').strip().split('.')[0]
-            if guia in en_bulto:
-                pisa[g] += q
-                continue
-            porTienda[d]['correo' + g] += q
-            b = detTienda[d].setdefault(('Correo', '', guia), {'F': 0.0, 'N': 0.0})
-            b[g] += q
+            if iT is None or iQ is None or iE is None:
+                log('%s no trae TIEND, ETIQUETA o CANTIDAD: se deja fuera'
+                    % os.path.basename(arch), 'AVISO')
+                break
+            leida = True
+            for row in filas:
+                if iT >= len(row) or row[iT] is None:
+                    continue
+                guia = str(row[iG] or '').strip().split('.')[0] if iG < len(row) else ''
+                if guia in ya:
+                    continue
+                de_este.add(guia)
+                # AL CODIGO DE TIENDA DEL CORREO SE LE PONE 50 DELANTE
+                d = '50' + str(row[iT]).strip().split('.')[0].zfill(3)
+                try:
+                    q = float(row[iQ] or 0) if iQ < len(row) else 0.0
+                except (TypeError, ValueError):
+                    q = 0.0
+                if d not in TIENDAS:
+                    sin_maestro[d] += q
+                    continue
+                g = ('F' if iE < len(row) and str(row[iE] or '').strip().upper() == 'CALZADO'
+                     else 'N')
+                if guia in en_bulto:
+                    pisa[g] += q
+                    continue
+                porTienda[d]['correo' + g] += q
+                b = detTienda[d].setdefault(('Correo', '', guia), {'F': 0.0, 'N': 0.0})
+                b[g] += q
+            break
         wb.close()
-        log('correo: %d pares ya estaban en un bulto y no se suman dos veces'
-            % sum(pisa.values()))
+        if not leida:
+            log('%s no tiene una hoja con GUIA: se deja fuera'
+                % os.path.basename(arch), 'AVISO')
+        ya |= de_este
+    log('correo: %d pares ya estaban en un bulto y no se suman dos veces'
+        % sum(pisa.values()))
+    if sin_maestro:
+        log('correo: %d unidades de tiendas que NO estan en el maestro de rutas y '
+            'no salen en el potencial: %s'
+            % (sum(sin_maestro.values()),
+               ', '.join('%s (%d)' % (d, q) for d, q in sin_maestro.most_common())),
+            'AVISO')
+    return armar_filas_potencial(porTienda, detTienda, TIENDAS)
+
+
+def armar_filas_potencial(porTienda, detTienda, TIENDAS):
+    """Las filas por tienda que publica el potencial."""
 
     filas = []
     for d, v in porTienda.items():
@@ -795,31 +888,37 @@ def potencial(ss, arch, gen, TIENDAS, porTienda, detTienda, en_bulto):
 SELLO_POTENCIAL = os.path.join(CARPETA_LOGS, 'potencial_ultimo_correo.txt')
 
 
-def ya_se_hizo(arch):
-    """¿Ya se publico el potencial con ESTE correo?
+def huella(archivos):
+    """Nombre y hora de cada correo del dia. Con uno solo queda igual que antes del
+       17-sep-2026 -`Guías 16.09.xlsx|1789603324`-, asi que instalar esto no rehace
+       el potencial que ya estaba publicado."""
+    return ' + '.join('%s|%d' % (os.path.basename(a), int(os.path.getmtime(a)))
+                      for a in archivos)
+
+
+def ya_se_hizo(archivos):
+    """¿Ya se publico el potencial con ESTOS correos?
 
        La ventana de la tarde despierta cada media hora; sin esta marca
-       republicaria lo mismo cinco veces. Se guarda el nombre y la hora del
-       archivo: si comercial manda una correccion, el archivo cambia y se
-       vuelve a procesar."""
-    if not arch:
+       republicaria lo mismo cinco veces. Se guarda el nombre y la hora de cada
+       archivo: si comercial manda una correccion, o llega un segundo correo del
+       dia, la huella cambia y se vuelve a procesar."""
+    if not archivos:
         return False
-    huella = '%s|%d' % (os.path.basename(arch), int(os.path.getmtime(arch)))
     try:
         with io.open(SELLO_POTENCIAL, encoding='utf-8') as fh:
-            return fh.read().strip() == huella
+            return fh.read().strip() == huella(archivos)
     except OSError:
         return False
 
 
-def anotar_hecho(arch):
-    if not arch:
+def anotar_hecho(archivos):
+    if not archivos:
         return
     try:
         os.makedirs(CARPETA_LOGS, exist_ok=True)
         with io.open(SELLO_POTENCIAL, 'w', encoding='utf-8') as fh:
-            fh.write('%s|%d' % (os.path.basename(arch),
-                                int(os.path.getmtime(arch))))
+            fh.write(huella(archivos))
     except OSError:
         pass
 
@@ -847,19 +946,29 @@ def main():
 
     # EL POTENCIAL SE PLANTA SI TODAVIA NO LLEGO EL CORREO. No publica nada y
     # sale con 0: la ventana de la tarde lo vuelve a intentar en media hora.
-    correo = ultimo_correo(ss)
+    fecha_correo, correos = correos_del_ultimo_dia(ss)
+    # "HECHO HOY" SOLO SI EL CORREO ES DE HOY. Antes se marcaba al ver cualquier
+    # correo ya procesado, y a las 18:40 el ultimo siempre es el de AYER: el dia
+    # quedaba "hecho" antes de que llegara nada y el aviso "No llego el correo de
+    # comercial en todo el dia" no podia sonar nunca. El 17-09-2026 el correo de
+    # siempre no llego, el potencial dijo once veces "ya se publico con Guias
+    # 16.09.xlsx" y a las 23:40 el aviso se callo: "hoy ya encontro lo suyo".
+    es_de_hoy = fecha_correo == datetime.date.today()
     if solo_pot:
-        if not correo:
+        if not correos:
             log('todavia no hay correo de comercial. No se publica nada; '
                 'se vuelve a intentar en el proximo pase.', 'AVISO')
             return 0
-        if ya_se_hizo(correo) and '--forzar' not in sys.argv:
-            log('el potencial ya se publico con %s. No se repite.'
-                % os.path.basename(correo))
+        if ya_se_hizo(correos) and '--forzar' not in sys.argv:
+            log('el potencial ya se publico con %s. No se repite.' % nombres(correos))
             # EL DIA NO QUEDO VACIO. Sin esto, el aviso del cierre decia "no llego
             # el correo de comercial en todo el dia" con el correo procesado desde
             # las 19:34 — paso la primera noche, el 14-09-2026.
-            marcar_hecho('despacho_potencial')
+            if es_de_hoy:
+                marcar_hecho('despacho_potencial')
+            else:
+                log('ese correo es del %s: el de hoy todavia no llego.'
+                    % fecha_correo.strftime('%d-%m'))
             return 0
 
     archivos, ultimo, fecha = elegir_dia(ss)
@@ -877,7 +986,7 @@ def main():
     # EN MODO DISTRIBUCION NO SE CALCULA: abrir el correo y recorrer las tiendas
     # es trabajo para un bloque que no se va a publicar.
     pot = ([] if solo_dist
-           else potencial(ss, correo, gen, TIENDAS, porTienda, detTienda, en_bulto))
+           else potencial(ss, correos, gen, TIENDAS, porTienda, detTienda, en_bulto))
 
     f_txt = fecha.strftime('%d-%m-%Y')
 
@@ -907,7 +1016,7 @@ def main():
         'staging': {f['l']: f['i'] for f in listas['staging'] if f.get('i')},
     }
     despacho = {'fecha': f_txt, 'filas': pot,
-                'correo': os.path.basename(correo) if correo else None}
+                'correo': nombres(correos) if correos else None}
 
     # SI LA FOTO SALE VACIA NO SE PUBLICA. Este almacen nunca tiene patio y
     # staging los dos en cero: si pasa, el archivo esta a medias y publicarlo
@@ -941,7 +1050,9 @@ def main():
             log('%-24s publicado  (%.0f KB)' % (area, n / 1024))
             # Solo el potencial avisa: la distribucion no espera ningun correo.
             if area == 'despacho_potencial_dia':
-                marcar_hecho('despacho_potencial')
+                # Publicar con el correo de AYER no es que llego el de hoy.
+                if es_de_hoy:
+                    marcar_hecho('despacho_potencial')
                 if _TITULAR:
                     avisar_novedad('despacho_potencial', _TITULAR)
         else:
@@ -949,7 +1060,7 @@ def main():
             ok = False
 
     if ok and not probar and not solo_dist:
-        anotar_hecho(correo)
+        anotar_hecho(correos)
 
     try:
         shutil.rmtree(TEMP)

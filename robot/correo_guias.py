@@ -21,9 +21,11 @@ datos en la segunda hoja. Antes de guardar nada, el script ABRE el adjunto y
 comprueba que tenga una columna GUIA con filas debajo. Si no la tiene, no lo
 guarda y lo dice: es preferible un día que falta a un archivo que ensucia.
 
-LA FECHA SALE DEL CORREO, no del nombre del adjunto. El correo llega entre las
-19:00 y las 20:00 con las guías de ese mismo día, así que el archivo se guarda
-como `Guías DD.MM.xlsx` con la fecha en que llegó el correo.
+LA FECHA SALE DEL NOMBRE DEL ADJUNTO, y si no la trae, del día en que llegó. El
+archivo se guarda como `Guías DD.MM.xlsx`; si el adjunto dice algo más -"B CARAZ
+guias 17.09.xlsx", la tienda nueva del 17-sep-2026-, como `Guías 17.09 B
+CARAZ.xlsx`. Un día puede traer más de un correo y ninguno pisa a otro: ver
+`nombre_del_archivo` y `destino_para`.
 
     python correo_guias.py --listar     mira los últimos correos con .xlsx y no
                                         guarda nada. ES EL PRIMER PASO: sirve
@@ -135,7 +137,11 @@ SELLO_PENDIENTE = os.path.join(AQUI, 'logs', 'pendiente_armado.txt')
 # lo mataba a mitad de la bajada.
 ESPERA_ARMADO = 60 * 60
 NS = '{http://schemas.openxmlformats.org/spreadsheetml/2006/main}'
-MINIMO_FILAS = 20       # un correo de guías nunca trae cuatro filas
+# NO HAY UN MINIMO DE FILAS. Hasta el 17-sep-2026 habia uno de 20 -"un correo de guias
+# nunca trae cuatro filas"- y era falso: esa noche comercial mando las guias de una
+# tienda nueva en un correo aparte, "B CARAZ guias 17.09.xlsx", con 5 filas, y el robot
+# lo descarto dos veces. Lo que comercial manda por correo es lo que se pica, sea una
+# guia o mil: basta con que el archivo tenga la columna GUIA y alguna guia debajo.
 
 
 def log(t, nivel='INFO'):
@@ -157,36 +163,155 @@ def arg(nombre, por_defecto=None):
 
 
 def tiene_guias(datos):
-    """¿Este .xlsx es de verdad un correo de guías?
+    """¿Este .xlsx es de verdad un correo de guías? -> (si_o_no, detalle, guias).
 
     Abre el archivo en memoria y busca una hoja cuya cabecera tenga la columna
     GUIA. Se miran TODAS las hojas porque la buena no siempre es la primera:
     `Guías 07.07.xlsx` trae Hoja2 adelante con 51 filas y los datos detrás.
+
+    Devuelve tambien EL CONJUNTO DE GUIAS: con eso se sabe si dos archivos del mismo
+    dia son el mismo correo -un reenvio "RV:"- o dos correos distintos.
+
+    LA COLUMNA SE BUSCA POR SU LETRA, no por el orden de las celdas: una celda vacia
+    no viene en el archivo y correria la cuenta.
     """
     try:
         z = zipfile.ZipFile(io.BytesIO(datos))
     except Exception:
-        return False, 'no se pudo abrir como Excel'
+        return False, 'no se pudo abrir como Excel', set()
     sh = []
     if 'xl/sharedStrings.xml' in z.namelist():
         for si in ET.fromstring(z.read('xl/sharedStrings.xml')):
             sh.append(''.join(t.text or '' for t in si.iter(NS + 't')))
+
+    def valor(c):
+        v = c.find(NS + 'v')
+        val = v.text if v is not None else ''
+        if c.get('t') == 's' and val:
+            val = sh[int(val)]
+        elif c.get('t') == 'inlineStr':
+            val = ''.join(t.text or '' for t in c.iter(NS + 't'))
+        return str(val or '').strip()
+
+    def letra(c):
+        return ''.join(ch for ch in (c.get('r') or '') if ch.isalpha())
+
     for hoja in sorted(n for n in z.namelist() if n.startswith('xl/worksheets/sheet')):
         filas = list(ET.fromstring(z.read(hoja)).iter(NS + 'row'))
         if not filas:
             continue
-        cab = []
+        col = None
         for c in filas[0].iter(NS + 'c'):
-            v = c.find(NS + 'v')
-            val = v.text if v is not None else ''
-            if c.get('t') == 's' and val:
-                val = sh[int(val)]
-            cab.append(str(val or '').strip().lower())
-        if any('guia' in x or 'guía' in x for x in cab):
-            if len(filas) - 1 < MINIMO_FILAS:
-                return False, 'tiene columna GUIA pero solo %d filas' % (len(filas) - 1)
-            return True, '%d filas' % (len(filas) - 1)
-    return False, 'ninguna hoja tiene columna GUIA'
+            x = sin_tildes(valor(c))
+            if x == 'guia' or (col is None and 'guia' in x):
+                col = letra(c)
+        if not col:
+            continue
+        guias = set()
+        for f in filas[1:]:
+            for c in f.iter(NS + 'c'):
+                if letra(c) == col:
+                    g = valor(c)
+                    if g.endswith('.0'):
+                        g = g[:-2]
+                    if g:
+                        guias.add(g)
+                    break
+        if not guias:
+            return False, 'tiene columna GUIA pero ninguna guia debajo', set()
+        return True, '%d guias' % len(guias), guias
+    return False, 'ninguna hoja tiene columna GUIA', set()
+
+
+def fecha_del_nombre(nombre):
+    """(dia, mes) de `Guías 17.09.xlsx` o `Guías 17.09 B CARAZ.xlsx`. None si no trae."""
+    m = re.search(r'(\d{2})[.\-](\d{2})(?!\d)', nombre)
+    if not m:
+        return None
+    dia, mes = int(m.group(1)), int(m.group(2))
+    if not (1 <= dia <= 31 and 1 <= mes <= 12):
+        return None
+    return dia, mes
+
+
+def etiqueta_del_adjunto(adjunto):
+    """Lo que el nombre del adjunto dice ADEMAS de la fecha y de la palabra guias.
+
+    El correo de siempre llega como `Guías 17.09.xlsx` y no dice nada mas: etiqueta
+    vacia. El de la tienda nueva llego como `B CARAZ guias 17.09.xlsx`: etiqueta
+    "B CARAZ". Con eso cada correo del dia tiene su propio archivo.
+    """
+    base = os.path.splitext(os.path.basename(str(adjunto)))[0]
+    m = re.search(r'(\d{1,2})[.\-/](\d{1,2})(?!\d)', base)
+    if m:
+        base = base[:m.start()] + ' ' + base[m.end():]
+    base = re.sub(r'(?i)gu[ií]as?', ' ', base)
+    base = re.sub(r'[<>:"/\\|?*]', ' ', base)          # lo que Windows no acepta
+    return ' '.join(base.split()).strip(' ._-()')[:60]
+
+
+def nombre_del_archivo(adjunto, dia, mes):
+    """UN DIA PUEDE TRAER MAS DE UN CORREO, y cada uno va a su archivo.
+
+    Hasta el 17-sep-2026 todo adjunto se guardaba como `Guías DD.MM.xlsx`, y con
+    "gana el mas nuevo" un segundo correo del dia pisaba al primero: el de una tienda
+    nueva habria borrado las guias del correo de siempre, o al reves.
+
+        Guías 17.09.xlsx            -> Guías 17.09.xlsx           el de siempre
+        B CARAZ guias 17.09.xlsx    -> Guías 17.09 B CARAZ.xlsx   uno adicional
+
+    El reenvio "RV:" trae el MISMO adjunto, asi que cae en el mismo archivo y lo
+    reemplaza como siempre. Los que leen la carpeta -`armar_pendiente.py`,
+    `distribucion.py`, el Fill Rate- toman todos los archivos del dia.
+    """
+    et = etiqueta_del_adjunto(adjunto)
+    return 'Guías %02d.%02d%s.xlsx' % (dia, mes, (' ' + et) if et else '')
+
+
+def guias_de(ruta):
+    """Las guias de un archivo ya guardado. Vacio si no se puede leer."""
+    try:
+        with io.open(ruta, 'rb') as fh:
+            return tiene_guias(fh.read())[2]
+    except Exception:
+        return set()
+
+
+def destino_para(nombre, guias):
+    """(nombre, ruta) donde va este adjunto SIN PISAR OTRO CORREO.
+
+    Si ya hay un archivo con ese nombre y comparte guias con este, es el mismo correo
+    -el reenvio o una correccion-: se devuelve ese, y afuera decide el mas nuevo, como
+    siempre. Si NO comparte ninguna guia, es otro correo que vino con el mismo nombre de
+    adjunto, y va a `Guías 17.09 (2).xlsx`: pisarlo borraria las guias de uno de los dos.
+    """
+    base, ext = os.path.splitext(nombre)
+    for n in range(1, 20):
+        cand = nombre if n == 1 else '%s (%d)%s' % (base, n, ext)
+        ruta = os.path.join(DESTINO, cand)
+        if not os.path.exists(ruta):
+            return cand, ruta
+        previas = guias_de(ruta)
+        if not previas or previas & guias:
+            return cand, ruta
+        log('   %s ya tiene OTRO correo (ninguna guia en comun): este no lo pisa'
+            % cand, 'WARN')
+    return cand, ruta
+
+
+def correos_de_hoy(ahora):
+    """Las rutas de TODOS los correos guardados con la fecha de hoy: el de siempre y
+    los adicionales."""
+    out = []
+    try:
+        for n in os.listdir(DESTINO):
+            if n.startswith('~$') or not n.lower().endswith('.xlsx'):
+                continue
+            if fecha_del_nombre(n) == (ahora.day, ahora.month):
+                out.append(os.path.join(DESTINO, n))
+    except OSError:
+        pass
+    return out
 
 
 def outlook():
@@ -406,6 +531,12 @@ def main():
     log('Configuracion: de %s' % de_donde)
     log('   asunto "%s"%s' % (ASUNTO,
         (' \u00b7 remitente "%s"' % REMITENTE) if REMITENTE else ''))
+    if REMITENTE:
+        # Leer el remitente cuelga al robot con un cartel de Outlook: ver mas abajo.
+        log('   el filtro de remitente NO se usa: para leer el remitente Outlook pide '
+            'permiso con un cartel y el robot se queda colgado. Solo manda el asunto.',
+            'WARN')
+        REMITENTE = ''
     log('   ventana de %s a %s \u00b7 dias: %s'
         % (cfg['desde'], cfg['hasta'],
            ', '.join(d for d in DIAS_SEM if cfg['dias'].get(d))))
@@ -417,8 +548,8 @@ def main():
             return 1
 
     if listar:
-        log('MODO LISTAR: no se guarda nada. Elegi de aca el remitente y el')
-        log('asunto, y ponelos arriba del script en REMITENTE y ASUNTO.')
+        log('MODO LISTAR: no se guarda nada. Elige de aqui el asunto y ponlo en la')
+        log('web, en Administracion > Configuracion > Parametros.')
         log('')
         log('Cuentas y bandejas que ve Outlook:')
         n = con_excel = 0
@@ -429,9 +560,9 @@ def main():
             if not adj:
                 continue
             con_excel += 1
-            log('%-16s | %-38s | %s'
-                % (it.ReceivedTime.strftime('%d-%m %H:%M'),
-                   str(it.SenderName)[:38], str(it.Subject)[:60]))
+            # SIN EL REMITENTE: ver el comentario de `SenderName` mas abajo.
+            log('%-16s | %s' % (it.ReceivedTime.strftime('%d-%m %H:%M'),
+                                str(it.Subject)[:80]))
             log('%16s   adjuntos: %s' % ('', ', '.join(adj)))
         log('')
         log('%d correos con adjunto en %d dias · %d de ellos con Excel'
@@ -464,13 +595,14 @@ def main():
         eid = str(it.EntryID)
         if eid in vistos:
             continue
-        # NO SE LEE `SenderEmailAddress`. Esa propiedad es la que dispara el
-        # cartel "Un programa intenta obtener acceso a direcciones de correo de
-        # Outlook", que se queda esperando un clic y colgaria el robot de
-        # madrugada. `SenderName` no esta protegida y alcanza de sobra.
+        # EL REMITENTE NO SE LEE. Ni `SenderEmailAddress` ni `SenderName`: en el
+        # Outlook del servidor LAS DOS abren el cartel "Un programa intenta obtener
+        # acceso a direcciones de correo de Outlook", que espera un clic y deja al
+        # robot colgado. Aca decia que `SenderName` no estaba protegida; el
+        # 18-sep-2026 dos lecturas que la pedian quedaron colgadas con el antivirus
+        # al dia, y hubo que cerrar los carteles con "Denegar". Por eso el filtro de
+        # remitente se apaga arriba y solo manda el asunto.
         asunto = sin_tildes(it.Subject)
-        if REMITENTE and sin_tildes(REMITENTE) not in sin_tildes(it.SenderName):
-            continue
         if ASUNTO and sin_tildes(ASUNTO) not in asunto:
             continue
 
@@ -488,25 +620,27 @@ def main():
                 dia_, mes_ = it.ReceivedTime.day, it.ReceivedTime.month
                 log('   "%s" no trae fecha en el nombre: se usa la del correo'
                     % a.FileName, 'WARN')
-            nombre = 'Guías %02d.%02d.xlsx' % (dia_, mes_)
-            ruta = os.path.join(DESTINO, nombre)
             tmp = os.path.join(os.environ.get('TEMP', AQUI), '_guias_tmp.xlsx')
             a.SaveAsFile(tmp)
             datos = io.open(tmp, 'rb').read()
             os.remove(tmp)
 
-            ok, detalle = tiene_guias(datos)
+            ok, detalle, guias = tiene_guias(datos)
             if not ok:
                 log('   %s de "%s": NO es un correo de guias (%s)'
                     % (a.FileName, str(it.Subject)[:40], detalle), 'WARN')
                 saltados += 1
                 continue
+            # CADA CORREO DEL DIA A SU ARCHIVO, y ninguno pisa a otro distinto.
+            nombre, ruta = destino_para(nombre_del_archivo(a.FileName, dia_, mes_),
+                                        guias)
 
             # SI YA HAY ARCHIVO, GANA EL MAS NUEVO. El mismo dia llega dos veces
             # -el original y un reenvio "RV:"- y con quedarse con uno alcanza. Pero
             # si comercial manda MANANA una correccion de las guias de hoy, esa
             # tiene que pisar: con un "no se pisa" a secas, la correccion no
-            # entraba nunca y el dia quedaba con la lista vieja.
+            # entraba nunca y el dia quedaba con la lista vieja. `destino_para` ya
+            # separo lo que es OTRO correo: aca solo llega el mismo.
             if os.path.exists(ruta):
                 nace = it.ReceivedTime.replace(tzinfo=None)
                 tiene = datetime.fromtimestamp(os.path.getmtime(ruta))
@@ -565,8 +699,12 @@ def main():
     lee en `logs/armar_pendiente.log`.
     """
     ahora = datetime.now()
-    correo_hoy = os.path.join(DESTINO, 'Guías %02d.%02d.xlsx' % (ahora.day, ahora.month))
-    hay_correo_de_hoy = os.path.isfile(correo_hoy)
+    # TODOS LOS CORREOS DE HOY, no solo `Guías DD.MM.xlsx`: el dia que solo llega uno
+    # adicional -como el de B CARAZ el 17-09- tambien hay correo, y el pendiente se
+    # rehace con el mas nuevo de todos.
+    de_hoy = correos_de_hoy(ahora)
+    hay_correo_de_hoy = bool(de_hoy)
+    correo_hoy = max(de_hoy, key=os.path.getmtime) if de_hoy else None
 
     # NO ALCANZA CON QUE EL SELLO DIGA HOY: TIENE QUE SER POSTERIOR AL CORREO.
     #
