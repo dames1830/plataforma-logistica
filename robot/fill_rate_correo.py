@@ -254,9 +254,9 @@ def leer_correos(base):
 
                 def v(i):
                     return '' if i is None or i >= len(r) or r[i] is None else str(r[i]).strip()
-                filas.append({'fecha': fecha, 'tienda': limpio_correo(v(it_)), 'nombre': v(inm),
-                              'prioridad': v(ip).upper(), 'etiqueta': v(ie).upper(),
-                              'guia': g, 'cantidad': q})
+                filas.append({'fecha': fecha, 'archivo': nombre, 'tienda': limpio_correo(v(it_)),
+                              'nombre': v(inm), 'prioridad': v(ip).upper(),
+                              'etiqueta': v(ie).upper(), 'guia': g, 'cantidad': q})
             ok = True
             break
         wb.close()
@@ -267,13 +267,20 @@ def leer_correos(base):
 
 
 def armar_guias(correos, hasta):
-    """Una guia, un lugar: la PRIMERA vez que aparece. Sin DOBLE TRAMO."""
+    """Una guia, un lugar: la PRIMERA vez que aparece. Sin DOBLE TRAMO.
+
+    LA PRIMERA VEZ ES UN ARCHIVO, NO SOLO UNA FECHA. Desde el 18-sep-2026 un dia puede
+    traer dos correos -el de siempre y el de una tienda nueva, como "B CARAZ guias
+    17.09"-, y si el mismo archivo quedara guardado dos veces con distinto nombre, sumar
+    las filas de los dos le doblaria lo solicitado a esa guia. Cuenta el primer archivo
+    donde aparece (por fecha y despues por nombre); con un archivo por dia da lo mismo
+    que la maqueta."""
     primera = {}
-    for r in sorted(correos, key=lambda x: x['fecha']):
-        primera.setdefault(r['guia'], r['fecha'])
+    for r in sorted(correos, key=lambda x: (x['fecha'], x['archivo'])):
+        primera.setdefault(r['guia'], (r['fecha'], r['archivo']))
     guias = {}
     for r in correos:
-        if r['fecha'] != primera[r['guia']] or not (DESDE <= r['fecha'] <= hasta):
+        if (r['fecha'], r['archivo']) != primera[r['guia']] or not (DESDE <= r['fecha'] <= hasta):
             continue
         if r['prioridad'] == 'DOBLE TRAMO':
             continue
