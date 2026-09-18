@@ -434,7 +434,7 @@ def limpiar_passwords_del_snapshot(ruta: str) -> bool:
 #   - La revisión la hacía el navegador del visitante: por eso la lista tenía que
 #     viajar entera hasta él.
 #   - Cuatro grupos usaban el token escrito en el JavaScript público
-#     (GERENCIAL-Deam2026 y parecidos): cualquiera podía armarse el link.
+#     (el nombre del grupo y el año): cualquiera podía armarse el link.
 #   - Cualquiera podía reescribir la lista: agregarse un grupo con todos los
 #     módulos, o borrar los de Daniel.
 #

@@ -553,7 +553,7 @@ export const getPublicReportsConfig = () => {
         } catch(e) {}
     }
     recordarLinks(adminStore.public_reports_config);
-    /* SIN LISTA DE FÁBRICA. Acá había cuatro grupos escritos con su token -GERENCIAL-Deam2026
+    /* SIN LISTA DE FÁBRICA. Acá había cuatro grupos escritos con su token -el nombre del grupo y el año
        y parecidos-, y este archivo lo puede leer cualquiera en deam1830.com: cualquiera podía
        armarse esos links. Sin lista, la pantalla espera a la del servidor. */
     if (!adminStore.public_reports_config || !Array.isArray(adminStore.public_reports_config)) {

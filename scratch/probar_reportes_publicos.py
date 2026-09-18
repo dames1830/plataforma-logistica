@@ -35,9 +35,9 @@ PUERTO = 8016
 
 # Los grupos como estaban guardados antes del arreglo: con el token en claro.
 VIEJOS = [
-    {'id': 'grp_gerencial', 'nombre': 'GERENCIAL', 'token': 'GERENCIAL-Deam2026',
+    {'id': 'grp_gerencial', 'nombre': 'GERENCIAL', 'token': 'GERENCIAL-viejo-de-prueba',
      'modulos': ['almacenaje'], 'reportesAlmacenaje': ['reporte_marcas']},
-    {'id': 'grp_supervisores', 'nombre': 'SUPERVISORES', 'token': 'SUPERVISORES-Deam2026',
+    {'id': 'grp_supervisores', 'nombre': 'SUPERVISORES', 'token': 'SUPERVISORES-viejo-de-prueba',
      'modulos': ['analisis_sku'], 'submodulos': ['layout_activo'], 'reportesAnalisis': ['layout_activo']},
     {'id': 'grp_1', 'nombre': 'COORDINADORES', 'token': 'tok_sec_AbCdEfGhIjKlMnOp',
      'modulos': ['despacho'], 'submodulos': ['distribucion']},
@@ -67,6 +67,11 @@ conn.close()
 
 import main  # noqa: E402  (arranca: init_db + migraciones)
 
+# Los tokens viejos de la prueba son inventados: para que salgan marcados como inseguros,
+# su huella se agrega a la lista de los que estuvieron en el código, solo mientras corre.
+main._HUELLAS_DE_FABRICA.update({main.huella_token('GERENCIAL-viejo-de-prueba'),
+                                 main.huella_token('SUPERVISORES-viejo-de-prueba')})
+
 conn = sqlite3.connect(DB)
 conn.execute("INSERT OR REPLACE INTO users (username, password, name, role, active) VALUES (?, ?, ?, ?, 1)",
              ('prueba_admin', main.hashear_password('clave-de-prueba'), 'Prueba', 'admin'))
@@ -81,7 +86,7 @@ print('\n1. Al arrancar, los tokens pasan a huella')
 print('-' * 74)
 chk(all('token' not in g for g in guardado), 'en la base no queda ningún token en claro')
 chk(all(str(g.get('token_hash', '')).startswith('sha256$') for g in guardado), 'cada grupo quedó con su huella')
-chk(guardado[1]['token_hash'] == main.huella_token('SUPERVISORES-Deam2026'), 'la huella de SUPERVISORES es la de su token')
+chk(guardado[1]['token_hash'] == main.huella_token('SUPERVISORES-viejo-de-prueba'), 'la huella de SUPERVISORES es la de su token')
 
 # 2. El servidor de verdad, escuchando en esta PC
 import uvicorn  # noqa: E402
@@ -113,7 +118,7 @@ st, j = pedir('GET', '/api/logistics/public_reports_config?date=MASTER')
 lista = j.get('data') or []
 texto = json.dumps(j)
 chk(st == 200 and len(lista) == 3, 'responde la lista de 3 grupos')
-chk('Deam2026' not in texto and 'tok_sec_' not in texto and 'sha256$' not in texto,
+chk('viejo-de-prueba' not in texto and 'tok_sec_' not in texto and 'sha256$' not in texto,
     'no aparece ningún token ni ninguna huella en la respuesta')
 chk(all(g.get('tiene_link') for g in lista), 'cada grupo dice que tiene link')
 chk([g['link_inseguro'] for g in lista] == [True, True, False],
@@ -121,14 +126,14 @@ chk([g['link_inseguro'] for g in lista] == [True, True, False],
 
 print('\n3. El link bueno entra; el malo y el vacío no')
 print('-' * 74)
-st, j = pedir('POST', '/api/reportes-publicos/acceso', {'token': 'SUPERVISORES-Deam2026'})
+st, j = pedir('POST', '/api/reportes-publicos/acceso', {'token': 'SUPERVISORES-viejo-de-prueba'})
 g = j.get('grupo') or {}
 chk(st == 200 and g.get('nombre') == 'SUPERVISORES', 'el link de SUPERVISORES entra')
 chk(g.get('submodulos') == ['layout_activo'] and 'token' not in g and 'token_hash' not in g,
     'y recibe solo sus permisos, sin token ni huella')
 st, j = pedir('POST', '/api/reportes-publicos/acceso', {'token': 'tok_sec_AbCdEfGhIjKlMnOp'})
 chk(st == 200 and (j.get('grupo') or {}).get('nombre') == 'COORDINADORES', 'el link de COORDINADORES entra')
-for malo in ('SUPERVISORES-Deam2027', '', 'x' * 500):
+for malo in ('SUPERVISORES-viejo-de-prueba-2', '', 'x' * 500):
     st, j = pedir('POST', '/api/reportes-publicos/acceso', {'token': malo})
     chk(st == 403 and 'grupo' not in j, 'un link malo (%d caracteres) no entra' % len(malo))
 st, j = pedir('POST', '/api/reportes-publicos/acceso', ['no es un objeto'])
@@ -159,7 +164,7 @@ g2 = json.loads(conn.execute("SELECT data_json FROM logistics_snapshots WHERE ar
 conn.close()
 chk(all('token' not in x for x in g2), 'en la base sigue sin haber ningún token en claro')
 chk(all('tiene_link' not in x and 'link_inseguro' not in x for x in g2), 'las marcas de la pantalla no se guardan')
-chk(g2[0]['token_hash'] == main.huella_token('GERENCIAL-Deam2026') and g2[0]['modulos'] == ['almacenaje', 'buffer'],
+chk(g2[0]['token_hash'] == main.huella_token('GERENCIAL-viejo-de-prueba') and g2[0]['modulos'] == ['almacenaje', 'buffer'],
     'GERENCIAL cambió sus permisos y conservó su huella (su link sigue andando)')
 chk(g2[2]['token_hash'] == main.huella_token('tok_' + 'N' * 32), 'COORDINADORES quedó con la huella del token nuevo')
 st, _ = pedir('POST', '/api/reportes-publicos/acceso', {'token': 'tok_sec_AbCdEfGhIjKlMnOp'})
