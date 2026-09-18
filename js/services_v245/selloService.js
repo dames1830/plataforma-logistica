@@ -145,7 +145,9 @@ export const chipSello = (areas) => {
 export const AREAS_POR_PANTALLA = {
     // ── Picking ──────────────────────────────────────────────────────────────
     reporte_picking:   ['picking_por_hora', 'embalaje_por_hora'],
-    picking_dia:       ['picking_por_hora'],
+    /* El Fill Rate va al pie de Picking por día (18-sep-2026) y tiene su propio robot:
+       si ese se queda atrás, el sello de la pantalla lo tiene que decir. */
+    picking_dia:       ['picking_por_hora', 'fill_rate_correo'],
     embalaje_dia:      ['embalaje_por_hora'],
     cruce_wms:         ['cruce_wms'],
     prod_proyeccion:   ['picking_por_hora', 'embalaje_por_hora'],
