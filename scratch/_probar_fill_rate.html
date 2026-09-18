@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="es" data-tema="pbi">
+<head>
+<meta charset="utf-8">
+<title>Prueba · Picking por día + Fill Rate</title>
+<!--
+  PICKING POR DÍA CON EL FILL RATE AL PIE, DE VERDAD, SIN INICIAR SESIÓN.
+
+  No es una copia: baja el texto de js/views/dashboard_v28.js y corta de ahí `leerArea`,
+  `renderProduccionDia` y `montarFillRateAlPie` tal cual están, y los arma con los módulos de
+  verdad (`produccion_hora.js` y `fill_rate.js`) con el mismo `?v=`.
+
+  SOLO CORRE EN BETA. Antes de env.js se pone un guardia: cualquier llamada al servidor que
+  salga sin el sello X-Environment: beta se frena, así que nada de esto puede tocar producción.
+
+  ?local=1  el área fill_rate_correo se sirve de robot/logs/fill_rate_correo.json (lo que deja
+            `robot/fill_rate_correo.py --probar`) en vez de pedirla a beta.
+-->
+<script>
+  (function () {
+    var nativo = window.fetch.bind(window);
+    var local = /[?&]local=1/.test(location.search);
+    window.__frenadas = [];
+    window.__pedidas = [];
+    window.fetch = function (input, init) {
+      var url = (typeof input === 'string') ? input : (input && input.url) || '';
+      if (/onrender\.com|\/api\/logistics/.test(url)) {
+        var h = new Headers((init && init.headers) || undefined);
+        if (h.get('X-Environment') !== 'beta') {
+          window.__frenadas.push(url);
+          return Promise.reject(new Error('PRUEBA: llamada sin sello beta, frenada: ' + url));
+        }
+        window.__pedidas.push(url);
+        if (local && /\/fill_rate_correo\?/.test(url)) {
+          return nativo('../robot/logs/fill_rate_correo.json?t=' + Date.now())
+            .then(function (r) { return r.json(); })
+            .then(function (d) { return new Response(JSON.stringify({ data: d }), { headers: { 'Content-Type': 'application/json' } }); });
+        }
+      }
+      return nativo(input, init);
+    };
+  })();
+</script>
+<script src="../js/env.js?v=29.0826"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+<link rel="stylesheet" href="../css/main.css?v=29.0826">
+<link rel="stylesheet" href="../css/temas.css?v=29.0826">
+<link rel="stylesheet" href="../css/componentes.css?v=29.0826">
+<style>
+  body { background: var(--bg-dark); color: var(--text-pale); padding: 16px 24px 80px; margin: 0; display:block; }
+  .pr-barra { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:0 0 18px; padding:10px 12px;
+              border:1px dashed rgba(var(--ink-rgb),0.25); border-radius:10px; font-size:13px; }
+  .pr-barra button { padding:6px 10px; border-radius:8px; border:1px solid rgba(var(--ink-rgb),0.2);
+              background:rgba(var(--ink-rgb),0.06); color:var(--text-pale); cursor:pointer; font-size:12px; }
+  #pr-estado { font-family:monospace; font-size:12px; color:var(--text-muted); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="pr-barra">
+  <b>PRUEBA</b>
+  <button data-tema="pbi">Power BI</button><button data-tema="pbi-classic">PBI Classic</button>
+  <button data-tema="indigo">Índigo</button><button data-tema="negro">Negro</button>
+  <span id="pr-estado">cargando…</span>
+</div>
+<div id="tab"></div>
+
+<script type="module">
+const estado = document.getElementById('pr-estado');
+const decir = (t) => { estado.textContent = t; };
+
+if (!window.PULSE_ES_BETA) {
+  document.body.innerHTML = '<h2 style="color:red;padding:2rem">NO ES BETA: la prueba no corre.</h2>';
+  throw new Error('no es beta');
+}
+
+document.querySelectorAll('[data-tema]').forEach(b => b.onclick = () => {
+  document.documentElement.setAttribute('data-tema', b.dataset.tema);
+});
+
+const { montarProduccionHora } = await import('../js/reportes/produccion_hora.js?v=29.0826');
+const { montarFillRate } = await import('../js/reportes/fill_rate.js?v=29.0826');
+const { observarTablas } = await import('../js/services_v245/tablasOrdenables.js?v=29.0826');
+const jornada = await import('../js/services_v245/jornadaService.js?v=29.0826');
+// Como en la plataforma: el observador que ordena cualquier tabla está prendido.
+observarTablas(document.body);
+
+/* EL CÓDIGO DE VERDAD, cortado del archivo que corre */
+const src = (await (await fetch('../js/views/dashboard_v28.js?t=' + Date.now())).text()).replace(/\r\n/g, '\n');
+const tramo = (inicio, fin) => {
+  const i = src.indexOf(inicio);
+  if (i < 0) throw new Error('no encontré: ' + inicio);
+  const j = src.indexOf(fin, i);
+  if (j < 0) throw new Error('no encontré el final de: ' + inicio);
+  return src.slice(i, j + fin.length);
+};
+const api = tramo("const TURNO_API  = ", ";\n");
+const lectura = tramo('const _areaEnMano = new Map();', '        _areaEnVuelo.delete(k);\n    }\n};\n');
+const pantalla = tramo('const PROD_HORA_AREA = ', '    montarFillRate(host, datos);\n};\n');
+
+const fabricar = new Function('montarProduccionHora', 'montarFillRate', 'getLogicalDate',
+  [api, lectura, pantalla, 'return { renderProduccionDia, leerArea };'].join('\n'));
+const P = fabricar(montarProduccionHora, montarFillRate, () => jornada.fechaLogicaDe());
+window.__P = P;
+
+decir('dibujando Picking por día…');
+const tab = document.getElementById('tab');
+await P.renderProduccionDia(tab, 'picking');
+// El fill rate se monta después del día, sin que la pantalla lo espere: se aguarda acá.
+for (let i = 0; i < 200 && !tab.querySelector('#fr'); i++) await new Promise(r => setTimeout(r, 100));
+window.__listo = !!tab.querySelector('#fr');
+decir((window.__listo ? 'listo' : 'SIN FILL RATE') + ' · pedidas: ' + window.__pedidas.length + ' · frenadas: ' + window.__frenadas.length);
+</script>
+</body>
+</html>

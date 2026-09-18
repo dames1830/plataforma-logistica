@@ -143,7 +143,13 @@ export const TAREAS = [
        noche. Una vez que tengas el correo, ahí recién procesas ese reporte"*. */
     { id: 'despacho_potencial', tipo: 'repetida', etiqueta: 'Despacho potencial',
       detalle: 'espera el correo de comercial y arma lo que se puede despachar por tienda',
-      area: 'despacho_potencial_dia' }
+      area: 'despacho_potencial_dia' },
+    /* EL FILL RATE DEL CORREO. Daniel, 18-sep-2026, al aprobar la maqueta: va al pie de
+       Picking por día. Corre 09:15 —después del OBLPN entero de ayer— y 21:15 —después
+       del OBLPN y el picking de la tarde y del correo de comercial—. No toca el WMS. */
+    { id: 'fill_rate', tipo: 'repetida', etiqueta: 'Fill rate del correo',
+      detalle: 'lo que mandó comercial: cuánto se picó, se embaló y se despachó',
+      area: 'fill_rate_correo' }
 ];
 
 /** Cada cuánto puede correr una tarea de las que se repiten. */
@@ -214,7 +220,9 @@ export const robotsPorDefecto = () => ({
     despacho_potencial: { activa: true, minuto: 1110, cadaMin: 30,
                           desde: '18:30', hasta: '23:30',
                           dias: { lun: true, mar: true, mie: true, jue: true,
-                                  vie: true, sab: false, dom: false } }
+                                  vie: true, sab: false, dom: false } },
+    /* 09:15 y 21:15: `minuto: 555` y la segunda 720 minutos después. */
+    fill_rate: { activa: true, minuto: 555, cadaMin: 720, dias: { ...LUN_A_SAB } }
 });
 
 const _hhmm = (v, respaldo) => {

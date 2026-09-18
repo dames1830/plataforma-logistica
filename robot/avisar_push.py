@@ -90,6 +90,7 @@ NOMBRES = {
     'corte_turno': 'Corte de turno',
     'distribucion': 'Distribución',
     'despacho_potencial': 'Despacho potencial',
+    'fill_rate': 'Fill rate del correo',
 }
 
 # LOS CAMBIOS DE TURNO, QUE LE INTERESAN A TODO EL MUNDO -son los cortes de stock de las
@@ -174,6 +175,7 @@ PREFIJO_LOG = {
     'oblpn_hora': 'picking_orden_',
     'cruce_wms': 'cruce',
     'asn_web': 'asn',
+    'fill_rate': 'fillrate_',
 }
 
 

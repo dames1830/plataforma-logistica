@@ -280,6 +280,13 @@ DE_FABRICA = {
                            'dias': {'lun': True, 'mar': True, 'mie': True,
                                     'jue': True, 'vie': True, 'sab': False,
                                     'dom': False}},
+    # EL FILL RATE DEL CORREO. Dos corridas: 09:15, despues del OBLPN entero de ayer
+    # (llega 08:55), y 21:15, despues del OBLPN y el picking de la tarde y del correo
+    # de comercial. `minuto: 555` es 09:15 y `cadaMin: 720` pone la segunda en 21:15;
+    # no va 'hora' porque no esta en DIARIAS. No toca el WMS y tarda un minuto.
+    'fill_rate':    {'activa': True, 'minuto': 555, 'cadaMin': 720,
+                     'dias': {'lun': True, 'mar': True, 'mie': True,
+                              'jue': True, 'vie': True, 'sab': True, 'dom': False}},
     'asn_web':      {'activa': True, 'hora': '02:30', 'dias': {'lun': True, 'mar': True, 'mie': True,
                                                                'jue': True, 'vie': True, 'sab': True, 'dom': True}},
 }

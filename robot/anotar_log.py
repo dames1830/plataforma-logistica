@@ -62,6 +62,7 @@ NOMBRES = {
     'corte_turno': 'Corte de turno',
     'distribucion': 'Distribución',
     'despacho_potencial': 'Despacho potencial',
+    'fill_rate': 'Fill rate del correo',
 }
 
 # QUE SE PIERDE CUANDO ESTE ROBOT NO CORRE.
@@ -110,6 +111,9 @@ CONSECUENCIA = {
         'El ASN no se actualizó: las recepciones nuevas todavía no aparecen.',
     'respaldo':
         'No se pudo guardar el respaldo de los datos de hoy.',
+    'fill_rate':
+        'El fill rate del correo de comercial no se actualizó: Picking por día '
+        'sigue mostrando lo picado, embalado y despachado del corte anterior.',
 }
 
 
