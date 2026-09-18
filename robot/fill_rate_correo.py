@@ -306,13 +306,17 @@ def armar_guias(correos, hasta):
 # ══ 2. LO PICADO ═════════════════════════════════════════════════════════════
 
 NECESARIAS = ['Número de orden', 'Estado', 'Código de artículo', 'Cantidad empaquetada',
-              'Hora de selección']
+              'Hora de selección', 'Cantidad de orden original']
 
 
 def leer_picking(base, guias):
     """Las lineas Finalizada de las guias del correo, de TODOS los archivos de picking."""
     carpeta = os.path.join(base, 'Picking')
     picado, picado_pp = collections.defaultdict(float), collections.defaultdict(float)
+    # LO QUE PEDIA LA ORDEN, por (orden, articulo). `Cantidad de orden original` SE REPITE
+    # en cada linea del mismo articulo -una por ubicacion, una por dia-: se toma una vez,
+    # con max, que es la regla de distribucion.py. El prepack viene en cajas: a pares.
+    orden_wms = {}
     ult, leidos = None, 0
     for n in sorted(x for x in os.listdir(carpeta) if x.lower().endswith('.csv')):
         try:
@@ -327,7 +331,7 @@ def leer_picking(base, guias):
                 if falta:
                     log('%s: faltan columnas %s' % (n, falta), 'AVISO')
                     continue
-                iO, iE, iA, iQ, iH = (ix[c] for c in NECESARIAS)
+                iO, iE, iA, iQ, iH, iOr = (ix[c] for c in NECESARIAS)
                 for r in rd:
                     if len(r) < len(cab) or r[iE].strip() != 'Finalizada':
                         continue
@@ -339,6 +343,8 @@ def leer_picking(base, guias):
                     picado[o] += p
                     if pares_de_la_caja(sku) > 1:
                         picado_pp[o] += p
+                    k = (o, sku)
+                    orden_wms[k] = max(orden_wms.get(k, 0.0), num(r[iOr]) * pares_de_la_caja(sku))
                     h = cuando(r[iH])
                     if h and (ult is None or h > ult):
                         ult = h
@@ -348,7 +354,10 @@ def leer_picking(base, guias):
         except OSError as e:
             log('%s: no se pudo leer (%s: %s)' % (n, type(e).__name__, str(e)[:80]), 'ERROR')
             FALLIDOS.append(n)
-    return picado, picado_pp, ult, leidos
+    por_orden = collections.defaultdict(float)
+    for (o, sku), q in orden_wms.items():
+        por_orden[o] += q
+    return picado, picado_pp, ult, leidos, por_orden
 
 
 # ══ 2b. EL TIPO DE LO QUE TODAVIA NO SE PICO ═════════════════════════════════
@@ -469,7 +478,7 @@ def calcular(base):
     log('Correos: %d archivos, %d guias del %s al %s (%.0f s)'
         % (leidos, len(guias), DESDE, hasta, time.time() - t0))
 
-    picado, picado_pp, ult_pick, n_pick = leer_picking(base, guias)
+    picado, picado_pp, ult_pick, n_pick, orden_wms = leer_picking(base, guias)
     log('Picking: %d archivos, %d guias con picking, ultimo pick %s (%.0f s)'
         % (n_pick, len(picado), ult_pick, time.time() - t0))
 
@@ -510,6 +519,19 @@ def calcular(base):
             factor = pp_pares / pp_cajas
             log('Correo en cajas: %s %s, %s cajas de %.1f pares' % (gid, g['nombre'], g['sol'], factor))
             g['sol'] = g['sol'] * factor
+
+    # EL CORREO QUE DICE MENOS DE LO QUE TRAIA LA ORDEN. Daniel, 18-sep-2026, viendo la guia
+    # 8000069 de B3 Chorrillos al 550%: el correo del 26-08 dice 200, pero la orden del WMS
+    # nacio el 19-08 con 1,100 bolsas de e-commerce -700 grandes, 200 medianas y 200 chicas-
+    # y el CD pico las tres lineas enteras. El CD pica la orden, no el numero del correo:
+    # lo solicitado es lo que pedia la orden. Se mide con `Cantidad de orden original` del
+    # picking. Al 18-sep le pasaba a 1 guia de 23.399 con picking.
+    for gid, g in guias.items():
+        pedia = orden_wms.get(gid, 0.0)
+        if pedia > g['sol']:
+            log('La orden trae mas que el correo: %s %s %s, correo %s, orden %s'
+                % (gid, g['tienda'], g['nombre'], g['sol'], pedia))
+            g['sol'] = pedia
 
     # ── lo que viaja a la pantalla, compacto ──
     tiendas, prioridades, ti, pi = [], [], {}, {}
