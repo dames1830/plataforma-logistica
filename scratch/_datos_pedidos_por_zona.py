@@ -96,7 +96,18 @@ def leer_guias():
     y la fecha de cuando de verdad la mandaron.
     """
     guias = {}
-    archivos = sorted(n for n in os.listdir(CORREOS) if n.lower().endswith(('.xlsx', '.xls')))
+
+    def orden(n):
+        # POR FECHA, no por nombre ("Guías 03.08" caia entre "02.07" y "06.07"), y dentro
+        # del dia el correo de siempre antes que uno adicional ("Guías 17.09 B CARAZ.xlsx").
+        b = os.path.splitext(n)[0]
+        m = re.search(r'(\d{1,2})[.\-](\d{1,2})(?!\d)', b)
+        dia = (int(m.group(2)), int(m.group(1))) if m else (99, 99)
+        if m:
+            b = b[:m.start()] + ' ' + b[m.end():]
+        return (dia, bool(re.sub(r'gu.as?', ' ', b.lower()).strip(' ._-()')), n)
+    archivos = sorted((n for n in os.listdir(CORREOS) if n.lower().endswith(('.xlsx', '.xls'))),
+                      key=orden)
     leidos = 0
     for n in archivos:
         try:
