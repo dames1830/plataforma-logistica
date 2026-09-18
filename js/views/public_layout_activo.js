@@ -496,12 +496,21 @@ export const renderLayoutActivo = async (container) => {
                       fullTooltipHTML = tooltipHTML;
                       cellData.skus.forEach((s, idx) => {
                           const s7 = s.sku.substring(0, 7);
-                          const g = window.DEBUG_SKU_GENDER ? (window.DEBUG_SKU_GENDER[s.sku] || window.DEBUG_SKU_GENDER[s7] || 'VACÍO') : 'N/A';
-                          const itemHTML = `<span style='font-size:0.75rem; color:#ccc;'>${s.sku} (${s.cant}) - ${s.temporada} [${g}]</span><br/>`;
+                          /* EL GÉNERO SALE DEL MAPA PUBLICADO (`genero`, desde el 18-sep-2026):
+                             esta página no carga el Maestro y por eso decía "N/A". Un mapa
+                             publicado antes de ese día no lo trae y sigue diciendo N/A hasta
+                             que el robot publique el siguiente. */
+                          const local = window.DEBUG_SKU_GENDER
+                              && (window.DEBUG_SKU_GENDER[s.sku] || window.DEBUG_SKU_GENDER[s7]);
+                          const g = local || s.genero
+                              || ((window.DEBUG_SKU_GENDER || 'genero' in s) ? 'VACÍO' : 'N/A');
+                          /* LAS LETRAS, COMO EN LA WEB: color y tamaño del tema. Iban en gris
+                             claro fijo (#ccc) y en la ventana blanca del clic no se leían. */
+                          const itemHTML = `<span style='font-size:var(--t-sm); color:var(--text-soft);'>${s.sku} (${s.cant}) - ${s.temporada} [${g}]</span><br/>`;
                           if (idx < 5) tooltipHTML += itemHTML;
                           fullTooltipHTML += itemHTML;
                       });
-                      if(cellData.skus.length > 5) tooltipHTML += `<span style='font-size:0.75rem; color:#ccc;'>...y ${cellData.skus.length-5} más</span>`;
+                      if(cellData.skus.length > 5) tooltipHTML += `<span style='font-size:var(--t-sm); color:var(--text-soft);'>...y ${cellData.skus.length-5} más</span>`;
                   }
                   
                   gridHtml += `
@@ -802,16 +811,19 @@ export const renderLayoutActivo = async (container) => {
                   tt = document.createElement('div');
                   tt.id = 'layout-tooltip';
                   tt.style.position = 'fixed';
-                  tt.style.background = 'rgba(0,0,0,0.85)';
-                  tt.style.color = '#fff';
+                  /* EL GLOBITO VA CLARO, como la web en sus temas claros y como el resto de
+                     esta página: con el fondo negro, las líneas de artículos —que ahora van
+                     en el color del tema para leerse en la ventana blanca— no se verían. */
+                  tt.style.background = 'rgba(255,255,255,0.97)';
+                  tt.style.color = 'var(--text-strong)';
                   tt.style.padding = '10px 15px';
                   tt.style.borderRadius = '8px';
                   tt.style.pointerEvents = 'none';
                   tt.style.fontSize = '0.8rem';
                   tt.style.zIndex = '99999';
                   tt.style.display = 'none';
-                  tt.style.border = '1px solid rgba(255,255,255,0.1)';
-                  tt.style.boxShadow = '0 10px 25px rgba(0,0,0,0.5)';
+                  tt.style.border = '1px solid rgba(var(--ink-rgb), 0.14)';
+                  tt.style.boxShadow = '0 10px 25px rgba(28,43,58,0.18)';
                   tt.style.backdropFilter = 'blur(4px)';
                   document.body.appendChild(tt);
               }

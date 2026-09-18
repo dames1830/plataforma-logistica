@@ -27,7 +27,7 @@
    Quien lo use desde afuera tiene que llamar antes a `zonasService.cargarZonas()`.
    ============================================================================ */
 
-import * as zonasService from '../services_v245/zonasService.js?v=29.0828';
+import * as zonasService from '../services_v245/zonasService.js?v=29.0829';
 
 /**
  * TRAER LAS ZONAS, DESDE ESTE MISMO ARCHIVO.
@@ -240,9 +240,14 @@ export const procesarLayout = ({ stock, maestro, zona }) => {
     if (!cell.seasons[temporadaClean]) cell.seasons[temporadaClean] = 0;
     cell.seasons[temporadaClean] += cant;
 
+    /* EL GÉNERO VIAJA CON EL MAPA PUBLICADO. Daniel, 18-sep-2026, comparando el globito:
+       en la web decía "[02 WOMEN]" y en el reporte público "[N/A]". La web lo saca del
+       Maestro que tiene cargado; el reporte público dibuja lo que publica el robot y ahí
+       no venía, así que no tenía de dónde sacarlo. */
+    const genero = skuGender[skuFull] || skuGender[sku7] || '';
     const existingSku = cell.skus.find(s => s.sku === skuFull);
     if (existingSku) existingSku.cant += cant;
-    else cell.skus.push({ sku: skuFull, cant, temporada: temporadaClean === 'ACTUAL' ? 'T. Actual' : 'T. Anterior' });
+    else cell.skus.push({ sku: skuFull, cant, temporada: temporadaClean === 'ACTUAL' ? 'T. Actual' : 'T. Anterior', genero });
 
     uniquePadres.add(sku7);
     totalUnits += cant;
@@ -253,8 +258,7 @@ export const procesarLayout = ({ stock, maestro, zona }) => {
     // estaba escrito a mano y mover una columna de temporada era editar código.
     // Las columnas de saldos aceptan las dos temporadas, pero solo si el
     // artículo es saldo; la de escolar solo mira que sea escolar.
-    const genderRaw = skuGender[skuFull] || skuGender[sku7] || '';
-    const isSchool = genderRaw.includes('SCHOOL');
+    const isSchool = genero.includes('SCHOOL');
     const franjaCol = zonasService.franjaDeColumna(zona, col);
 
     let isValid;

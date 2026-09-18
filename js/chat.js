@@ -36,7 +36,7 @@
    celular; lo unico propio de aca es el boton y el cartelito que explica que va a llegar. */
 import { puedeAvisos, mirarAvisos, prenderAvisos, apagarAvisos, queLlega,
          idDeEsteAparato, ponerAlDiaAvisos }
-    from './services_v245/avisos.js?v=29.0828';
+    from './services_v245/avisos.js?v=29.0829';
 
 /* `typeof window` y no `window` a secas: `scratch/probar_marcas_chat.mjs` carga este
    archivo desde Node para comprobar el calculo de las marcas sin navegador, y sin la
