@@ -167,6 +167,24 @@ def _hora(v):
     return t[11:19] if len(t) >= 19 and t[10:11] == " " else ""
 
 
+# LA HORA DE RECEPCION VIENE EN UTC. Medido el 19-sep-2026 con la logistica inversa: las guias se
+# verificaban "de 13 a 23 h" con el bajon del refrigerio a las 18; restando 5 horas queda de 08 a 17
+# con el refrigerio a las 13, que es el turno dia. Daniel: *"L.I no trabaja de noche"*. Lo que se
+# verificaba despues de las 19:00 de Lima caia ademas en el DIA siguiente. Peru no cambia de hora en
+# todo el ano: un desfase fijo de 5 horas alcanza. La fecha de envio es solo dia (00:00) y no se toca.
+UTC_A_LIMA = timedelta(hours=5)
+
+
+def recepcion_lima(v):
+    """La 'Fecha de recepcion' del ASN pasada de UTC a hora de Lima. None si no hay fecha."""
+    d = fecha_de(v)
+    if d is None:
+        return None
+    if (d.hour, d.minute, d.second, d.microsecond) == (0, 0, 0, 0):
+        return d          # un dia sin hora: no hay nada que correr
+    return d - UTC_A_LIMA
+
+
 def _fecha10(v):
     """AAAA-MM-DD, venga como fecha de Excel o como texto."""
     if hasattr(v, 'strftime'):
@@ -487,12 +505,12 @@ def construir():
                     asn_tipo[asn],
                     str(fila[iS]).strip() if iS is not None and iS < len(fila) and fila[iS] else "",
                     _fecha10(fila[iF]) if iF is not None and iF < len(fila) else "",
-                    _fecha10(fila[iV]) if iV is not None and iV < len(fila) else "",
+                    _fecha10(recepcion_lima(fila[iV])) if iV is not None and iV < len(fila) else "",
                     # LA HORA VA APARTE de la fecha, no pegada: si fuera
                     # "2026-09-02 19:53", el filtro por dia <= "2026-09-02"
                     # dejaria fuera todo lo de ese dia. Separadas, los dos
                     # filtros siguen siendo una comparacion simple.
-                    _hora(fila[iV]) if iV is not None and iV < len(fila) else "",
+                    _hora(recepcion_lima(fila[iV])) if iV is not None and iV < len(fila) else "",
                     str(fila[iU]).strip() if iU is not None and iU < len(fila) and fila[iU] else "",
                 )
 
@@ -548,7 +566,7 @@ def construir():
             asn_rec[asn] += rec
 
             if rec > 0:
-                fv = fecha_de(fila[iV]) if iV is not None and iV < len(fila) else None
+                fv = recepcion_lima(fila[iV]) if iV is not None and iV < len(fila) else None
                 if fv is None:
                     sin_fecha_rec["unid"] += rec
                     sin_fecha_rec["lineas"] += 1
