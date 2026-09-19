@@ -59,6 +59,87 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# =============================================================================
+# LA MEMORIA SE DEVUELVE DESPUÉS DE CADA GUARDADO GRANDE
+# -----------------------------------------------------------------------------
+# El 16-sep y el 19-sep-2026 Render reinició el servidor por pasar los 512 MB. El
+# gráfico de Render lo explica: la memoria SUBE EN ESCALONES Y NUNCA BAJA —20% al
+# arrancar, 70% después del cierre de las 07:00, 85% después del de las 19:00, 100%
+# a la 01:53 del día siguiente—. Cada guardado grande (el stock son ~8 MB de JSON)
+# se desarma en objetos de Python que ocupan diez veces eso; al terminar se liberan,
+# pero el asignador de memoria de Linux (glibc) se queda con las páginas en vez de
+# devolverlas. Así el proceso solo crece hasta que Render lo mata.
+#
+# `malloc_trim(0)` le pide a glibc que devuelva al sistema lo que ya está libre, y
+# `mallopt(M_ARENA_MAX, 2)` evita que cada hilo arme su propio montón aparte, que es
+# lo que más fragmenta. En Windows (la laptop) no existe: queda apagado sin error.
+# /api/health muestra cuánto ocupa el proceso y cuánto se devolvió la última vez.
+# =============================================================================
+import ctypes
+import ctypes.util
+
+_LIBC = None
+try:
+    if os.name == "posix":
+        _LIBC = ctypes.CDLL(ctypes.util.find_library("c") or "libc.so.6")
+        _LIBC.mallopt(-8, 2)            # M_ARENA_MAX = -8 en glibc
+        _LIBC.malloc_trim.argtypes = [ctypes.c_size_t]
+except Exception as _e:
+    print(f"[PULSE] Sin malloc_trim: {_e}")
+    _LIBC = None
+
+_memoria = {"devoluciones": 0, "ultima": None, "ultima_liberada_mb": None, "ultima_ruta": None}
+
+
+def memoria_mb(campo: str = "VmRSS"):
+    """Lo que ocupa el proceso en memoria de verdad, en MB. None fuera de Linux."""
+    try:
+        with open("/proc/self/status") as f:
+            for linea in f:
+                if linea.startswith(campo + ":"):
+                    return round(int(linea.split()[1]) / 1024, 1)
+    except Exception:
+        pass
+    return None
+
+
+def devolver_memoria(ruta: str = ""):
+    if _LIBC is None:
+        return
+    try:
+        antes = memoria_mb()
+        _LIBC.malloc_trim(0)
+        despues = memoria_mb()
+        _memoria["devoluciones"] += 1
+        _memoria["ultima"] = ahora().isoformat()
+        _memoria["ultima_ruta"] = ruta
+        if antes is not None and despues is not None:
+            _memoria["ultima_liberada_mb"] = round(antes - despues, 1)
+    except Exception:
+        pass
+
+
+# VA ANTES DE LA COMPRESION, a proposito: asi ve el tamano REAL de lo que entrega. Puesto
+# despues, un area de 8 MB le llegaba comprimida a menos de 1 MB y no devolvia nada.
+@app.middleware("http")
+async def devolver_memoria_al_terminar(request: Request, call_next):
+    """Después de un guardado —o de entregar un área de más de 1 MB— se devuelve la
+    memoria que quedó libre. Las consultas chicas (versiones, chat) no pagan nada."""
+    respuesta = await call_next(request)
+    if _LIBC is not None:
+        grande = False
+        if request.method != "GET":
+            grande = True
+        else:
+            try:
+                grande = int(respuesta.headers.get("content-length") or 0) > 1024 * 1024
+            except (TypeError, ValueError):
+                grande = False
+        if grande:
+            devolver_memoria(request.method + " " + request.url.path)
+    return respuesta
+
+
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # =============================================================================
@@ -1301,6 +1382,15 @@ def health():
             "timestamp": ahora().isoformat(),
             # ¿Puede este servidor avisar al celular? Ver `_estado_push`.
             "avisos_push": _estado_push(),
+            # Cuánto ocupa el proceso: Render lo reinicia al pasar los 512 MB. `pico_mb` es
+            # lo máximo desde que arrancó. Ver "LA MEMORIA SE DEVUELVE".
+            "memoria": {
+                "rss_mb": memoria_mb("VmRSS"),
+                "pico_mb": memoria_mb("VmHWM"),
+                "limite_mb": 512,
+                "devuelve": _LIBC is not None,
+                **_memoria,
+            },
             # Estado del candado de escritura -fase 3-. Sirve para saber si ya se puede
             # encender sin dejar a nadie fuera: cuando `escrituras_anonimas` deje de subir,
             # es que todos los robots y PC ya mandan token.
