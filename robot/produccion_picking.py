@@ -395,14 +395,27 @@ for n in sorted((n for n in os.listdir(CARPETA_ORD)
 print('tipo de orden conocido para %s ordenes' % '{:,}'.format(len(tipo_orden)))
 
 
+# LOS TIPOS DE ORDEN QUE SON TIENDA, la tabla del 04-sep-2026 (memoria
+# canal-de-la-orden). Hacen falta para la tienda que todavia no esta en el maestro
+# de rutas: el 18-sep-2026 B CARAZ (50644) llego como "Aldeas Bata" y cayo en OTROS,
+# 2.627 lineas y 6.875 pares que la pantalla en RETAIL no mostraba y el supervisor si.
+TIPOS_RETAIL = {'ALDEAS BATA', 'ALDEAS BUBBLEGUMMERS', 'ALDEAS NORTHSTAR',
+                'WEINBRENNER ALDEAS', 'ALDEAS INSUMOS'}
+
+
 def canal_de(destino, orden):
     """EL MAESTRO DE RUTAS MANDA. Si el destino es tienda, es retail y no se
-    consulta nada mas; el Tipo de orden solo afina lo que NO es tienda."""
+    consulta nada mas; el Tipo de orden solo afina lo que NO es tienda.
+
+    Y un Tipo de orden de tienda es retail AUNQUE el destino falte en el maestro:
+    una tienda recien abierta tarda en entrar al archivo de rutas."""
     if destino in tiendas:
         return 'RETAIL'
     t = (tipo_orden.get(orden) or '').upper()
     if not t:
         return 'SIN CANAL'
+    if t in TIPOS_RETAIL:
+        return 'RETAIL'
     if 'MAYOR' in t:
         return 'MAYORISTA'
     if 'CATALOGO' in t:

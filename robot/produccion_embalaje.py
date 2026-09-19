@@ -403,12 +403,22 @@ for n in sorted((n for n in os.listdir(CARPETA_ORD)
 print('tipo de orden conocido para %s ordenes' % '{:,}'.format(len(tipo_orden)))
 
 
+# LOS TIPOS DE ORDEN QUE SON TIENDA: una tienda recien abierta tarda en entrar al
+# maestro de rutas y es retail igual. El 18-sep-2026 B CARAZ (50644) llego como
+# "Aldeas Bata" y cayo en OTROS: 2.419 lineas embaladas fuera de RETAIL. Misma
+# regla que produccion_picking.py.
+TIPOS_RETAIL = {'ALDEAS BATA', 'ALDEAS BUBBLEGUMMERS', 'ALDEAS NORTHSTAR',
+                'WEINBRENNER ALDEAS', 'ALDEAS INSUMOS'}
+
+
 def canal_de(destino, orden):
     if destino in tiendas:
         return 'RETAIL'
     t = (tipo_orden.get(orden) or '').upper()
     if not t:
         return 'SIN CANAL'
+    if t in TIPOS_RETAIL:
+        return 'RETAIL'
     if 'MAYOR' in t:
         return 'MAYORISTA'
     if 'CATALOGO' in t:
