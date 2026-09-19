@@ -59,7 +59,14 @@ TOPE_LINEAS = 30            # cuantas lineas se guardan de cada celda que no cua
 BASE = os.path.join('C:' + os.sep, 'Users', 'Administrator', 'OneDrive',
                     'danielames.bata', 'scraping Stock')
 FORMA_PREPACK = re.compile(r'^\d{7}-\d-\d{5}$')
-ES_PRE = re.compile(r'^W?PRE', re.I)
+# LA PRE-ETIQUETA, CON LO QUE TRAIGA DELANTE. El contenedor del picking tiene que
+# ser PRE500080..., pero al escribirlo a veces le meten caracteres antes: 1PRE, WPRE,
+# UPRE, 3PRE, LGPRE, KOKKPRE, GGGGGGPRE... (visto en 120 archivos del OBLPN y del
+# picking, 18-sep-2026). Embalaje no lo puede pistolear y lo deja a un lado: NO esta
+# embalado. Daniel: "ponen un W, ponen un numero, a veces ponen otra cosa antes del
+# pre". El 18-sep uno de pvargas (UPRE..., 10 pares) salia embalado en la web y no en
+# el WMS. Una caja real es un numero puro: nunca lleva "PRE" seguido del numero.
+ES_PRE = re.compile(r'PRE\d', re.I)
 
 # Cada lado: de donde sale el web report, de donde el cuadro de la plataforma, y
 # con que columnas se lee el archivo original para sacar el detalle.
@@ -436,7 +443,7 @@ def detalle(clave, cru, dia_corto, dia_wms, TIENDAS, GEN, DES):
         if cfg['quitar_pre']:
             if not d(x, iH).startswith(dia_wms):
                 continue
-            if ES_PRE.match(d(x, iLpn)):     # las PRE son pre-etiquetas, no cajas
+            if ES_PRE.search(d(x, iLpn)):     # las PRE son pre-etiquetas, no cajas
                 continue
         elif d(x, iEst) != 'Finalizada':     # 'Cancelado' es una COPIA de la buena
             continue

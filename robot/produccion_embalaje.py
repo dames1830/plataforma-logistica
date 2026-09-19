@@ -39,7 +39,8 @@ puro. El archivo lo confirma solo:
 11.553 de los 11.629 cancelados son PRE. Sin esta regla el reporte contaba 11.728
 pares de mas -el 29%- y 20 personas que en realidad no embalaron nada.
 
-Tambien se saca `WPRE`, que es la misma familia (35 lineas).
+Tambien se saca la PRE con caracteres delante -WPRE, UPRE, 1PRE, KOKKPRE...-, que
+es la misma pre-etiqueta mal escrita: se reconoce por "PRE" seguido del numero.
 
 No se filtra por `Estado de LPN`: tienen que venir Empaquetado, Cargado y Enviado
 juntos, que es la gracia de comparar los escalones.
@@ -522,8 +523,14 @@ iDest, iOrd = col('Instalación de destino'), col('Número de orden')
 iUbi, iEst = col('Ubicación de selección'), col('Estado de LPN')
 iLpn = col('Número de LPN')
 iTarea = col('Número de tarea')
-# la pre-etiqueta, no la caja: PRE... y su variante WPRE...
-ES_PRE = re.compile(r'^W?PRE', re.I)
+# LA PRE-ETIQUETA, CON LO QUE TRAIGA DELANTE. El contenedor del picking tiene que
+# ser PRE500080..., pero al escribirlo a veces le meten caracteres antes: 1PRE, WPRE,
+# UPRE, 3PRE, LGPRE, KOKKPRE, GGGGGGPRE... (visto en 120 archivos del OBLPN y del
+# picking, 18-sep-2026). Embalaje no lo puede pistolear y lo deja a un lado: NO esta
+# embalado. Daniel: "ponen un W, ponen un numero, a veces ponen otra cosa antes del
+# pre". El 18-sep uno de pvargas (UPRE..., 10 pares) salia embalado en la web y no en
+# el WMS. Una caja real es un numero puro: nunca lleva "PRE" seguido del numero.
+ES_PRE = re.compile(r'PRE\d', re.I)
 
 cel = defaultdict(lambda: defaultdict(float))
 # persona -> [(segundo, canal, clase, hora)]: cada linea embalada de esa persona, de
@@ -566,7 +573,7 @@ for x in crudas:
         sin_hora += 1
         continue
     # EL LPN QUE EMPIEZA CON PRE NO ESTA EMBALADO, diga lo que diga el estado.
-    if ES_PRE.match(dt(x, iLpn)):
+    if ES_PRE.search(dt(x, iLpn)):
         pre_fuera += 1
         pre_pares += entero(dt(x, iQ)) * pares_de_la_caja(dt(x, iSku))
         continue

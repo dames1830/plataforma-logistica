@@ -93,6 +93,18 @@ TEMP = os.path.join(AQUI, "_tmp_distribucion")
 # El prepack lleva la talla en CINCO digitos: 5614468-1-06006 contra el suelto
 # 5614468-1-03. Es la unica forma de reconocerlo; la ubicacion no alcanza.
 FORMA_PREPACK = re.compile(r'^\d{7}-\d-\d{5}$')
+# LA PRE-ETIQUETA, CON LO QUE TRAIGA DELANTE. El contenedor del picking tiene que
+# ser PRE500080..., pero al escribirlo a veces le meten caracteres antes: 1PRE, WPRE,
+# UPRE, 3PRE, LGPRE, KOKKPRE, GGGGGGPRE... (visto en 120 archivos del OBLPN y del
+# picking, 18-sep-2026). Embalaje no lo puede pistolear y lo deja a un lado: NO esta
+# embalado. Daniel: "ponen un W, ponen un numero, a veces ponen otra cosa antes del
+# pre". El 18-sep uno de pvargas (UPRE..., 10 pares) salia embalado en la web y no en
+# el WMS. Una caja real es un numero puro: nunca lleva "PRE" seguido del numero.
+ES_PRE = re.compile(r'PRE\d', re.I)
+
+
+def es_pre(lpn):
+    return bool(ES_PRE.search(lpn or ''))
 
 # Un bulto parado en cualquiera de estos dos estados es mercaderia detenida.
 PARADO = ('Empaquetado', 'En empaquetado')
@@ -403,7 +415,7 @@ def cuadro_retail(ss, gen, TIENDAS, fecha, estados):
                     continue
                 g, q = clase(c), pares(c, N(r['Cantidad asignada']))
                 tab[g]['picado'] += q
-                if L(r.get('Número de contenedor')).startswith('PRE'):
+                if es_pre(L(r.get('Número de contenedor'))):
                     tab[g]['patio'] += q
                 else:
                     tab[g]['embalado'] += q
@@ -496,7 +508,7 @@ def foto_del_dia(ultimo_oblpn, gen, TIENDAS):
             if estado not in PARADO:
                 continue
 
-            etapa = 'PATIO' if lpn.startswith('PRE') else 'STAGING'
+            etapa = 'PATIO' if es_pre(lpn) else 'STAGING'
             estados[gg]['patio' if etapa == 'PATIO' else 'staging'] += p
             b = caja[etapa].setdefault(lpn, {
                 'l': lpn, 'd': d, 't': TIENDAS[d]['t'], 'q': 0.0,
@@ -623,7 +635,7 @@ def varados(archivos, gen, TIENDAS, hoy):
         # EL ESTADO MANDA, NO EL NOMBRE DEL LPN. Ver la regla 4.
         if b['estado'] not in PARADO:
             continue
-        if lpn.startswith('PRE'):
+        if es_pre(lpn):
             etapa, desde = 'patio', b['pick']
         else:
             etapa, desde = 'staging', (b['emp'] or b['pick'])
@@ -684,7 +696,7 @@ def varados(archivos, gen, TIENDAS, hoy):
         [{'l': lpn, 'p': (b['ped'].most_common(1) or [('', 0)])[0][0],
           'd': b['d'], 't': TIENDAS[b['d']]['t'], 'q': int(b['q'])}
          for lpn, b in ult.items()
-         if lpn.startswith('PRE') and b['estado'] in ('Cargado', 'Enviado')
+         if es_pre(lpn) and b['estado'] in ('Cargado', 'Enviado')
          and not b['vacio'] and b['q'] > 0],
         key=lambda x: -x['q'])
     log('control: %d PRE despachados sin pasar por embalaje'

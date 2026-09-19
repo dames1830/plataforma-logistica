@@ -85,6 +85,20 @@ TIPOS = ['SOLID', 'PREPACK', 'NO CALZADO', 'INSUMOS']
 ETIQ_CLASE = {'CALZADO': 'CALZADO', 'INSUMOS': 'INSUMOS'}      # el resto: NO CALZADO
 PARADO = ('Empaquetado', 'En empaquetado')
 FORMA_PREPACK = re.compile(r'^\d{7}-\d-\d{5}$')
+# LA PRE-ETIQUETA, CON LO QUE TRAIGA DELANTE. El contenedor del picking tiene que
+# ser PRE500080..., pero al escribirlo a veces le meten caracteres antes: 1PRE, WPRE,
+# UPRE, 3PRE, LGPRE, KOKKPRE, GGGGGGPRE... (visto en 120 archivos del OBLPN y del
+# picking, 18-sep-2026). Embalaje no lo puede pistolear y lo deja a un lado: NO esta
+# embalado. Daniel: "ponen un W, ponen un numero, a veces ponen otra cosa antes del
+# pre". El 18-sep uno de pvargas (UPRE..., 10 pares) salia embalado en la web y no en
+# el WMS. Una caja real es un numero puro: nunca lleva "PRE" seguido del numero.
+ES_PRE = re.compile(r'PRE\d', re.I)
+
+
+def es_pre(lpn):
+    return bool(ES_PRE.search(lpn or ''))
+
+
 PROBAR = '--probar' in sys.argv
 
 CARPETA_LOGS = os.path.join(AQUI, 'logs')
@@ -458,7 +472,7 @@ def leer_oblpn(base, guias, topes):
                 if prev is None or momento >= prev[0]:
                     caja = pares_de_la_caja(c)
                     picks[pick][lpn] = (momento, r[iE].strip(), num(r[iQ]) * caja,
-                                        lpn.startswith('PRE'), num(r[iQ]), caja > 1)
+                                        es_pre(lpn), num(r[iQ]), caja > 1)
     # UN ARTICULO NO SE EMBALA MAS DE LO QUE PEDIA LA ORDEN. El mismo pick aparece a veces
     # en dos bultos reales vivos: la guia 7999159 tenia 1 unidad y figuraba en el bulto
     # 508004072676 y otra vez como 508004072676-26747924, los dos Enviado. Por articulo se
