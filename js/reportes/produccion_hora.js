@@ -526,8 +526,7 @@ export function montarProduccionHora(cont, OPC) {
       </div>
 
       <div class="ph-pan ph-mtz">
-        <div class="ph-cab"><h3 id="ph_mtz_tit">${esc(T.cuadro)}</h3>
-          <p id="ph_mtz_pie"></p></div>
+        <div class="ph-cab"><h3 id="ph_mtz_tit">${esc(T.cuadro)}</h3></div>
         <div class="ph-selec" id="ph_sel"></div>
         <div class="ph-sc"><table>
           <thead><tr><th>#</th><th>Persona</th>
@@ -536,7 +535,6 @@ export function montarProduccionHora(cont, OPC) {
             <th class="n" title="pares por hora sobre el tiempo trabajado">Par/h</th>
             <th class="n" title="minutos trabajados: del primer al último par, sin el refrigerio">Min</th></tr></thead>
           <tbody id="ph_cuerpo"></tbody></table></div>
-        <div class="ph-nota" id="ph_mtz_nota"></div>
       </div>
 
       <div class="ph-dos">
@@ -830,35 +828,9 @@ export function montarProduccionHora(cont, OPC) {
         }
 
         el('mtz_tit').textContent = T.cuadro;
-        el('mtz_pie').innerHTML = 'Sigue el <b>filtro de canal</b> de arriba. ' + (esEf
-            ? 'Cada celda son los <b>pares por hora</b> sobre el tiempo que esa persona '
-              + 'estuvo realmente trabajando. El prepack cuenta por sus pares y el no calzado '
-              + 'por sus unidades.'
-            : 'Cada celda son los <b>pares</b> que esa persona ' + esc(T.verbo) + ' en esa hora.');
-        /* LA REGLA DEL TIEMPO SE DICE COMO LA PUBLICÓ EL ROBOT. Desde el 17-sep-2026 es la de
-           Daniel —menos de 30 min sin mover nada es trabajo; de las pausas de 30 o más se
-           descuenta el refrigerio, hasta 60 min en el día— y el cuadro trae `pausaMin`. Los
-           días calculados antes siguen con el puente de 15 min, y dicen eso. */
-        const reglaTiempo = C.pausaMin != null
-            ? `Las pausas de menos de ${C.pausaMin} min cuentan como trabajo; de las de
-               ${C.pausaMin} min o más se descuenta el refrigerio, hasta ${C.refrigerioMin} min
-               en el día.`
-            : `Se unen las pausas de hasta ${C.puenteMin || 15} min: el refrigerio y las pausas
-               largas no cuentan.`;
-        el('mtz_nota').innerHTML =
-            `<b>${gente.length} de ${v.gente.length} personas</b> `
-            + (esEf ? `tienen ritmo medible en ${NOMBRE[clase]}`
-                    : `${esc(T.accion)} ${NOMBRE[clase]}`)
-            + '; el resto no figura. '
-            + (esEf
-                ? `<b>Pares por hora</b> sobre el tiempo trabajado, del primer al último par.
-                   ${reglaTiempo} Una raya
-                   no es un cero: es que en esa hora trabajó muy poco para medir un ritmo
-                   —hacen falta ${C.minutosCelda} min en la celda y ${C.minutosDia} en el día—,
-                   o que el WMS confirmó un bloque de golpe, que no es alguien trabajando.`
-                : 'Ordenado por pares: dice cuánto trabajo le tocó a cada uno, no qué tan '
-                  + 'rápido lo hizo. Para eso está Efectividad. <b>Min</b> va del primer al '
-                  + 'último par. ' + reglaTiempo);
+        /* SIN LEYENDAS arriba ni abajo del cuadro por hora. Daniel, 19-sep-2026: "quita las
+           leyendas tanto arriba como abajo". Explicaban el filtro de canal, que cada celda
+           son pares y la regla del refrigerio; el cuadro queda solo con su titulo. */
     }
 
     /* ── los enganches ── */

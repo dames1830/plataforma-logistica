@@ -1,0 +1,33 @@
+<!-- Prueba: el cuadro "por hora" de Picking y Embalaje por día SIN las dos leyendas.
+     Monta el montarProduccionHora real con el día publicado en producción (solo LEE). -->
+<meta charset="utf-8">
+<title>Prueba sin leyendas</title>
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<style>
+  body { margin: 0; padding: 20px; background: var(--panel-deeper); }
+  #eco { font: 12px system-ui, sans-serif; color: var(--text-muted); white-space: pre-wrap; margin-bottom: 12px; }
+</style>
+<div id="eco"></div>
+<div id="salida"></div>
+<script type="module">
+document.documentElement.setAttribute('data-tema', 'indigo');
+const eco = (t) => { document.getElementById('eco').textContent += t + '\n'; };
+const cual = new URLSearchParams(location.search).get('cual') || 'embalaje';
+const fecha = new URLSearchParams(location.search).get('fecha') || '2026-09-18';
+const AREA = { picking: 'picking_por_hora', embalaje: 'embalaje_por_hora' }[cual];
+const TEXTOS = {
+  picking: { titulo: 'Picking por día', cuadro: 'Picking por hora', verbo: 'picó',
+             accion: 'movieron', origen: 'De dónde la sacan', fuente: 'archivo de picking' },
+  embalaje: { titulo: 'Embalaje por día', cuadro: 'Embalaje por hora', verbo: 'embaló',
+              accion: 'embalaron', origen: 'De dónde salió', fuente: 'OBLPN de embalaje' },
+}[cual];
+const { montarProduccionHora } = await import('../js/reportes/produccion_hora.js?z=' + Date.now());
+const r = await (await fetch('https://logistics-backend-wv0x.onrender.com/api/logistics/' + AREA + '?date=' + fecha)).json();
+eco(cual + ' ' + fecha + ' · sellado ' + r.updated_at);
+montarProduccionHora(document.getElementById('salida'), {
+  dias: [{ fecha, datos: r.data }], textos: TEXTOS, fecha, fechas: [fecha], alCambiarFecha: () => {},
+});
+window.__listo = true;
+</script>
