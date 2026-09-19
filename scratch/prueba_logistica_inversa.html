@@ -33,7 +33,8 @@
   window.__pedidos = [];
   window.fetch = async (url, o) => {
     const m = String(url).match(/\/api\/logistics\/([a-z_]+)/);
-    if (!m) return fetchReal(url, o);
+    // ?real=1 lee las áreas publicadas de verdad (solo GET: el módulo no escribe nada)
+    if (!m || /[?&]real=1/.test(location.search)) { if (m) window.__pedidos.push(m[1] + ' (real)'); return fetchReal(url, o); }
     window.__pedidos.push(m[1]);
     const r = await fetchReal('li_datos/' + m[1] + '.json?' + Date.now());
     if (!r.ok) return new Response('{"detail":"no"}', {status: 404});
