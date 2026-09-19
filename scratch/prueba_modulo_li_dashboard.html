@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es" data-tema="pbi">
+<head>
+<meta charset="utf-8">
+<title>Prueba · Logística inversa en el tablero</title>
+<!--
+  EL MÓDULO LOGÍSTICA INVERSA DENTRO DEL TABLERO DE VERDAD, SIN INICIAR SESIÓN (19-sep-2026).
+
+  Carga js/views/dashboard_v28.js tal cual -el mismo archivo que corre en la web- y llama a renderDashboard con un
+  usuario de prueba de rol admin. Así se ve el menú, la barra de sub-pestañas y el módulo como los va a ver Daniel.
+
+  NO PUEDE TOCAR NADA:
+   - toda llamada al servidor sin el sello X-Environment: beta se FRENA (el guardia va antes de env.js);
+   - toda escritura (lo que no sea GET) se contesta aquí mismo con un "ok" de mentira y no sale;
+   - las áreas li_* se contestan con scratch/li_datos/<área>.json (python robot/logistica_inversa.py --salida scratch/li_datos).
+-->
+<script>
+  (function () {
+    var nativo = window.fetch.bind(window);
+    window.__frenadas = []; window.__escrituras = []; window.__li = [];
+    window.fetch = async function (input, init) {
+      var url = (typeof input === 'string') ? input : (input && input.url) || '';
+      if (!/onrender\.com|\/api\//.test(url)) return nativo(input, init);
+      var metodo = ((init && init.method) || 'GET').toUpperCase();
+      var h = new Headers((init && init.headers) || undefined);
+      if (h.get('X-Environment') !== 'beta') { window.__frenadas.push(url); throw new Error('PRUEBA: sin sello beta, frenada: ' + url); }
+      if (metodo !== 'GET' && metodo !== 'HEAD') {
+        window.__escrituras.push(metodo + ' ' + url);
+        return new Response('{"status":"ok"}', {status: 200, headers: {'Content-Type': 'application/json'}});
+      }
+      var m = url.match(/\/api\/logistics\/(li_[a-z_]+)/);
+      if (m) {
+        window.__li.push(m[1]);
+        var r = await nativo('li_datos/' + m[1] + '.json?' + Date.now());
+        if (!r.ok) return new Response('{}', {status: 404});
+        return new Response(JSON.stringify({area: m[1], data: await r.json()}), {status: 200, headers: {'Content-Type': 'application/json'}});
+      }
+      return nativo(input, init);
+    };
+  })();
+</script>
+<script src="../js/env.js?v=29.0833"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="../css/main.css?v=29.0833">
+<link rel="stylesheet" href="../css/temas.css?v=29.0833">
+<link rel="stylesheet" href="../css/componentes.css?v=29.0833">
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+  const { renderDashboard } = await import('../js/views/dashboard_v28.js?v=29.0833');
+  window.__listo = false;
+  await renderDashboard(document.getElementById('app'), {username: 'prueba', role: 'admin', name: 'Prueba'}, () => {});
+  window.__listo = true;
+</script>
+</body>
+</html>

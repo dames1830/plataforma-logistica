@@ -950,6 +950,31 @@ def main(log_externo=None):
                 log("No se pudo arrancar recibido_sin_picar.py (%s: %s). El ASN "
                     "SI se publico." % (type(e).__name__, str(e)[:120]), "WARN")
 
+    # ── Y AL FINAL, LOGISTICA INVERSA ───────────────────────────────────────
+    #
+    # El modulo del mismo nombre (Daniel, 19-sep-2026) lee los mismos seis
+    # archivos del ASN, asi que va encadenado aca y no con hora propia, por lo
+    # mismo que recibido y sin picar. Tampoco puede tumbar al ASN.
+    if "--sin-inversa" not in sys.argv:
+        tercero = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                               "logistica_inversa.py")
+        if not os.path.isfile(tercero):
+            log("No esta logistica_inversa.py, no se arma ese modulo.", "WARN")
+        else:
+            log("")
+            log("Ahora logistica inversa...")
+            try:
+                cod = subprocess.run([sys.executable, tercero],
+                                     timeout=40 * 60).returncode
+                if cod == 0:
+                    log("Logistica inversa: publicada")
+                else:
+                    log("Logistica inversa: FALLO (codigo %s). El ASN SI se "
+                        "publico." % cod, "WARN")
+            except Exception as e:
+                log("No se pudo arrancar logistica_inversa.py (%s: %s). El ASN "
+                    "SI se publico." % (type(e).__name__, str(e)[:120]), "WARN")
+
     return 0 if ok else 3
 
 

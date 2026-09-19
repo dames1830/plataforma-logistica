@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es" data-tema="pbi">
+<head>
+<meta charset="utf-8">
+<title>Prueba · Logística inversa</title>
+<!-- PRUEBA DEL MÓDULO LOGÍSTICA INVERSA SIN INICIAR SESIÓN (19-sep-2026).
+     Carga el CSS DE VERDAD de la plataforma y el módulo DE VERDAD (js/reportes/logistica_inversa.js), y le sirve
+     las áreas desde scratch/li_datos/<área>.json, que escribe `python robot/logistica_inversa.py --salida
+     scratch/li_datos`. No toca el servidor: el fetch a /api/logistics/<área> se contesta con el archivo local.
+     window.__auditar() mide el contraste de cada texto en los cuatro temas y las cuatro pestañas. -->
+<link rel="stylesheet" href="../css/main.css">
+<link rel="stylesheet" href="../css/temas.css">
+<link rel="stylesheet" href="../css/componentes.css">
+<style>
+  body{background:var(--bg-dark);padding:18px;min-height:100vh}
+  #barra{display:flex;gap:8px;align-items:center;margin-bottom:12px;font-size:12px;color:var(--text-muted);flex-wrap:wrap}
+  #barra button{font:inherit;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text-main);cursor:pointer}
+  #barra button[aria-pressed="true"]{border-color:var(--primary);font-weight:800}
+</style>
+</head>
+<body>
+<div id="barra">
+  <span>Pestaña</span>
+  <button data-p="li_vuelve">Lo que vuelve</button><button data-p="li_retorno">Despachado y devuelto</button>
+  <button data-p="li_doble_tramo">Doble tramo</button><button data-p="li_produccion">Producción L.I</button>
+  <span style="margin-left:16px">Tema</span>
+  <button data-t="indigo">Índigo</button><button data-t="pbi">Power BI</button><button data-t="pbi-classic">PBI Classic</button><button data-t="negro">Negro</button>
+</div>
+<div id="areaContent"></div>
+<script>
+  // El servidor, de mentira: /api/logistics/<área>?date=MASTER -> li_datos/<área>.json envuelto como lo devuelve la API.
+  const fetchReal = window.fetch.bind(window);
+  window.__pedidos = [];
+  window.fetch = async (url, o) => {
+    const m = String(url).match(/\/api\/logistics\/([a-z_]+)/);
+    if (!m) return fetchReal(url, o);
+    window.__pedidos.push(m[1]);
+    const r = await fetchReal('li_datos/' + m[1] + '.json?' + Date.now());
+    if (!r.ok) return new Response('{"detail":"no"}', {status: 404});
+    const d = await r.json();
+    return new Response(JSON.stringify({area: m[1], data: d}), {status: 200, headers: {'Content-Type': 'application/json'}});
+  };
+</script>
+<script type="module">
+  import { montarLogisticaInversa } from '../js/reportes/logistica_inversa.js';
+  const cont = document.getElementById('areaContent');
+  const marcar = () => document.querySelectorAll('#barra button').forEach(b => b.setAttribute('aria-pressed',
+      String(b.dataset.p === window.__parte || b.dataset.t === document.documentElement.dataset.tema)));
+  window.__montar = async (p) => { window.__parte = p; marcar(); await montarLogisticaInversa(cont, { parte: p }); };
+  document.getElementById('barra').addEventListener('click', (ev) => {
+    const b = ev.target.closest('button'); if (!b) return;
+    if (b.dataset.p) window.__montar(b.dataset.p);
+    if (b.dataset.t) { document.documentElement.dataset.tema = b.dataset.t; marcar(); }
+  });
+  window.__montar(new URLSearchParams(location.search).get('p') || 'li_vuelve');
+</script>
+<script>
+/* EL CONTRASTE, igual que auditoria_temas.js de la maqueta: fondo compuesto capa por capa + opacidad; 4,5:1 letra,
+   3:1 letra grande, flechitas, barritas y el guion de la celda vacía. */
+(function () {
+  function parse(c) {
+    if (!c || c === 'transparent') return [0, 0, 0, 0];
+    var m = c.match(/^rgba?\(([^)]+)\)/);
+    if (m) { var p = m[1].split(/[\s,\/]+/).filter(Boolean).map(parseFloat); return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; }
+    m = c.match(/^color\(srgb ([^)]+)\)/);
+    if (m) { var q = m[1].split(/[\s\/]+/).filter(Boolean).map(parseFloat); return [q[0] * 255, q[1] * 255, q[2] * 255, q.length > 3 ? q[3] : 1]; }
+    return null;
+  }
+  function over(t, b) { var a = t[3]; return [t[0] * a + b[0] * (1 - a), t[1] * a + b[1] * (1 - a), t[2] * a + b[2] * (1 - a), 1]; }
+  function lum(c) { return [c[0], c[1], c[2]].map(function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); })
+      .reduce(function (s, v, i) { return s + v * [0.2126, 0.7152, 0.0722][i]; }, 0); }
+  function ratio(a, b) { var x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
+  function fondo(el) {
+    var capas = [], n = el;
+    while (n && n.nodeType === 1) { var bg = parse(getComputedStyle(n).backgroundColor);
+      if (bg && bg[3] > 0) { capas.push(bg); if (bg[3] >= 0.999) break; } n = n.parentElement; }
+    var base = capas.length && capas[capas.length - 1][3] >= 0.999 ? capas.pop() : parse(getComputedStyle(document.documentElement).backgroundColor);
+    if (!base || base[3] < 1) base = over(base || [0, 0, 0, 0], [255, 255, 255, 1]);
+    for (var i = capas.length - 1; i >= 0; i--) base = over(capas[i], base);
+    return base;
+  }
+  function opac(el) { var o = 1, n = el; while (n && n.nodeType === 1) { o *= parseFloat(getComputedStyle(n).opacity); n = n.parentElement; } return o; }
+  function firma(el) { var s = function (e) { return e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') +
+      (typeof e.className === 'string' && e.className.trim() ? '.' + e.className.trim().split(/\s+/).join('.') : ''); };
+    var p = el.parentElement; return (p ? s(p) + ' > ' : '') + s(el); }
+  function visible(el) { var r = el.getBoundingClientRect(); if (!r.width || !r.height) return false;
+    var cs = getComputedStyle(el); return cs.visibility !== 'hidden' && cs.display !== 'none'; }
+  function medir(raiz, donde, res) {
+    raiz.querySelectorAll('*').forEach(function (el) {
+      if (/^(SCRIPT|STYLE|OPTION)$/.test(el.tagName)) return;
+      var txt = ''; el.childNodes.forEach(function (c) { if (c.nodeType === 3) txt += c.nodeValue; });
+      if (el.tagName === 'INPUT' || el.tagName === 'SELECT') txt = el.value || el.placeholder || '';
+      var ps = getComputedStyle(el, '::before'), flecha = ps.content && !/^(none|normal|"")$/.test(ps.content);
+      if (!txt.trim() && !flecha) return;
+      if (!visible(el)) return;
+      var bg = fondo(el), o = opac(el), k = donde + ' | ' + firma(el);
+      if (flecha) { var fp = parse(ps.color); if (fp) add(res, k + '::before', ratio(over([fp[0], fp[1], fp[2], fp[3] * o], bg), bg), 3, ps.content); }
+      if (!txt.trim()) return;
+      var cs = getComputedStyle(el), fg = parse(cs.color); if (!fg) return;
+      var px = parseFloat(cs.fontSize), w = parseInt(cs.fontWeight, 10), tenue = el.classList.contains('z') || el.classList.contains('nv');
+      add(res, k, ratio(over([fg[0], fg[1], fg[2], fg[3] * o], bg), bg), (px >= 24 || (px >= 18.66 && w >= 700) || tenue) ? 3 : 4.5, txt.trim().slice(0, 30));
+    });
+    raiz.querySelectorAll('.barra').forEach(function (b) { if (!visible(b)) return;
+      var bg = fondo(b.parentElement), c = parse(getComputedStyle(b).backgroundColor), o = opac(b);
+      add(res, donde + ' | barra', ratio(over([c[0], c[1], c[2], c[3] * o], bg), bg), 3, '(barra)'); });
+  }
+  function add(res, k, r, min, txt) { var x = res[k] || (res[k] = {min: min, peor: 99, txt: txt}); if (r < x.peor) { x.peor = r; x.txt = txt; } }
+  function quieto() { document.querySelectorAll('*').forEach(function (e) { e.style.setProperty('transition', 'none', 'important'); }); void document.body.offsetHeight; }
+  function abrir(sel) { var e = document.querySelector(sel); if (!e) return false; if (!e.classList.contains('abierta')) e.click(); quieto(); return true; }
+  const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+  window.__auditar = async function () {
+    var out = {}, abiertos = [];
+    for (const tema of ['indigo', 'pbi', 'pbi-classic', 'negro']) {
+      document.documentElement.dataset.tema = tema; quieto();
+      var res = {};
+      await window.__montar('li_vuelve'); quieto();
+      abiertos.push(abrir('#li_tien_t tr.abre[data-t]'), abrir('#li_tien_t tr.hijo tr.abre[data-a]'), abrir('#li_dis_t tr.abre'));
+      medir(document.getElementById('li'), 'vuelve', res);
+      await window.__montar('li_retorno'); quieto();
+      abiertos.push(abrir('#lr_t tr.n1.abre'), abrir('#lr_t tr.n2.abre'), abrir('#lr_sin_t tr.n1.abre'), abrir('#lr_sin_t tr.n2.abre'));
+      medir(document.getElementById('li'), 'retorno', res);
+      var mod = document.querySelector('#lr_t tr.n3.modal'); abiertos.push(!!mod); if (mod) mod.click();
+      for (var i = 0; i < 50 && !document.querySelector('#lr_modal table.det'); i++) await espera(100);
+      quieto(); abiertos.push(!!document.querySelector('#lr_modal table.det'));
+      medir(document.getElementById('lr_modal'), 'modal', res);
+      var x = document.querySelector('#lr_modal .lr-cerrar'); if (x) x.click();
+      await window.__montar('li_doble_tramo'); quieto(); abiertos.push(abrir('#dt_par_t tr.abre'));
+      medir(document.getElementById('li'), 'doble', res);
+      await window.__montar('li_produccion'); quieto();
+      medir(document.getElementById('li'), 'produccion', res);
+      out[tema] = Object.keys(res).filter(function (k) { return res[k].peor < res[k].min; })
+        .map(function (k) { return res[k].peor.toFixed(2) + '/' + res[k].min + ' ' + k.slice(-70) + ' «' + res[k].txt + '»'; });
+      out[tema + '_medidos'] = Object.keys(res).length;
+    }
+    out.abiertos = abiertos.every(Boolean);
+    return out;
+  };
+})();
+</script>
+</body>
+</html>

@@ -66,3 +66,7 @@ v.json
 # Los JSON que deja `distribucion.py --probar`: son de una corrida en seco.
 robot/_prueba_*.json
 scratch/_libs/
+
+# La copia del Maestro que guarda cada robot (maestro_web.py) y los datos de la prueba de Logistica inversa
+robot/cache/
+scratch/li_datos/

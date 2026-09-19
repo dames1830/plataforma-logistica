@@ -158,6 +158,11 @@ export const AREAS_POR_PANTALLA = {
     despacho_no_retail:['no_retail_cache'],
     // ── Recepción ────────────────────────────────────────────────────────────
     asn_recepcion:     ['asn_recepcion'],
+    // ── Logística inversa ────────────────────────────────────────────────────
+    li_vuelve:         ['li_vuelve'],
+    li_retorno:        ['li_retorno'],
+    li_doble_tramo:    ['li_doble_tramo'],
+    li_produccion:     ['li_produccion'],
     reportes_recepcion:['citas_recepcion'],
     // ── Almacenaje ───────────────────────────────────────────────────────────
     tareas_dia:        ['almacenaje_tasks'],

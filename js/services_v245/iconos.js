@@ -35,6 +35,8 @@ const TRAZOS = {
   despacho:    '<path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>',
   no_retail:   '<path d="M4 9h16v11H4z"/><path d="M4 9 6 4h12l2 5"/><path d="M9 20v-6h6v6"/>',
   recepcion:   '<path d="M12 21V10"/><path d="m7.5 14 4.5-4.5L16.5 14"/><path d="M4 4h16"/>',
+  // la flecha que da la vuelta: lo que sale a tienda y regresa al CD
+  logistica_inversa: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
   almacenaje:  '<path d="M3 21V9l9-5 9 5v12"/><path d="M3 13h18M3 17h18"/><path d="M9 21V9M15 21V9"/>',
   slotting:    '<rect x="3" y="3" width="7.5" height="7.5" rx="1.2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.2"/><path d="M17.25 13.5v7.5M13.5 17.25h7.5"/>',
   buffer:      '<path d="M6 3h12"/><path d="M6 21h12"/><path d="M7.5 3c0 4.5 4.5 6 4.5 9s-4.5 4.5-4.5 9"/><path d="M16.5 3c0 4.5-4.5 6-4.5 9s4.5 4.5 4.5 9"/>',
